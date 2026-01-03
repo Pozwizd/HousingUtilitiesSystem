@@ -2,7 +2,7 @@ name: Unified Monorepo Deployment
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - 'HousingUtilitiesSystemAdmin/**'
       - 'HousingUtilitiesSystemChairman/**'
@@ -84,7 +84,7 @@ jobs:
               --name $CONTAINER \
               --network ${{ env.NETWORK_NAME }} \
               --restart unless-stopped \
-              -p 8081:8080 \
+              -p 9081:8080 \
               -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
               -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
               -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
@@ -159,7 +159,7 @@ jobs:
               --name $CONTAINER \
               --network ${{ env.NETWORK_NAME }} \
               --restart unless-stopped \
-              -p 8083:8082 \
+              -p 9083:8082 \
               -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
               -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
               -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
@@ -234,7 +234,7 @@ jobs:
               --name $CONTAINER \
               --network ${{ env.NETWORK_NAME }} \
               --restart unless-stopped \
-              -p 8082:8081 \
+              -p 9082:8081 \
               -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
               -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
               -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
