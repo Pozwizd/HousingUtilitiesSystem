@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+        <style>
+            .vote-info-item {
+                margin-bottom: 0.5rem;
+            }
+
+            .vote-info-label {
+                font-weight: 500;
+                color: #6c757d;
+            }
+
+            .vote-info-value {
+                font-weight: 600;
+            }
+
+            .badge-for {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-against {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .badge-abstain {
+                background-color: #ff9800;
+                color: white;
+            }
+
+            .badge-active {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-closed {
+                background-color: #6c757d;
+                color: white;
+            }
+
+            .badge-accepted {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-rejected {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .chart-container {
+                min-height: 350px;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <!-- Left Column: Chart & Description -->
+            <div class="col-lg-7 col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0" id="voteTitle">Загрузка...</h4>
+                        <a href="#" class="btn btn-success" id="editVoteBtn">
+                            <i class="icon-base ti tabler-pencil me-1"></i>
+                            <span data-i18n="common.edit">Редактировать</span>
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <p id="voteDescription" class="mb-4"></p>
+
+                        <div class="chart-container">
+                            <div id="voteChart"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-center mt-3">
+                            <div class="d-flex gap-4">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-against me-1">&nbsp;</span>
+                                    <span data-i18n="votes.against">Против</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-abstain me-1">&nbsp;</span>
+                                    <span data-i18n="votes.abstained">Воздержались</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-for me-1">&nbsp;</span>
+                                    <span data-i18n="votes.for">За</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Vote Info -->
+            <div class="col-lg-5 col-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="vote-info-item">
+                            <span class="vote-info-label" data-i18n="common.status">Статус:</span>
+                            <span id="voteStatus" class="vote-info-value"></span>
+                        </div>
+                        <div class="vote-info-item">
+                            <span class="vote-info-label" data-i18n="votes.voting">Голосование:</span>
+                            <span id="voteResult" class="vote-info-value"></span>
+                        </div>
+                        <div class="vote-info-item">
+                            <span class="vote-info-label" data-i18n="votes.totalVoted">Всего проголосовало:</span>
+                            <span id="voteTotalArea" class="vote-info-value text-primary"></span>
+                        </div>
+                        <div class="vote-info-item">
+                            <span class="vote-info-label" data-i18n="votes.startTime">Время начала:</span>
+                            <span id="voteStartTime" class="vote-info-value"></span>
+                        </div>
+                        <div class="vote-info-item">
+                            <span class="vote-info-label" data-i18n="votes.endTime">Время завершения:</span>
+                            <span id="voteEndTime" class="vote-info-value"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal"
+                            data-bs-target="#participantsModal">
+                            <i class="icon-base ti tabler-users me-1"></i>
+                            <span data-i18n="votes.viewParticipants">Смотреть участников</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants Modal -->
+        <div class="modal fade" id="participantsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" data-i18n="votes.participants">Участники голосования</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table style="width: 100%;" class="table table-hover table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="votes.participantName">ФИО</th>
+                                        <th data-i18n="votes.apartmentNumber">№ квартиры</th>
+                                        <th data-i18n="votes.apartmentArea">S квартиры</th>
+                                        <th data-i18n="votes.participantPhone">Телефон</th>
+                                        <th data-i18n="votes.position">Позиция</th>
+                                        <th data-i18n="votes.voteTime">Время</th>
+                                    </tr>
+                                    <tr>
+                                        <th><input type="text" class="form-control form-control-sm participant-filter"
+                                                data-filter-key="fullName"
+                                                data-i18n="[placeholder]votes.participantName" placeholder="ФИО"></th>
+                                        <th><input type="text" class="form-control form-control-sm participant-filter"
+                                                data-filter-key="apartmentNumber"
+                                                data-i18n="[placeholder]votes.apartmentNumber" placeholder="№"></th>
+                                        <th></th>
+                                        <th><input type="text" class="form-control form-control-sm participant-filter"
+                                                data-filter-key="phone" data-i18n="[placeholder]votes.participantPhone"
+                                                placeholder="Телефон"></th>
+                                        <th>
+                                            <select class="form-select form-select-sm participant-filter-select"
+                                                data-filter-key="voteType">
+                                                <option value="" data-i18n="common.all">Все</option>
+                                                <option value="FOR" data-i18n="votes.for">За</option>
+                                                <option value="AGAINST" data-i18n="votes.against">Против</option>
+                                                <option value="ABSTENTION" data-i18n="votes.abstainedOne">Воздержался
+                                                </option>
+                                            </select>
+                                        </th>
+                                        <th class="text-center">
+                                            <button type="button" id="clearParticipantFilters"
+                                                class="btn btn-light btn-sm" data-i18n="common.clear">Очистить</button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between align-items-center">
+                        <label class="d-flex align-items-center gap-1 mb-0">
+                            <select id="participantsPageSize"
+                                class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                                style="width: auto;">
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </label>
+                        <nav aria-label="Participants Pagination">
+                            <ul class="pagination mb-0" id="participantsPagination">
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = /*[[@{/}]]*/ '/';
+                window.contextPath = window.contextPath.replace(/\/$/, '');
+                window.voteId = /*[[${voteId}]]*/ '';
+            </script>
+            <script>
+                $(document).ready(function () {
+                    let voteData = null;
+                    let participantsPage = 0;
+                    let participantsPageSize = 10;
+                    let participantFilters = {};
+                    let chart = null;
+
+                    // Load vote details
+                    function loadVoteDetail() {
+                        $.ajax({
+                            url: window.contextPath + '/voting/' + window.voteId + '/detail',
+                            type: 'GET',
+                            success: function (vote) {
+                                voteData = vote;
+                                renderVoteDetail(vote);
+                                renderChart(vote);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error loading vote detail:', error);
+                            }
+                        });
+                    }
+
+                    function renderVoteDetail(vote) {
+                        $('#voteTitle').text(vote.title || 'Без названия');
+                        $('#voteDescription').text(vote.description || '');
+                        $('#editVoteBtn').attr('href', window.contextPath + '/voting');
+
+                        // Status
+                        const statusBadge = vote.status === 'Активное'
+                            ? '<span class="badge badge-active">Активное</span>'
+                            : '<span class="badge badge-closed">Закрыто</span>';
+                        $('#voteStatus').html(statusBadge);
+
+                        // Result
+                        let resultBadge = '-';
+                        if (vote.result === 'Принято') {
+                            resultBadge = '<span class="badge badge-accepted">Принято</span>';
+                        } else if (vote.result === 'Отклонено') {
+                            resultBadge = '<span class="badge badge-rejected">Отклонено</span>';
+                        }
+                        $('#voteResult').html(resultBadge);
+
+                        // Total area
+                        const totalArea = vote.totalVotedArea || 0;
+                        $('#voteTotalArea').text(totalArea.toFixed(2) + ' кв. м.');
+
+                        // Times
+                        const formatDate = (dateStr) => {
+                            if (!dateStr) return '-';
+                            return new Date(dateStr).toLocaleString('ru-RU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        };
+                        $('#voteStartTime').text(formatDate(vote.startTime));
+                        $('#voteEndTime').text(formatDate(vote.endTime));
+                    }
+
+                    function renderChart(vote) {
+                        const forArea = vote.forVotesArea || 0;
+                        const againstArea = vote.againstVotesArea || 0;
+                        const abstainArea = vote.abstentionsArea || 0;
+
+                        const options = {
+                            series: [againstArea, abstainArea, forArea],
+                            chart: {
+                                type: 'pie',
+                                height: 350
+                            },
+                            labels: ['Против', 'Воздержались', 'За'],
+                            colors: ['#dc3545', '#ff9800', '#4caf50'],
+                            legend: {
+                                show: false
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                formatter: function (val, opts) {
+                                    return opts.w.config.series[opts.seriesIndex].toFixed(2) + ' кв.м.';
+                                }
+                            },
+                            tooltip: {
+                                y: {
+                                    formatter: function (val) {
+                                        return val.toFixed(2) + ' кв. м.';
+                                    }
+                                }
+                            },
+                            responsive: [{
+                                breakpoint: 480,
+                                options: {
+                                    chart: {
+                                        width: 300
+                                    }
+                                }
+                            }]
+                        };
+
+                        if (chart) {
+                            chart.destroy();
+                        }
+                        chart = new ApexCharts(document.querySelector("#voteChart"), options);
+                        chart.render();
+                    }
+
+                    // Load participants
+                    function loadParticipants() {
+                        const requestData = {
+                            page: participantsPage,
+                            size: participantsPageSize
+                        };
+
+                        Object.keys(participantFilters).forEach(key => {
+                            if (participantFilters[key]) {
+                                requestData[key] = participantFilters[key];
+                            }
+                        });
+
+                        $.ajax({
+                            url: window.contextPath + '/voting/' + window.voteId + '/participants',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(requestData),
+                            success: function (response) {
+                                renderParticipantsTable(response.content);
+                                renderParticipantsPagination(response);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error loading participants:', error);
+                            }
+                        });
+                    }
+
+                    function renderParticipantsTable(participants) {
+                        const tbody = $('#participantsTableBody');
+                        tbody.empty();
+
+                        if (!participants || participants.length === 0) {
+                            tbody.append(`
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="icon-base ti tabler-mood-empty icon-lg mb-2"></i>
+                                    <p class="mb-0">Участники не найдены</p>
+                                </td>
+                            </tr>
+                        `);
+                            return;
+                        }
+
+                        participants.forEach(p => {
+                            let voteBadge = '';
+                            switch (p.voteType) {
+                                case 'FOR':
+                                    voteBadge = '<span class="badge badge-for">За</span>';
+                                    break;
+                                case 'AGAINST':
+                                    voteBadge = '<span class="badge badge-against">Против</span>';
+                                    break;
+                                case 'ABSTENTION':
+                                    voteBadge = '<span class="badge badge-abstain">Воздержался</span>';
+                                    break;
+                                default:
+                                    voteBadge = p.voteTypeDisplay || p.voteType;
+                            }
+
+                            const voteTime = p.voteTime ? new Date(p.voteTime).toLocaleString('ru-RU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '-';
+
+                            const row = `
+                            <tr>
+                                <td>${p.fullName || '-'}</td>
+                                <td>${p.apartmentNumber || '-'}</td>
+                                <td>${p.apartmentArea ? p.apartmentArea.toFixed(2) : '-'}</td>
+                                <td>${p.phone || '-'}</td>
+                                <td>${voteBadge}</td>
+                                <td>${voteTime}</td>
+                            </tr>
+                        `;
+                            tbody.append(row);
+                        });
+                    }
+
+                    function renderParticipantsPagination(pageData) {
+                        const pagination = $('#participantsPagination');
+                        pagination.empty();
+
+                        const totalPages = pageData.totalPages;
+                        const currentPageNum = pageData.number;
+
+                        if (totalPages <= 1) return;
+
+                        // First button
+                        const firstDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${firstDisabled}">
+                            <a class="page-link" href="#" data-page="0">
+                                <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Previous button
+                        const prevDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${prevDisabled}">
+                            <a class="page-link" href="#" data-page="${currentPageNum - 1}">
+                                <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Page numbers
+                        let startPage = Math.max(0, currentPageNum - 2);
+                        let endPage = Math.min(totalPages - 1, currentPageNum + 2);
+
+                        for (let i = startPage; i <= endPage; i++) {
+                            const activeClass = i === currentPageNum ? 'active' : '';
+                            pagination.append(`
+                            <li class="page-item ${activeClass}">
+                                <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                            </li>
+                        `);
+                        }
+
+                        // Next button
+                        const nextDisabled = currentPageNum >= totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${nextDisabled}">
+                            <a class="page-link" href="#" data-page="${currentPageNum + 1}">
+                                <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Last button
+                        const lastDisabled = currentPageNum >= totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${lastDisabled}">
+                            <a class="page-link" href="#" data-page="${totalPages - 1}">
+                                <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+                    }
+
+                    // Event handlers
+                    $('#participantsModal').on('shown.bs.modal', function () {
+                        loadParticipants();
+                    });
+
+                    $(document).on('click', '#participantsPagination .page-link', function (e) {
+                        e.preventDefault();
+                        if ($(this).parent().hasClass('disabled')) return;
+                        participantsPage = parseInt($(this).data('page'));
+                        loadParticipants();
+                    });
+
+                    $('#participantsPageSize').change(function () {
+                        participantsPageSize = parseInt($(this).val());
+                        participantsPage = 0;
+                        loadParticipants();
+                    });
+
+                    $('.participant-filter').on('input', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        if (filterValue) {
+                            participantFilters[filterKey] = filterValue;
+                        } else {
+                            delete participantFilters[filterKey];
+                        }
+
+                        participantsPage = 0;
+                        loadParticipants();
+                    });
+
+                    $('.participant-filter-select').on('change', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        if (filterValue) {
+                            participantFilters[filterKey] = filterValue;
+                        } else {
+                            delete participantFilters[filterKey];
+                        }
+
+                        participantsPage = 0;
+                        loadParticipants();
+                    });
+
+                    $('#clearParticipantFilters').click(function () {
+                        $('.participant-filter').val('');
+                        $('.participant-filter-select').val('');
+                        participantFilters = {};
+                        participantsPage = 0;
+                        loadParticipants();
+                    });
+
+                    // Initial load
+                    loadVoteDetail();
+                });
+            </script>
+        </th:block>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-6">
+                    <h5 class="card-header" id="pageTitle" data-i18n="houses.newHouse">Новый дом</h5>
+                    <form id="formHouseSettings">
+                        <div class="card-body pt-4">
+                            <input type="hidden" id="houseId" name="id" />
+                            <div class="row gy-4 gx-6 mb-3">
+                                <!-- Номер дома -->
+                                <div class="col-md-6">
+                                    <label for="houseNumber" class="form-label"><span
+                                            data-i18n="houses.houseNumber">Номер дома</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" type="text" name="houseNumber" id="houseNumber"
+                                        data-i18n="[placeholder]houses.placeholders.enterHouseNumber"
+                                        placeholder="Введите номер дома" autofocus />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Улица -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="streetId"><span
+                                            data-i18n="houses.street">Улица</span> <span
+                                            class="text-danger">*</span></label>
+                                    <select name="streetId" id="streetId" class="form-select select2-street">
+                                        <option value="" data-i18n="houses.placeholders.selectStreet">Выберите улицу
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Председатель -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="chairmanId"><span
+                                            data-i18n="houses.chairman">Председатель</span></label>
+                                    <select name="chairmanId" id="chairmanId" class="form-select select2-chairman">
+                                        <option value="" data-i18n="houses.placeholders.selectChairman">Выберите
+                                            председателя</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Статус -->
+                                <div class="col-md-6">
+                                    <label for="status" class="form-label"><span data-i18n="common.status">Статус</span>
+                                        <span class="text-danger">*</span></label>
+                                    <select name="status" id="status" class="form-select">
+                                        <option value="" data-i18n="houses.placeholders.selectStatus">Выберите статус
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-10">
+                                <button type="submit" class="btn btn-primary me-3"
+                                    data-i18n="common.saveChanges">Сохранить изменения</button>
+                                <button type="reset" class="btn btn-label-secondary"
+                                    data-i18n="common.cancel">Отмена</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            </script>
+
+            <!-- Модульный JavaScript для страницы редактирования дома -->
+            <script th:src="@{/custom/houses/house-edit.js}"></script>
+
+        </th:block>
+    </div>
+
+</body>
+
+</html>

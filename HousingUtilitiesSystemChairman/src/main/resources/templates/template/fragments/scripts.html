@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<div layout:fragment="scripts">
+
+
+    <script th:src="@{/assets/vendor/libs/jquery/jquery.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/popper/popper.js}"></script>
+    <script th:src="@{/assets/vendor/js/bootstrap.js}"></script>
+    <script th:src="@{/assets/vendor/libs/node-waves/node-waves.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/algolia/autocomplete-js.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/pickr/pickr.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/hammer/hammer.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/notyf/notyf.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/i18n/i18n.js}"></script>
+
+    <script th:src="@{/assets/vendor/js/menu.js}"></script>
+
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+    <script th:src="@{/assets/vendor/libs/apex-charts/apexcharts.js}"></script>
+    <script th:src="@{/assets/vendor/libs/swiper/swiper.js}"></script>
+    <script th:src="@{/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js}"></script>
+
+    <!-- Main JS -->
+
+    <script th:src="@{/assets/js/main.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/select2/select2.js}"></script>
+    <script th:src="@{/custom/axios.min.js}"></script>
+    <script th:src="@{/custom/toast.js}"></script>
+
+    <!-- WebSocket -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // Global WebSocket connection for presence tracking on all pages
+            // Using the same endpoint as chat: /ws/chat
+            var socket = new SockJS(/*[[@{/ws/chat}]]*/ '/ws/chat');
+            var stompClient = Stomp.over(socket);
+            // Disable debug logs for global connection to reduce noise
+            stompClient.debug = () => { };
+
+            stompClient.connect({}, function (frame) {
+                console.log('Global WebSocket Connected');
+                // Expose globally for reuse by chat.html
+                window.globalStompClient = stompClient;
+                window.globalStompConnected = true;
+                // Dispatch event for pages that need to know connection is ready
+                window.dispatchEvent(new CustomEvent('globalStompConnected', { detail: stompClient }));
+            }, function (error) {
+                console.log('Global WebSocket Error: ' + error);
+                window.globalStompConnected = false;
+            });
+
+            // Store reference immediately for later checks
+            window.globalStompClient = stompClient;
+        });
+    </script>
+
+    <!-- Universal Modal Functions -->
+    <script>
+        // Universal confirm modal - replacement for native confirm()
+        function showConfirmModal(title, message, onConfirm, options = {}) {
+            const modal = document.getElementById('universalConfirmModal');
+            const modalTitle = document.getElementById('confirmModalTitle');
+            const modalBody = document.getElementById('confirmModalBody');
+            const confirmBtn = document.getElementById('confirmModalBtn');
+
+            modalTitle.textContent = title || 'Подтверждение';
+            modalBody.textContent = message || 'Вы уверены?';
+            confirmBtn.textContent = options.confirmText || 'Подтвердить';
+            confirmBtn.className = 'btn ' + (options.confirmClass || 'btn-primary');
+
+            // Remove old event listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            // Add new event listener
+            newConfirmBtn.addEventListener('click', function () {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+            });
+
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+
+        // Universal alert/toast - replacement for native alert()
+        function showAlert(message, type = 'info', duration = 4000) {
+            const toast = document.getElementById('universalToast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastBody = document.getElementById('toastBody');
+
+            // Set content
+            toastBody.textContent = message;
+
+            // Set type-specific styling
+            const types = {
+                success: { icon: 'tabler-check', title: 'Успешно', bg: 'bg-success', text: 'text-white' },
+                error: { icon: 'tabler-x', title: 'Ошибка', bg: 'bg-danger', text: 'text-white' },
+                warning: { icon: 'tabler-alert-triangle', title: 'Внимание', bg: 'bg-warning', text: 'text-dark' },
+                info: { icon: 'tabler-info-circle', title: 'Информация', bg: 'bg-info', text: 'text-white' }
+            };
+
+            const config = types[type] || types.info;
+
+            toastIcon.className = 'icon-base ti ' + config.icon + ' me-2';
+            toastTitle.textContent = config.title;
+
+            // Reset and apply background
+            toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white', 'text-dark');
+            toast.classList.add(config.bg, config.text);
+
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast, { delay: duration });
+            bsToast.show();
+        }
+    </script>
+
+    <!-- Page JS -->
+    <th:block layout:fragment="page_js"></th:block>
+
+</div>
+
+</html>

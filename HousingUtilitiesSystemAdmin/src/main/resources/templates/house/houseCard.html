@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header with actions -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-label-secondary me-3" onclick="window.history.back()">
+                            <i class="icon-base ti tabler-arrow-left me-1"></i> <span
+                                data-i18n="common.back">Назад</span>
+                        </button>
+                        <h4 class="mb-0" data-i18n="houses.houseProfile">Профиль дома</h4>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="editHouseBtn" class="btn btn-primary">
+                            <i class="icon-base ti tabler-edit me-1"></i> <span
+                                data-i18n="common.edit">Редактировать</span>
+                        </button>
+                        <button type="button" id="deleteHouseBtn" class="btn btn-danger">
+                            <i class="icon-base ti tabler-trash me-1"></i> <span
+                                data-i18n="common.delete">Удалить</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- House Info Card -->
+                    <div class="col-xl-4 col-lg-5 col-md-5">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="user-avatar-section">
+                                    <div class="d-flex align-items-center flex-column">
+                                        <div class="user-info text-center">
+                                            <h4 class="mb-2" id="houseNumber" data-i18n="common.loading">Загрузка...
+                                            </h4>
+                                            <span class="badge" id="houseStatus">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-around flex-wrap mt-4 pt-3 pb-4 border-bottom">
+                                    <div class="d-flex align-items-start me-4 mt-3 gap-2">
+                                        <span class="badge bg-label-primary p-2 rounded">
+                                            <i class="icon-base ti tabler-map-pin ti-sm"></i>
+                                        </span>
+                                        <div>
+                                            <p class="mb-0 fw-medium" data-i18n="houses.address">Адрес</p>
+                                            <small id="houseAddress">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-4 small text-uppercase text-muted" data-i18n="houses.chairmanInfo">
+                                    Информация о председателе</p>
+                                <div class="info-container">
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2 pt-1">
+                                            <span class="fw-medium me-1"
+                                                data-i18n="houses.chairmanLabel">Председатель:</span>
+                                            <span id="houseChairman">-</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Info Card -->
+                    <div class="col-xl-8 col-lg-7 col-md-7">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0" data-i18n="houses.detailedInfo">Подробная информация</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="houses.houseNumber">Номер
+                                            дома</label>
+                                        <p id="houseNumberDetail" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="houses.street">Улица</label>
+                                        <p id="houseStreet" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="houses.city">Город</label>
+                                        <p id="houseCity" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="common.status">Статус</label>
+                                        <p id="houseStatusDetail" class="form-control-plaintext">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Users in House Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" data-i18n="houses.residents">Жильцы дома</h5>
+                                <small class="text-muted" data-i18n="houses.residentsList">Список пользователей</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th data-i18n="users.fullName">ФИО</th>
+                                                <th data-i18n="users.apartment">Квартира</th>
+                                                <th data-i18n="users.phone">Телефон</th>
+                                                <th data-i18n="users.email">Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">
+                                                    <i class="icon-base ti tabler-users ti-sm me-1"></i>
+                                                    <span data-i18n="houses.noResidentsData">Нет данных о жильцах</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center py-3">
+                                <label class="d-flex align-items-center gap-1 mb-0">
+                                    <select id="userPageSize"
+                                        class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                                        style="width: auto;">
+                                        <option value="10" selected>10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </label>
+                                <nav aria-label="Pagination">
+                                    <ul class="pagination mb-0" id="usersPagination">
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" data-i18n="common.confirmDelete">Подтверждение удаления</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            data-i18n="[aria-label]common.close" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        <span data-i18n="houses.deleteConfirm">Вы уверены, что хотите удалить этот дом?</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal"
+                            data-i18n="common.cancel">Отменить</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
+                            data-i18n="common.delete">Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            // Переводим статические элементы после загрузки i18next
+            function translateElements() {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (key.startsWith('[placeholder]')) {
+                        const placeholderKey = key.replace('[placeholder]', '');
+                        element.placeholder = i18next.t(placeholderKey);
+                    } else if (key.startsWith('[aria-label]')) {
+                        const ariaKey = key.replace('[aria-label]', '');
+                        element.setAttribute('aria-label', i18next.t(ariaKey));
+                    } else {
+                        const translatedText = i18next.t(key);
+                        if (element.tagName.toLowerCase() === 'title') {
+                            document.title = translatedText;
+                        }
+                        element.textContent = translatedText;
+                    }
+                });
+            }
+
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof i18next !== 'undefined') {
+                    i18next.on('initialized', translateElements);
+                    i18next.on('languageChanged', translateElements);
+                    if (i18next.isInitialized) {
+                        translateElements();
+                    }
+                }
+
+                let houseId = null;
+                let currentHouse = null;
+                let currentUserPage = 0;
+                let userPageSize = 10;
+
+                // Get house ID from URL
+                const pathParts = window.location.pathname.split('/');
+                houseId = pathParts[pathParts.length - 1];
+
+                // DOM elements
+                const elements = {
+                    houseNumber: document.getElementById('houseNumber'),
+                    status: document.getElementById('houseStatus'),
+                    address: document.getElementById('houseAddress'),
+                    chairman: document.getElementById('houseChairman'),
+                    numberDetail: document.getElementById('houseNumberDetail'),
+                    street: document.getElementById('houseStreet'),
+                    city: document.getElementById('houseCity'),
+                    statusDetail: document.getElementById('houseStatusDetail'),
+                    editBtn: document.getElementById('editHouseBtn'),
+                    deleteBtn: document.getElementById('deleteHouseBtn'),
+                    confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+                    usersTableBody: document.getElementById('usersTableBody')
+                };
+
+                // Load house data
+                loadHouseData();
+
+                // Load users for this house
+                loadHouseUsers();
+
+                // Event listeners
+                if (elements.editBtn) {
+                    elements.editBtn.addEventListener('click', function () {
+                        window.location.href = window.contextPath + `/houses/edit/${houseId}`;
+                    });
+                }
+
+                if (elements.deleteBtn) {
+                    elements.deleteBtn.addEventListener('click', function () {
+                        $('#deleteConfirmModal').modal('show');
+                    });
+                }
+
+                if (elements.confirmDeleteBtn) {
+                    elements.confirmDeleteBtn.addEventListener('click', deleteHouse);
+                }
+
+                async function loadHouseData() {
+                    try {
+                        const response = await fetch(window.contextPath + `/houses/getHouse/${houseId}`);
+                        if (response.ok) {
+                            currentHouse = await response.json();
+                            displayHouseData(currentHouse);
+                        } else {
+                            const notFoundMsg = typeof i18next !== 'undefined' ? i18next.t('houses.errors.notFound') : 'Дом не найден';
+                            throw new Error(notFoundMsg);
+                        }
+                    } catch (error) {
+                        console.error('Error loading house:', error);
+                        const errorMsg = typeof i18next !== 'undefined' ? i18next.t('houses.errors.loadData') : 'Ошибка при загрузке данных дома';
+                        showNotification(errorMsg, 'error');
+                    }
+                }
+
+                function displayHouseData(house) {
+                    // House number
+                    if (elements.houseNumber) {
+                        const houseLabel = typeof i18next !== 'undefined' ? i18next.t('houses.houseLabel') : 'Дом';
+                        elements.houseNumber.textContent = `${houseLabel} №${house.houseNumber || house.number || '-'}`;
+                        // Удаляем data-i18n чтобы предотвратить перезапись при смене языка
+                        elements.houseNumber.removeAttribute('data-i18n');
+                    }
+
+                    if (elements.numberDetail) {
+                        elements.numberDetail.textContent = house.houseNumber || house.number || '-';
+                    }
+
+                    // Status badge
+                    if (elements.status) {
+                        const getStatusInfo = (status) => {
+                            const statusLabels = {
+                                'NEW': { key: 'common.statuses.new', class: 'bg-label-info', default: 'Новый' },
+                                'ACTIVE': { key: 'common.statuses.active', class: 'bg-label-success', default: 'Активный' },
+                                'DEACTIVATED': { key: 'common.statuses.deactivated', class: 'bg-label-warning', default: 'Деактивирован' },
+                                'BLOCKED': { key: 'common.statuses.blocked', class: 'bg-label-danger', default: 'Заблокирован' }
+                            };
+                            const statusInfo = statusLabels[status] || { key: null, class: 'bg-label-secondary', default: status || '-' };
+                            const text = statusInfo.key && typeof i18next !== 'undefined' ? i18next.t(statusInfo.key) : statusInfo.default;
+                            return { text, class: statusInfo.class };
+                        };
+                        const statusInfo = getStatusInfo(house.status);
+                        elements.status.textContent = statusInfo.text;
+                        elements.status.className = `badge ${statusInfo.class}`;
+                    }
+
+                    if (elements.statusDetail) {
+                        const getStatusText = (status) => {
+                            const statusLabels = {
+                                'NEW': { key: 'common.statuses.new', default: 'Новый' },
+                                'ACTIVE': { key: 'common.statuses.active', default: 'Активный' },
+                                'DEACTIVATED': { key: 'common.statuses.deactivated', default: 'Деактивирован' },
+                                'BLOCKED': { key: 'common.statuses.blocked', default: 'Заблокирован' }
+                            };
+                            const statusInfo = statusLabels[status] || { key: null, default: status || '-' };
+                            return statusInfo.key && typeof i18next !== 'undefined' ? i18next.t(statusInfo.key) : statusInfo.default;
+                        };
+                        elements.statusDetail.textContent = getStatusText(house.status);
+                    }
+
+                    // Address
+                    if (elements.address) {
+                        const street = house.street?.name || '-';
+                        const city = house.street?.city?.name || '-';
+                        elements.address.textContent = `${street}, ${city}`;
+                    }
+
+                    if (elements.street) {
+                        elements.street.textContent = house.street?.name || '-';
+                    }
+
+                    if (elements.city) {
+                        elements.city.textContent = house.street?.city?.name || '-';
+                    }
+
+                    // Chairman
+                    if (elements.chairman) {
+                        const notAssigned = typeof i18next !== 'undefined' ? i18next.t('houses.notAssigned') : 'Не назначен';
+                        elements.chairman.textContent = house.chairman?.fullName || notAssigned;
+                    }
+                }
+
+
+                async function deleteHouse() {
+                    try {
+                        const response = await fetch(window.contextPath + `/houses/${houseId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (response.ok) {
+                            $('#deleteConfirmModal').modal('hide');
+                            const successMsg = typeof i18next !== 'undefined' ? i18next.t('houses.deleteSuccess') : 'Дом успешно удален';
+                            showNotification(successMsg, 'success');
+                            setTimeout(() => {
+                                window.location.href = window.contextPath + '/houses';
+                            }, 1500);
+                        } else {
+                            const deleteErrorMsg = typeof i18next !== 'undefined' ? i18next.t('houses.deleteError') : 'Ошибка при удалении';
+                            throw new Error(deleteErrorMsg);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting house:', error);
+                        const deleteErrorMsg = typeof i18next !== 'undefined' ? i18next.t('houses.deleteError') : 'Ошибка при удалении дома';
+                        showNotification(deleteErrorMsg, 'error');
+                    }
+                }
+
+                async function loadHouseUsers() {
+                    try {
+                        const response = await fetch(
+                            window.contextPath + `/houses/getUsersByHouse/${houseId}?page=${currentUserPage}&size=${userPageSize}`
+                        );
+                        if (response.ok) {
+                            const pageData = await response.json();
+                            displayHouseUsers(pageData.content);
+                            renderUsersPagination(pageData);
+                        } else {
+                            console.error('Error loading users:', response.statusText);
+                            displayNoUsers();
+                        }
+                    } catch (error) {
+                        console.error('Error loading users:', error);
+                        displayNoUsers();
+                    }
+                }
+
+                function displayHouseUsers(users) {
+                    if (!elements.usersTableBody) return;
+
+                    if (!users || users.length === 0) {
+                        displayNoUsers();
+                        return;
+                    }
+
+                    let html = '';
+                    users.forEach(user => {
+                        const fullName = user.fullName || `${user.lastName || ''} ${user.firstName || ''} ${user.middleName || ''}`.trim() || '-';
+                        const apartment = user.apartmentNumber || '-';
+                        const phone = user.phone || '-';
+                        const email = user.email || '-';
+
+                        html += `
+                        <tr>
+                            <td>${fullName}</td>
+                            <td>${apartment}</td>
+                            <td>${phone}</td>
+                            <td>${email}</td>
+                        </tr>
+                    `;
+                    });
+
+                    elements.usersTableBody.innerHTML = html;
+                }
+
+                function displayNoUsers() {
+                    if (!elements.usersTableBody) return;
+
+                    const noDataMsg = typeof i18next !== 'undefined' ? i18next.t('houses.noResidentsData') : 'Нет данных о жильцах';
+                    elements.usersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="icon-base ti tabler-users ti-sm me-1"></i>
+                            <span>${noDataMsg}</span>
+                        </td>
+                    </tr>
+                `;
+                }
+
+                function renderUsersPagination(pageData) {
+                    const pagination = document.getElementById('usersPagination');
+                    if (!pagination) return;
+
+                    pagination.innerHTML = '';
+
+                    const totalPages = pageData.totalPages;
+                    const currentPageNum = pageData.number;
+
+                    if (totalPages <= 1) return;
+
+                    // First button
+                    const firstDisabled = currentPageNum === 0 ? 'disabled' : '';
+                    pagination.innerHTML += `
+                    <li class="page-item first ${firstDisabled}">
+                        <a class="page-link" href="#" data-user-page="0" ${firstDisabled ? 'aria-disabled="true"' : ''}>
+                            <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                        </a>
+                    </li>
+                `;
+
+                    // Previous button
+                    const prevDisabled = currentPageNum === 0 ? 'disabled' : '';
+                    pagination.innerHTML += `
+                    <li class="page-item prev ${prevDisabled}">
+                        <a class="page-link" href="#" data-user-page="${currentPageNum - 1}" ${prevDisabled ? 'aria-disabled="true"' : ''}>
+                            <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                        </a>
+                    </li>
+                `;
+
+                    // Page numbers logic
+                    if (totalPages <= 7) {
+                        for (let i = 0; i < totalPages; i++) {
+                            const activeClass = i === currentPageNum ? 'active' : '';
+                            pagination.innerHTML += `
+                            <li class="page-item ${activeClass}">
+                                <a class="page-link" href="#" data-user-page="${i}">${i + 1}</a>
+                            </li>
+                        `;
+                        }
+                    } else {
+                        // First page
+                        const firstActive = currentPageNum === 0 ? 'active' : '';
+                        pagination.innerHTML += `
+                        <li class="page-item ${firstActive}">
+                            <a class="page-link" href="#" data-user-page="0">1</a>
+                        </li>
+                    `;
+
+                        let startPage, endPage;
+                        const pagesAround = 2;
+
+                        if (currentPageNum <= 3) {
+                            startPage = 1;
+                            endPage = Math.min(5, totalPages - 2);
+                        } else if (currentPageNum >= totalPages - 4) {
+                            startPage = Math.max(totalPages - 6, 1);
+                            endPage = totalPages - 2;
+                        } else {
+                            startPage = currentPageNum - pagesAround;
+                            endPage = currentPageNum + pagesAround;
+                        }
+
+                        if (startPage > 1) {
+                            pagination.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                        }
+
+                        for (let i = startPage; i <= endPage; i++) {
+                            const activeClass = i === currentPageNum ? 'active' : '';
+                            pagination.innerHTML += `
+                            <li class="page-item ${activeClass}">
+                                <a class="page-link" href="#" data-user-page="${i}">${i + 1}</a>
+                            </li>
+                        `;
+                        }
+
+                        if (endPage < totalPages - 2) {
+                            pagination.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                        }
+
+                        // Last page
+                        const lastActive = currentPageNum === totalPages - 1 ? 'active' : '';
+                        pagination.innerHTML += `
+                        <li class="page-item ${lastActive}">
+                            <a class="page-link" href="#" data-user-page="${totalPages - 1}">${totalPages}</a>
+                        </li>
+                    `;
+                    }
+
+                    // Next button
+                    const nextDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                    pagination.innerHTML += `
+                    <li class="page-item next ${nextDisabled}">
+                        <a class="page-link" href="#" data-user-page="${currentPageNum + 1}" ${nextDisabled ? 'aria-disabled="true"' : ''}>
+                            <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                        </a>
+                    </li>
+                `;
+
+                    // Last button
+                    const lastDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                    pagination.innerHTML += `
+                    <li class="page-item last ${lastDisabled}">
+                        <a class="page-link" href="#" data-user-page="${totalPages - 1}" ${lastDisabled ? 'aria-disabled="true"' : ''}>
+                            <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                        </a>
+                    </li>
+                `;
+
+                    // Add click handlers
+                    pagination.querySelectorAll('a[data-user-page]').forEach(link => {
+                        link.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            if (!this.parentElement.classList.contains('disabled')) {
+                                currentUserPage = parseInt(this.getAttribute('data-user-page'));
+                                loadHouseUsers();
+                            }
+                        });
+                    });
+                }
+
+                // Page size change handler
+                const userPageSizeSelect = document.getElementById('userPageSize');
+                if (userPageSizeSelect) {
+                    userPageSizeSelect.addEventListener('change', function () {
+                        userPageSize = parseInt(this.value);
+                        currentUserPage = 0;
+                        loadHouseUsers();
+                    });
+                }
+
+                function showNotification(message, type = 'info') {
+                    if (typeof Swal !== 'undefined') {
+                        const icon = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+                        const getTitle = () => {
+                            if (typeof i18next !== 'undefined') {
+                                if (type === 'error') return i18next.t('notifications.titles.error');
+                                if (type === 'success') return i18next.t('notifications.titles.success');
+                                return i18next.t('notifications.titles.info');
+                            }
+                            return type === 'error' ? 'Ошибка' : type === 'success' ? 'Успех' : 'Информация';
+                        };
+                        Swal.fire({
+                            title: getTitle(),
+                            text: message,
+                            icon: icon,
+                            customClass: {
+                                confirmButton: 'btn btn-primary waves-effect waves-light'
+                            },
+                            buttonsStyling: false
+                        });
+                    } else {
+                        alert(message);
+                    }
+                }
+            });
+        </script>
+    </th:block>
+
+</body>
+
+</html>

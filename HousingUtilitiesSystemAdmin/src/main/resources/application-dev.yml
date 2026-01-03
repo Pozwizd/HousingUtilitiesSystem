@@ -1,0 +1,25 @@
+
+logging:
+  level:
+    org.springframework.data.mongodb.core: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.springframework.data.mongodb.repository.query: DEBUG
+    org.mongodb.driver: WARN
+    org.mongodb.driver.connection: INFO
+    org.mongodb.driver.operation: WARN
+    org.mongodb.driver.query: WARN
+    org.mongodb.driver.write: WARN
+    org.mongodb.driver.protocol.command: WARN
+    org.spacelab.housingutilitiessystemadmin: DEBUG
+    org.springframework.data.mongodb.core.convert: WARN
+    org.springframework.data.mongodb.core.mapping: WARN
+    org.springframework.data.elasticsearch: DEBUG
+    co.elastic.clients: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+file:
+  upload:
+    dir: "${user.dir}/uploads"
+  temp:
+    dir: "${user.dir}/temp-uploads"

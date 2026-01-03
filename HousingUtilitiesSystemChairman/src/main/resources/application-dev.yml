@@ -1,0 +1,79 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongo1:27017,mongo2:27018,mongo3:27019/${MONGODB_DATABASE:HousingUtilitiesSystemDB}?replicaSet=rs0}
+
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 60s
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m  # 10 минут
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}
+    sender: ${SENDGRID_SENDER}
+logging:
+  level:
+    org.springframework.data.mongodb.core: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.springframework.data.mongodb.repository.query: DEBUG
+    org.mongodb.driver: WARN
+    org.mongodb.driver.connection: INFO
+    org.mongodb.driver.operation: WARN
+    org.mongodb.driver.query: WARN
+    org.mongodb.driver.write: WARN
+    org.mongodb.driver.protocol.command: WARN
+    org.spacelab.housingutilitiessystemchairman: DEBUG
+    org.springframework.data.mongodb.core.convert: WARN
+    org.springframework.data.mongodb.core.mapping: WARN
+    org.springframework.data.elasticsearch: DEBUG
+    co.elastic.clients: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+
+file:
+  upload:
+    dir: "${user.dir}/uploads"
+  temp:
+    dir: "${user.dir}/temp-uploads"
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 900000 # 15 минут в миллисекундах
+  refresh-expiration: 604800000 # 7 дней в миллисекундах

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+        <style>
+            .feedback-header {
+                border-bottom: 2px solid #e9ecef;
+                padding-bottom: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .feedback-subject {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #495057;
+            }
+
+            .feedback-date {
+                color: #6c757d;
+                font-size: 0.9rem;
+            }
+
+            .feedback-message {
+                line-height: 1.8;
+                color: #495057;
+                font-size: 1rem;
+            }
+
+            .sender-info {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 1rem;
+                margin-top: 1.5rem;
+            }
+
+            .sender-info-item {
+                margin-bottom: 0.5rem;
+            }
+
+            .sender-info-label {
+                font-weight: 500;
+                color: #6c757d;
+            }
+
+            .sender-info-value {
+                font-weight: 600;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" data-i18n="feedback.detail">Просмотр сообщения</h5>
+                        <a th:href="@{/feedback/}" class="btn btn-secondary">
+                            <i class="icon-base ti tabler-arrow-left me-1"></i>
+                            <span data-i18n="common.back">Назад</span>
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="feedback-header">
+                            <h4 class="feedback-subject" id="feedbackSubject">Загрузка...</h4>
+                            <span class="feedback-date" id="feedbackDate"></span>
+                        </div>
+
+                        <div class="feedback-message" id="feedbackMessage">
+                        </div>
+
+                        <div class="sender-info">
+                            <h6 class="mb-3" data-i18n="feedback.senderInfo">Информация об отправителе</h6>
+                            <div class="sender-info-item">
+                                <span class="sender-info-label" data-i18n="feedback.fullName">ФИО:</span>
+                                <span class="sender-info-value" id="senderName">-</span>
+                            </div>
+                            <div class="sender-info-item">
+                                <span class="sender-info-label" data-i18n="feedback.apartmentNumber">№ квартиры:</span>
+                                <span class="sender-info-value" id="senderApartment">-</span>
+                            </div>
+                            <div class="sender-info-item">
+                                <span class="sender-info-label" data-i18n="feedback.phone">Телефон:</span>
+                                <span class="sender-info-value" id="senderPhone">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = /*[[@{/}]]*/ '/';
+                window.contextPath = window.contextPath.replace(/\/$/, '');
+                window.feedbackId = /*[[${feedbackId}]]*/ '';
+            </script>
+            <script>
+                $(document).ready(function () {
+                    // Load feedback details
+                    function loadFeedbackDetail() {
+                        $.ajax({
+                            url: window.contextPath + '/feedback/' + window.feedbackId,
+                            type: 'GET',
+                            success: function (feedback) {
+                                renderFeedbackDetail(feedback);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error loading feedback detail:', error);
+                                $('#feedbackSubject').text('Ошибка загрузки');
+                            }
+                        });
+                    }
+
+                    function renderFeedbackDetail(feedback) {
+                        $('#feedbackSubject').text(feedback.subject || 'Без темы');
+
+                        const createdDate = feedback.createdAt ? new Date(feedback.createdAt).toLocaleString('ru-RU', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : '-';
+                        $('#feedbackDate').text(createdDate);
+
+                        $('#feedbackMessage').text(feedback.message || '');
+
+                        $('#senderName').text(feedback.senderName || '-');
+                        $('#senderApartment').text(feedback.apartmentNumber || '-');
+                        $('#senderPhone').text(feedback.phone || '-');
+                    }
+
+                    // Initial load
+                    loadFeedbackDetail();
+                });
+            </script>
+        </th:block>
+    </div>
+
+</body>
+
+</html>

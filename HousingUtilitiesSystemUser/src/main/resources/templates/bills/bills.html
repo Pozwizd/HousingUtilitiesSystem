@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Счета</title>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Счета</h5>
+                <button type="button" class="btn btn-success btn-sm d-flex align-items-center gap-1" id="exportAllBtn">
+                    <i class="icon-base ti tabler-file-spreadsheet"></i>
+                    Скачать Excel
+                </button>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label" for="filterBillNumber">№ Квитанции</label>
+                        <input type="text" id="filterBillNumber" class="form-control form-control-sm"
+                            placeholder="Введите номер...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filterStartDate">Дата с</label>
+                        <input type="date" id="filterStartDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filterEndDate">Дата по</label>
+                        <input type="date" id="filterEndDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="button" class="btn btn-primary btn-sm" id="applyFiltersBtn">
+                            Применить
+                        </button>
+                        <button type="button" class="btn btn-label-secondary btn-sm" id="clearFiltersBtn">
+                            Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bills Table -->
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>№ Квитанции</th>
+                            <th class="sortable sort-desc" data-sort="date" style="width: 150px;">Дата</th>
+                            <th style="width: 120px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billsTableBody" class="table-border-bottom-0">
+                        <!-- Rows will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-center">
+                <nav aria-label="Pagination">
+                    <ul class="pagination mb-0" id="pagination">
+                        <!-- Pagination will be loaded via AJAX -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Details Modal -->
+    <div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="billDetailsModalLabel">Детали счета</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="billDetailsBody">
+                    <!-- Bill details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-success" id="downloadFromModal">
+                        <i class="icon-base ti tabler-download me-1"></i>
+                        Скачать
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            let currentPage = 0;
+            const pageSize = 10;
+            let currentSortDir = 'desc';
+            let currentBillId = null;
+
+            $(document).ready(function () {
+                loadBills(0);
+
+                // Apply filters
+                $('#applyFiltersBtn').click(function () {
+                    loadBills(0);
+                });
+
+                // Clear filters
+                $('#clearFiltersBtn').click(function () {
+                    $('#filterBillNumber').val('');
+                    $('#filterStartDate').val('');
+                    $('#filterEndDate').val('');
+                    loadBills(0);
+                });
+
+                // Export all to Excel
+                $('#exportAllBtn').click(function () {
+                    exportToExcel();
+                });
+
+                // Download from modal
+                $('#downloadFromModal').click(function () {
+                    if (currentBillId) {
+                        exportSingleBill(currentBillId);
+                    }
+                });
+
+                // Sort by date
+                $('.table th.sortable').click(function () {
+                    if (currentSortDir === 'desc') {
+                        currentSortDir = 'asc';
+                        $(this).removeClass('sort-desc').addClass('sort-asc');
+                    } else {
+                        currentSortDir = 'desc';
+                        $(this).removeClass('sort-asc').addClass('sort-desc');
+                    }
+                    loadBills(currentPage);
+                });
+
+                // Enter key on filter inputs
+                $('#filterBillNumber, #filterStartDate, #filterEndDate').keypress(function (e) {
+                    if (e.which === 13) {
+                        loadBills(0);
+                    }
+                });
+            });
+
+            function getFilterParams() {
+                const billNumber = $('#filterBillNumber').val().trim();
+                const startDate = $('#filterStartDate').val();
+                const endDate = $('#filterEndDate').val();
+
+                let params = {};
+                if (billNumber) params.billNumber = billNumber;
+                if (startDate) params.startDate = startDate;
+                if (endDate) params.endDate = endDate;
+
+                return params;
+            }
+
+            function loadBills(page) {
+                currentPage = page;
+
+                let params = {
+                    page: page,
+                    size: pageSize,
+                    ...getFilterParams()
+                };
+
+                $.ajax({
+                    url: window.contextPath + '/api/bills',
+                    type: 'GET',
+                    data: params,
+                    success: function (response) {
+                        renderTable(response.content);
+                        renderPagination(response.totalPages, page);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading bills:', error);
+                        if (xhr.status === 401) {
+                            window.location.href = window.contextPath + '/login';
+                        }
+                    }
+                });
+            }
+
+            function renderTable(bills) {
+                const tbody = $('#billsTableBody');
+                tbody.empty();
+
+                if (!bills || bills.length === 0) {
+                    tbody.append('<tr><td colspan="3" class="text-center py-4 text-muted">Нет счетов</td></tr>');
+                    return;
+                }
+
+                // Sort bills by date
+                bills.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return currentSortDir === 'desc' ? dateB - dateA : dateA - dateB;
+                });
+
+                bills.forEach(function (bill) {
+                    const formattedDate = bill.date ? formatDate(bill.date) : '-';
+
+                    const row = `
+                        <tr>
+                            <td>
+                                <a href="javascript:void(0);" class="text-primary" onclick="viewBillDetails('${bill.id}')">
+                                    ${bill.billNumber || '-'}
+                                </a>
+                            </td>
+                            <td class="text-success">${formattedDate}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-icon btn-sm btn-warning" onclick="viewBillDetails('${bill.id}')" title="Просмотр">
+                                        <i class="icon-base ti tabler-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-success" onclick="exportSingleBill('${bill.id}')" title="Скачать">
+                                        <i class="icon-base ti tabler-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}.${month}.${year}`;
+            }
+
+            function renderPagination(totalPages, currentPage) {
+                const pagination = $('#pagination');
+                pagination.empty();
+
+                if (totalPages <= 1) return;
+
+                // Previous
+                const prevDisabled = currentPage === 0 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${prevDisabled}">
+                        <a class="page-link" href="#" onclick="loadBills(${currentPage - 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+
+                // Page numbers
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                if (startPage > 0) {
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadBills(0); return false;">1</a></li>`);
+                    if (startPage > 1) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const active = i === currentPage ? 'active' : '';
+                    pagination.append(`<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadBills(${i}); return false;">${i + 1}</a></li>`);
+                }
+
+                if (endPage < totalPages - 1) {
+                    if (endPage < totalPages - 2) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadBills(${totalPages - 1}); return false;">${totalPages}</a></li>`);
+                }
+
+                // Next
+                const nextDisabled = currentPage === totalPages - 1 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${nextDisabled}">
+                        <a class="page-link" href="#" onclick="loadBills(${currentPage + 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+            }
+
+            function viewBillDetails(billId) {
+                currentBillId = billId;
+
+                $.ajax({
+                    url: window.contextPath + '/api/bills/' + billId,
+                    type: 'GET',
+                    success: function (bill) {
+                        const formattedDate = bill.date ? formatDate(bill.date) : '-';
+
+                        const content = `
+                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">№ Квитанции:</span>
+                                <span class="fw-medium">${bill.billNumber || '-'}</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Дата:</span>
+                                <span class="fw-medium">${formattedDate}</span>
+                            </div>
+                        `;
+
+                        $('#billDetailsBody').html(content);
+                        $('#billDetailsModalLabel').text('Квитанция №' + (bill.billNumber || bill.id));
+
+                        const modal = new bootstrap.Modal(document.getElementById('billDetailsModal'));
+                        modal.show();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading bill details:', error);
+                        showAlert('Ошибка загрузки деталей счета', 'error');
+                    }
+                });
+            }
+
+            function exportToExcel() {
+                let params = new URLSearchParams(getFilterParams());
+                window.location.href = window.contextPath + '/api/bills/export/excel?' + params.toString();
+            }
+
+            function exportSingleBill(billId) {
+                // For single bill export, we could filter by the bill number
+                // For now, we'll download all filtered bills
+                window.location.href = window.contextPath + '/api/bills/export/excel';
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

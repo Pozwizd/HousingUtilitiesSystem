@@ -1,0 +1,84 @@
+services:
+  # ============================================================================
+  # Elasticsearch - Поисковая система для полнотекстового поиска
+  # ============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
+    container_name: elasticsearch-services
+    hostname: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      # Режим одного узла для разработки
+      - discovery.type=single-node
+      # Отключаем security для упрощения разработки
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      # Ограничение памяти для разработки
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Настройки кластера
+      - cluster.name=housing-cluster
+      - node.name=elasticsearch-services
+      # Отключаем machine learning для экономии ресурсов
+      - xpack.ml.enabled=false
+    volumes:
+      - elasticsearch-services-data:/usr/share/elasticsearch/data
+    networks:
+      - housing-services-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # ============================================================================
+  # Redis - In-memory хранилище для кеширования и сессий
+  # ============================================================================
+  redis:
+    image: redis:latest
+    container_name: redis-services
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-services-data:/data
+    networks:
+      - housing-services-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+# ==============================================================================
+# Persistent Data Volumes - Именованные volumes для хранения данных
+# ==============================================================================
+volumes:
+  elasticsearch-services-data:
+    driver: local
+  redis-services-data:
+    driver: local
+
+# ==============================================================================
+# Network Configuration - Пользовательская bridge-сеть
+# ==============================================================================
+networks:
+  housing-services-network:
+    driver: bridge
+    name: housing-services-network

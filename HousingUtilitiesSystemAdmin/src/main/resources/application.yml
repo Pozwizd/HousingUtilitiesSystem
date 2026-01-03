@@ -1,0 +1,115 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    # --spring.profiles.active=prod или --spring.profiles.active=docker
+    active: dev
+
+  application:
+    name: HousingUtilitiesSystemAdmin
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongo1:27017,mongo2:27018,mongo3:27019/${MONGODB_DATABASE:HousingUtilitiesSystemDB}?replicaSet=rs0}
+
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 60s
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connection-timeout: 5000
+          timeout: 5000
+          write-timeout: 5000
+
+
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}
+
+sendgrid:
+  from-email: ${SENDGRID_FROM_EMAIL}
+
+server:
+  port: 8080
+  servlet:
+    context-path: /admin
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    org.spacelab.housingutilitiessystemadmin.service.PasswordResetTokenService: DEBUG
+    org.spacelab.housingutilitiessystemadmin.controller.app.LoginController: DEBUG
+
+file:
+  upload:
+    dir: "${user.dir}/uploads"
+  temp:
+    dir: "${user.dir}/temp-uploads"
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 900000 # 15 минут в миллисекундах
+  refresh-expiration: 604800000 # 7 дней в миллисекундах
+
+
+
+# Профили:
+# - dev: Локальная разработка (application-dev.yml)
+# - prod: Продакшен (application-prod.yml)  
+# - docker: Docker окружение (application-docker.yml)

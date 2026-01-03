@@ -1,0 +1,4 @@
+Region;District;Community;Code;City;PostalCode;Street;Houses;Coordinates;Status
+Kyiv Region;Kyiv District;Kyiv Community;12345;Kyiv;01001;Khreshchatyk;1, 2, 3, 4, 5;50.4501, 30.5234;Active
+Lviv Region;Lviv District;Lviv Community;67890;Lviv;79000;Svobody Ave;10, 11, 12;49.8397, 24.0297;Active
+Odesa Region;Odesa District;Odesa Community;54321;Odesa;65000;Deribasivska;20, 21, 22;46.4825, 30.7233;Active

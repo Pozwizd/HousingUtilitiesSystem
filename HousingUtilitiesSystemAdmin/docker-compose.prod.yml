@@ -1,0 +1,267 @@
+# ============================================================================
+# Docker Compose - Production Configuration with Environment Variables
+# All secrets are passed through environment variables for CI/CD
+# ============================================================================
+
+services:
+  # ============================================================================
+  # MongoDB Replica Set
+  # ============================================================================
+
+  mongo1: &mongo-base
+    image: mongo:latest
+    command: >
+      mongod  --replSet rs0  --bind_ip_all
+    networks:
+      - housing-network
+    restart: unless-stopped
+    healthcheck:
+      test: mongosh --quiet --eval "db.adminCommand('ping')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    container_name: mongo1
+    hostname: mongo1
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo1-data:/data/db
+      - mongo1-config:/data/configdb
+
+  mongo2:
+    <<: *mongo-base
+    container_name: mongo2
+    hostname: mongo2
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo2-data:/data/db
+      - mongo2-config:/data/configdb
+
+  mongo3:
+    <<: *mongo-base
+    container_name: mongo3
+    hostname: mongo3
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo3-data:/data/db
+      - mongo3-config:/data/configdb
+
+  # ============================================================================
+  # MongoDB Initialization with Environment Variables
+  # ============================================================================
+
+  mongo-init:
+    image: mongo:latest
+    container_name: mongo-init
+    networks:
+      - housing-network
+    environment:
+      - MONGO_ADMIN_USER=${MONGO_ADMIN_USER:-admin}
+      - MONGO_ADMIN_PASSWORD=${MONGO_ADMIN_PASSWORD}
+      - MONGO_APP_USER=${MONGO_APP_USER:-housingapp}
+      - MONGO_APP_PASSWORD=${MONGO_APP_PASSWORD}
+      - MONGO_DATABASE=${MONGO_DATABASE:-HousingUtilitiesSystemDB}
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for MongoDB...';
+        sleep 10;
+        echo 'Initializing Replica Set...';
+        mongosh --host mongo1:27017 --eval \"
+          try {
+            rs.initiate({
+              _id: 'rs0',
+              members: [
+                { _id: 0, host: 'mongo1:27017', priority: 2 },
+                { _id: 1, host: 'mongo2:27017', priority: 1 },
+                { _id: 2, host: 'mongo3:27017', priority: 1 }
+              ]
+            });
+          } catch (e) {
+            if (e.codeName === 'AlreadyInitialized') {
+              print('Replica set already initialized');
+            } else {
+              throw e;
+            }
+          }
+        \";
+        
+        echo 'Waiting for primary election...';
+        sleep 15;
+        
+        echo 'Creating users...';
+        mongosh --host mongo1:27017 --eval \"
+          db.getSiblingDB('admin').createUser({
+            user: '$$MONGO_ADMIN_USER',
+            pwd: '$$MONGO_ADMIN_PASSWORD',
+            roles: [
+              { role: 'userAdminAnyDatabase', db: 'admin' },
+              { role: 'readWriteAnyDatabase', db: 'admin' },
+              { role: 'dbAdminAnyDatabase', db: 'admin' },
+              { role: 'clusterAdmin', db: 'admin' }
+            ]
+          });
+          
+          db.getSiblingDB('$$MONGO_DATABASE').createUser({
+            user: '$$MONGO_APP_USER',
+            pwd: '$$MONGO_APP_PASSWORD',
+            roles: [
+              { role: 'readWrite', db: '$$MONGO_DATABASE' },
+              { role: 'dbAdmin', db: '$$MONGO_DATABASE' }
+            ]
+          });
+        \" || echo 'Users may already exist';
+        
+        echo 'Initialization complete!';
+      "
+    restart: "no"
+
+  # ============================================================================
+  # Spring Boot Application
+  # ============================================================================
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: housing-utilities-app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      # MongoDB Connection
+      - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_APP_USER:-housingapp}:${MONGO_APP_PASSWORD}@mongo1:27017,mongo2:27017,mongo3:27017/${MONGO_DATABASE:-HousingUtilitiesSystemDB}?replicaSet=rs0&authSource=${MONGO_DATABASE:-HousingUtilitiesSystemDB}
+
+      # JWT Configuration
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+
+      # OAuth Google
+      - OAUTH_GOOGLE_CLIENT_ID=${OAUTH_GOOGLE_CLIENT_ID}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${OAUTH_GOOGLE_CLIENT_SECRET}
+
+      # SendGrid Email
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
+
+      # File Upload
+      - FILE_UPLOAD_DIR=/app/uploads
+      - FILE_TEMP_DIR=/app/temp-uploads
+
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=docker
+
+      # Elasticsearch (optional)
+      - ELASTICSEARCH_URIS=${ELASTICSEARCH_URIS:-http://elasticsearch:9200}
+
+      # Redis (optional)
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    volumes:
+      - app-uploads:/app/uploads
+      - app-temp:/app/temp-uploads
+    networks:
+      - housing-network
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================================================
+  # Elasticsearch - Search Engine
+  # ============================================================================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
+    container_name: elasticsearch
+    hostname: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=housing-cluster
+      - node.name=elasticsearch
+      - xpack.ml.enabled=false
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - housing-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # ============================================================================
+  # Redis - In-memory Cache
+  # ============================================================================
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - housing-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+# ============================================================================
+# Volumes
+# ============================================================================
+
+volumes:
+  mongo1-data:
+  mongo1-config:
+  mongo2-data:
+  mongo2-config:
+  mongo3-data:
+  mongo3-config:
+  app-uploads:
+  app-temp:
+  elasticsearch-data:
+  redis-data:
+
+    # ============================================================================
+    # Networks
+    # ============================================================================
+
+networks:
+  housing-network:
+    driver: bridge

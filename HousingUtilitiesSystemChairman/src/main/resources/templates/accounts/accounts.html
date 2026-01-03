@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="main-card mb-3 card" id="card-block">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" data-i18n="accounts.title">Счета</h5>
+                <button type="button" class="btn btn-label-secondary btn-sm d-flex align-items-center gap-1"
+                    onclick="window.location.reload()">
+                    <i class="icon-base ti tabler-refresh"></i>
+                    <span data-i18n="accounts.actions.refresh">Обновить</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table style="width: 100%;" class="table table-hover table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th data-i18n="accounts.table.receiptNumber">№ квитанции</th>
+                                <th data-i18n="accounts.table.billNumber">Номер счета</th>
+                                <th data-i18n="accounts.table.date">Дата</th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="receiptNumber"
+                                        data-i18n="[placeholder]accounts.filters.receiptNumber"
+                                        placeholder="№ квитанции">
+                                </th>
+                                <th>
+                                    <input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="billNumber"
+                                        data-i18n="[placeholder]accounts.filters.billNumber" placeholder="Номер счета">
+                                </th>
+                                <th>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" class="form-control form-control-sm filter-input"
+                                            data-filter-key="date" data-i18n="[placeholder]accounts.filters.date"
+                                            placeholder="Дата">
+                                        <button type="button" id="clearFiltersBtn" class="btn btn-light btn-sm"
+                                            data-i18n="common.clear">Очистить
+                                        </button>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center py-3">
+                <label class="d-flex align-items-center gap-1 mb-0">
+                    <select id="pageSize" class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                        style="width: auto;">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+                <nav aria-label="Pagination">
+                    <ul class="pagination mb-0" id="pagination">
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            </script>
+            <script>
+                function translateAccountsElements() {
+                    document.querySelectorAll('[data-i18n]').forEach(element => {
+                        const key = element.getAttribute('data-i18n');
+                        if (key.startsWith('[placeholder]')) {
+                            const placeholderKey = key.replace('[placeholder]', '');
+                            element.placeholder = i18next.t(placeholderKey);
+                        } else if (key.startsWith('[aria-label]')) {
+                            const ariaKey = key.replace('[aria-label]', '');
+                            element.setAttribute('aria-label', i18next.t(ariaKey));
+                        } else {
+                            element.textContent = i18next.t(key);
+                        }
+                    });
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (typeof i18next !== 'undefined') {
+                        i18next.on('initialized', translateAccountsElements);
+                        i18next.on('languageChanged', translateAccountsElements);
+                        if (i18next.isInitialized) {
+                            translateAccountsElements();
+                        }
+                    }
+                });
+
+                $(document).ready(function () {
+                    let currentPage = 0;
+                    let pageSize = 10;
+                    let currentFilters = {};
+
+                    function loadReceiptsTable() {
+                        const requestData = {
+                            page: currentPage,
+                            size: pageSize
+                        };
+
+                        Object.keys(currentFilters).forEach(key => {
+                            if (currentFilters[key]) {
+                                requestData[key] = currentFilters[key];
+                            }
+                        });
+
+                        $.ajax({
+                            url: window.contextPath + '/accounts/getAll',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(requestData),
+                            success: function (response) {
+                                renderTable(response.content);
+                                renderPagination(response);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error loading receipts:', error);
+                                if (typeof i18next !== 'undefined' && typeof showI18nToast === 'function') {
+                                    showI18nToast('error', 'notifications.titles.error', 'accounts.errors.loadData');
+                                }
+                            }
+                        });
+                    }
+
+                    function renderTable(receipts) {
+                        const tbody = $('#receiptsTableBody');
+                        tbody.empty();
+
+                        if (!receipts || receipts.length === 0) {
+                            const noDataText = typeof i18next !== 'undefined' ? i18next.t('accounts.table.empty') : 'Нет данных по квитанциям';
+                            tbody.append(`
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">
+                                    <i class="icon-base ti tabler-receipt-off icon-lg mb-2"></i>
+                                    <p class="mb-0">${noDataText}</p>
+                                </td>
+                            </tr>
+                        `);
+                            return;
+                        }
+
+                        receipts.forEach(receipt => {
+                            const row = `
+                        <tr>
+                            <td>${receipt.receiptNumber || '-'}</td>
+                            <td>${receipt.billNumber || '-'}</td>
+                            <td>${receipt.formattedDate || '-'}</td>
+                        </tr>
+                    `;
+                            tbody.append(row);
+                        });
+                    }
+
+                    function renderPagination(pageData) {
+                        const pagination = $('#pagination');
+                        pagination.empty();
+
+                        const totalPages = pageData.totalPages || 0;
+                        const currentPageNum = pageData.number || 0;
+
+                        const disableClass = (condition) => condition ? 'disabled' : '';
+
+                        const appendPageItem = (page, label, disabled = false, active = false, iconClass = null) => {
+                            const icon = iconClass ? `<i class="icon-base ti ${iconClass} icon-sm"></i>` : label;
+                            pagination.append(`
+                            <li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}">
+                                <a class="page-link" href="#" data-page="${page}" ${disabled ? 'aria-disabled="true"' : ''}>${icon}</a>
+                            </li>
+                        `);
+                        };
+
+                        appendPageItem(0, '', currentPageNum === 0, false, 'tabler-chevrons-left');
+                        appendPageItem(currentPageNum - 1, '', currentPageNum === 0, false, 'tabler-chevron-left');
+
+                        if (totalPages <= 7) {
+                            for (let i = 0; i < totalPages; i++) {
+                                appendPageItem(i, (i + 1), false, i === currentPageNum);
+                            }
+                        } else {
+                            appendPageItem(0, 1, false, currentPageNum === 0);
+
+                            let startPage;
+                            let endPage;
+                            const pagesAround = 2;
+
+                            if (currentPageNum <= 3) {
+                                startPage = 1;
+                                endPage = Math.min(5, totalPages - 2);
+                            } else if (currentPageNum >= totalPages - 4) {
+                                startPage = Math.max(totalPages - 6, 1);
+                                endPage = totalPages - 2;
+                            } else {
+                                startPage = currentPageNum - pagesAround;
+                                endPage = currentPageNum + pagesAround;
+                            }
+
+                            if (startPage > 1) {
+                                pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+                            }
+
+                            for (let i = startPage; i <= endPage; i++) {
+                                appendPageItem(i, (i + 1), false, i === currentPageNum);
+                            }
+
+                            if (endPage < totalPages - 2) {
+                                pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+                            }
+
+                            appendPageItem(totalPages - 1, totalPages, false, currentPageNum === totalPages - 1);
+                        }
+
+                        appendPageItem(currentPageNum + 1, '', currentPageNum === totalPages - 1 || totalPages === 0, false, 'tabler-chevron-right');
+                        appendPageItem(totalPages - 1, '', currentPageNum === totalPages - 1 || totalPages === 0, false, 'tabler-chevrons-right');
+                    }
+
+                    $(document).on('click', '.page-link', function (e) {
+                        e.preventDefault();
+                        const targetPage = parseInt($(this).data('page'));
+                        if (!isNaN(targetPage)) {
+                            currentPage = Math.max(targetPage, 0);
+                            loadReceiptsTable();
+                        }
+                    });
+
+                    $('#pageSize').change(function () {
+                        pageSize = parseInt($(this).val());
+                        currentPage = 0;
+                        loadReceiptsTable();
+                    });
+
+                    $('.filter-input').on('input', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        if (filterValue) {
+                            currentFilters[filterKey] = filterValue;
+                        } else {
+                            delete currentFilters[filterKey];
+                        }
+
+                        currentPage = 0;
+                        loadReceiptsTable();
+                    });
+
+                    $('#clearFiltersBtn').click(function () {
+                        $('.filter-input').val('');
+                        currentFilters = {};
+                        currentPage = 0;
+                        loadReceiptsTable();
+                    });
+
+                    loadReceiptsTable();
+                });
+            </script>
+        </th:block>
+    </div>
+
+</body>
+
+</html>

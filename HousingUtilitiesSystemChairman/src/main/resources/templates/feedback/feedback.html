@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <style>
+            .date-range-picker {
+                max-width: 280px;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="main-card mb-3 card" id="card-block">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" data-i18n="feedback.receivedMessages">Полученные сообщения</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table style="width: 100%;" class="table table-hover table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th data-i18n="feedback.sender">Отправитель</th>
+                                <th data-i18n="feedback.apartmentNumber">№ квартиры</th>
+                                <th data-i18n="feedback.phone">Телефон</th>
+                                <th data-i18n="feedback.subject">Тема сообщения</th>
+                                <th data-i18n="feedback.date">Дата</th>
+                                <th data-i18n="common.actions">Действия</th>
+                            </tr>
+                            <!-- Filter Row -->
+                            <tr>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="senderName" data-i18n="[placeholder]feedback.sender"
+                                        placeholder="Отправитель"></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th>
+                                    <input type="text" class="form-control form-control-sm date-range-picker"
+                                        id="dateRangePicker" data-i18n="[placeholder]feedback.selectDates"
+                                        placeholder="Выберите даты">
+                                </th>
+                                <th class="text-center">
+                                    <button type="button" id="clearFiltersBtn" class="btn btn-light btn-sm"
+                                        data-i18n="common.clear">Очистить</button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedbackTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center py-3">
+                <label class="d-flex align-items-center gap-1 mb-0">
+                    <select id="pageSize" class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                        style="width: auto;">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+                <nav aria-label="Pagination">
+                    <ul class="pagination mb-0" id="pagination">
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" data-i18n="common.confirmDelete">Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <span data-i18n="feedback.deleteConfirm">Вы уверены, что хотите удалить это
+                                сообщение?</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal"
+                                data-i18n="common.cancel">Отменить</button>
+                            <button type="button" class="btn btn-danger" id="confirm-delete-btn"
+                                data-i18n="common.delete">Удалить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            </script>
+            <script>
+                $(document).ready(function () {
+                    let currentPage = 0;
+                    let pageSize = 10;
+                    let currentFilters = {};
+                    let dateFrom = null;
+                    let dateTo = null;
+
+                    // Initialize Flatpickr date range picker
+                    const datePicker = flatpickr("#dateRangePicker", {
+                        mode: "range",
+                        dateFormat: "d.m.Y",
+                        locale: "ru",
+                        onChange: function (selectedDates, dateStr, instance) {
+                            if (selectedDates.length === 2) {
+                                dateFrom = selectedDates[0].toISOString().split('T')[0];
+                                dateTo = selectedDates[1].toISOString().split('T')[0];
+                                currentPage = 0;
+                                loadFeedbackTable();
+                            } else if (selectedDates.length === 0) {
+                                dateFrom = null;
+                                dateTo = null;
+                                currentPage = 0;
+                                loadFeedbackTable();
+                            }
+                        }
+                    });
+
+                    function loadFeedbackTable() {
+                        const requestData = {
+                            page: currentPage,
+                            size: pageSize
+                        };
+
+                        Object.keys(currentFilters).forEach(key => {
+                            if (currentFilters[key]) {
+                                requestData[key] = currentFilters[key];
+                            }
+                        });
+
+                        if (dateFrom) requestData.dateFrom = dateFrom;
+                        if (dateTo) requestData.dateTo = dateTo;
+
+                        $.ajax({
+                            url: window.contextPath + '/feedback/getAll',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(requestData),
+                            success: function (response) {
+                                renderTable(response.content);
+                                renderPagination(response);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error loading data:', error);
+                            }
+                        });
+                    }
+
+                    function renderTable(feedbacks) {
+                        const tbody = $('#feedbackTableBody');
+                        tbody.empty();
+
+                        if (!feedbacks || feedbacks.length === 0) {
+                            tbody.append(`
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="icon-base ti tabler-mood-empty icon-lg mb-2"></i>
+                                    <p class="mb-0">Сообщения не найдены</p>
+                                </td>
+                            </tr>
+                        `);
+                            return;
+                        }
+
+                        feedbacks.forEach(feedback => {
+                            const createdDate = feedback.createdAt ? new Date(feedback.createdAt).toLocaleString('ru-RU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '-';
+
+                            const row = `
+                            <tr>
+                                <td>${feedback.senderName || '-'}</td>
+                                <td>${feedback.apartmentNumber || '-'}</td>
+                                <td>${feedback.phone || '-'}</td>
+                                <td>${feedback.subject || '-'}</td>
+                                <td>${createdDate}</td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                          <i class="icon-base ti tabler-dots-vertical"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                              <a href="${window.contextPath}/feedback/${feedback.id}/view" class="dropdown-item"><i
+                                                  class="icon-base ti tabler-eye me-1"></i> <span data-i18n="common.view">Просмотреть</span></a>
+                                              <button class="dropdown-item delete-btn" data-id="${feedback.id}"><i
+                                                  class="icon-base ti tabler-trash me-1"></i> <span data-i18n="common.delete">Удалить</span></button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                            tbody.append(row);
+                        });
+                    }
+
+                    function renderPagination(pageData) {
+                        const pagination = $('#pagination');
+                        pagination.empty();
+
+                        const totalPages = pageData.totalPages;
+                        const currentPageNum = pageData.number;
+
+                        if (totalPages <= 1) return;
+
+                        // First button
+                        const firstDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${firstDisabled}">
+                            <a class="page-link" href="#" data-page="0">
+                                <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Previous button
+                        const prevDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${prevDisabled}">
+                            <a class="page-link" href="#" data-page="${currentPageNum - 1}">
+                                <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Page numbers
+                        let startPage = Math.max(0, currentPageNum - 2);
+                        let endPage = Math.min(totalPages - 1, currentPageNum + 2);
+
+                        for (let i = startPage; i <= endPage; i++) {
+                            const activeClass = i === currentPageNum ? 'active' : '';
+                            pagination.append(`
+                            <li class="page-item ${activeClass}">
+                                <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                            </li>
+                        `);
+                        }
+
+                        // Next button
+                        const nextDisabled = currentPageNum >= totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${nextDisabled}">
+                            <a class="page-link" href="#" data-page="${currentPageNum + 1}">
+                                <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+
+                        // Last button
+                        const lastDisabled = currentPageNum >= totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                        <li class="page-item ${lastDisabled}">
+                            <a class="page-link" href="#" data-page="${totalPages - 1}">
+                                <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                            </a>
+                        </li>
+                    `);
+                    }
+
+                    // Pagination click
+                    $(document).on('click', '.page-link', function (e) {
+                        e.preventDefault();
+                        if ($(this).parent().hasClass('disabled')) return;
+                        currentPage = parseInt($(this).data('page'));
+                        loadFeedbackTable();
+                    });
+
+                    // Page size change
+                    $('#pageSize').change(function () {
+                        pageSize = parseInt($(this).val());
+                        currentPage = 0;
+                        loadFeedbackTable();
+                    });
+
+                    // Text filters
+                    $('.filter-input').on('input', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        if (filterValue) {
+                            currentFilters[filterKey] = filterValue;
+                        } else {
+                            delete currentFilters[filterKey];
+                        }
+
+                        currentPage = 0;
+                        loadFeedbackTable();
+                    });
+
+                    // Clear filters
+                    $('#clearFiltersBtn').click(function () {
+                        $('.filter-input').val('');
+                        datePicker.clear();
+                        currentFilters = {};
+                        dateFrom = null;
+                        dateTo = null;
+                        currentPage = 0;
+                        loadFeedbackTable();
+                    });
+
+                    // Delete button click
+                    $(document).on('click', '.delete-btn', function () {
+                        const feedbackId = $(this).data('id');
+                        $('#confirm-delete-btn').data('id', feedbackId);
+                        $('#deleteConfirmModal').modal('show');
+                    });
+
+                    // Confirm delete
+                    $('#confirm-delete-btn').click(function () {
+                        const feedbackId = $(this).data('id');
+
+                        $.ajax({
+                            url: window.contextPath + '/feedback/' + feedbackId,
+                            type: 'DELETE',
+                            success: function () {
+                                $('#deleteConfirmModal').modal('hide');
+                                loadFeedbackTable();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Delete error:', error);
+                                $('#deleteConfirmModal').modal('hide');
+                            }
+                        });
+                    });
+
+                    // Initial load
+                    loadFeedbackTable();
+                });
+            </script>
+        </th:block>
+    </div>
+
+</body>
+
+</html>

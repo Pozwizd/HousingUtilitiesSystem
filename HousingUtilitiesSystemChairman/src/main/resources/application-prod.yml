@@ -1,0 +1,59 @@
+
+
+spring:
+  data:
+    mongodb:
+      # Нужно изменить пароль
+      uri: mongodb://housingapp:CHANGE_PASSWORD_IN_PRODUCTION@mongo1:27017,mongo2:27017,mongo3:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=HousingUtilitiesSystemDB&ssl=false
+      
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+
+logging:
+  level:
+    org.springframework.data.mongodb.core: INFO
+    org.springframework.data.mongodb.core.MongoTemplate: INFO
+    org.springframework.data.mongodb.repository.query: WARN
+    org.mongodb.driver: WARN
+    org.mongodb.driver.connection: WARN
+    org.mongodb.driver.operation: ERROR
+    org.mongodb.driver.query: WARN
+    org.mongodb.driver.write: WARN
+    org.mongodb.driver.protocol.command: WARN
+    org.spacelab.housingutilitiessystemchairman: INFO
+    org.springframework.data.mongodb.core.convert: ERROR
+    org.springframework.data.mongodb.core.mapping: ERROR
+    root: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/housing-app/application.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 1GB
+
+file:
+  upload:
+    dir: "/app/uploads"
+  temp:
+    dir: "/app/temp-uploads"
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000 # 24 часа
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false

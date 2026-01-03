@@ -1,0 +1,27 @@
+package org.spacelab.housingutilitiessystemadmin.entity.location;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
+
+import java.util.List;
+
+@Data
+@Document
+public class Street {
+    @Id
+    private String id;
+
+    private String name;
+
+    @DocumentReference(lazy = true)
+    @JsonBackReference
+    private City city;
+
+    @DocumentReference(lazy = true)
+    @JsonManagedReference
+    private List<House> houses;
+}

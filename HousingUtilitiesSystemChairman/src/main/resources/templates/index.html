@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="main-card mb-3 card" id="card-block">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Пользователи</h5>
+                <a th:href="@{/users/create}" class="btn btn-primary btn-sm">Добавить</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table style="width: 100%;" class="table table-hover table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Город</th>
+                                <th>Улица</th>
+                                <th>Дом</th>
+                                <th>Квартира</th>
+                                <th>Счет</th>
+                                <th>Телефон</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                            <!-- Filter Row -->
+                            <tr>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="fullName" placeholder="ФИО"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="cityName" placeholder="Город"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="streetName" placeholder="Улица"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="houseNumber" placeholder="Дом"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="apartmentNumber" placeholder="Квартира"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="accountNumber" placeholder="Счет"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="phoneNumber" placeholder="Телефон"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="status" placeholder="Статус"></th>
+                                <th class="text-center">
+                                    <button type="button" id="clearFiltersBtn" class="btn btn-light btn-sm">Очистить
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center py-3">
+                <label class="d-flex align-items-center gap-1 mb-0">
+                    <select id="pageSize" class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                        style="width: auto;">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+                <nav aria-label="Навигация по страницам">
+                    <ul class="pagination mb-0" id="pagination">
+
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteConfirmModalLabel">
+                                Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <span>Вы уверены, что хотите удалить этого пользователя?</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Отменить
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirm-delete-btn">Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            </script>
+            <script>
+                $(document).ready(function () {
+                    let currentPage = 0;
+                    let pageSize = 10;
+                    let currentFilters = {};
+
+                    function loadUserTable() {
+                        const requestData = {
+                            page: currentPage,
+                            size: pageSize
+                        };
+
+                        Object.keys(currentFilters).forEach(key => {
+                            if (currentFilters[key]) {
+                                requestData[key] = currentFilters[key];
+                            }
+                        });
+
+                        $.ajax({
+                            url: window.contextPath + '/users',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(requestData),
+                            success: function (response) {
+                                renderTable(response.content);
+                                renderPagination(response);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Ошибка загрузки данных:', error);
+                            }
+                        });
+                    }
+
+                    function renderTable(users) {
+                        const tbody = $('#userTableBody');
+                        tbody.empty();
+
+                        users.forEach(user => {
+                            const row = `
+                    <tr>
+                        <td>${user.fullName || ''}</td>
+                        <td>${user.cityName || ''}</td>
+                        <td>${user.streetName || ''}</td>
+                        <td>${user.houseNumber || ''}</td>
+                        <td>${user.apartmentNumber || ''}</td>
+                        <td>${user.accountNumber || ''}</td>
+                        <td>${user.phoneNumber || ''}</td>
+                        <td>${user.status || ''}</td>
+                        <td class="text-center">
+                        <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="icon-base ti tabler-dots-vertical"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                  <a href="${window.contextPath}users/edit/${user.id}" class="dropdown-item"><i
+                                      class="icon-base ti tabler-pencil me-1"></i> Edit</a>
+                                  <button class="dropdown-item delete-btn" data-id="${user.id}" ><i
+                                      class="icon-base ti tabler-trash me-1"></i> Delete</button>
+                            </div>
+                        </div>
+                        </td>
+                    </tr>
+                `;
+                            tbody.append(row);
+                        });
+                    }
+
+                    function renderPagination(pageData) {
+                        const pagination = $('#pagination');
+                        pagination.empty();
+
+                        const totalPages = pageData.totalPages;
+                        const currentPageNum = pageData.number;
+
+                        const firstDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item first ${firstDisabled}">
+                    <a class="page-link" href="#" data-page="0" ${firstDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        const prevDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item prev ${prevDisabled}">
+                    <a class="page-link" href="#" data-page="${currentPageNum - 1}" ${prevDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        if (totalPages <= 9) {
+                            for (let i = 0; i < totalPages; i++) {
+                                const activeClass = i === currentPageNum ? 'active' : '';
+                                pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                        </li>
+                    `);
+                            }
+                        } else {
+                            for (let i = 0; i < 3; i++) {
+                                const activeClass = i === currentPageNum ? 'active' : '';
+                                pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                        </li>
+                    `);
+                            }
+                            pagination.append(`
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                `);
+                            const middle = Math.floor((totalPages - 1) / 2);
+                            const activeClass = middle === currentPageNum ? 'active' : '';
+                            pagination.append(`
+                    <li class="page-item ${activeClass}">
+                        <a class="page-link" href="#" data-page="${middle}">${middle + 1}</a>
+                    </li>
+                `);
+                            pagination.append(`
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                `);
+                            for (let i = totalPages - 3; i < totalPages; i++) {
+                                const activeClass = i === currentPageNum ? 'active' : '';
+                                pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                        </li>
+                    `);
+                            }
+                        }
+
+                        const nextDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item next ${nextDisabled}">
+                    <a class="page-link" href="#" data-page="${currentPageNum + 1}" ${nextDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        const lastDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item last ${lastDisabled}">
+                    <a class="page-link" href="#" data-page="${totalPages - 1}" ${lastDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                    </a>
+                </li>
+            `);
+                    }
+
+                    $(document).on('click', '.page-link', function (e) {
+                        e.preventDefault();
+                        currentPage = parseInt($(this).data('page'));
+                        loadUserTable();
+                    });
+
+                    $('#pageSize').change(function () {
+                        pageSize = parseInt($(this).val());
+                        currentPage = 0;
+                        loadUserTable();
+                    });
+
+                    $('.filter-input').on('input', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        if (filterValue) {
+                            currentFilters[filterKey] = filterValue;
+                        } else {
+                            delete currentFilters[filterKey];
+                        }
+
+                        currentPage = 0;
+                        loadUserTable();
+                    });
+
+                    $('#clearFiltersBtn').click(function () {
+                        $('.filter-input').val('');
+                        currentFilters = {};
+                        currentPage = 0;
+                        loadUserTable();
+                    });
+
+                    $(document).on('click', '.delete-btn', function () {
+                        const userId = $(this).data('id');
+                        $('#confirm-delete-btn').data('id', userId);
+                        $('#deleteConfirmModal').modal('show');
+                    });
+
+                    $('#confirm-delete-btn').click(function () {
+                        const userId = $(this).data('id');
+
+                        $.ajax({
+                            url: window.contextPath + `users/delete/${userId}`,
+                            type: 'DELETE',
+                            success: function () {
+                                $('#deleteConfirmModal').modal('hide');
+                                loadUserTable();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Ошибка удаления:', error);
+                            }
+                        });
+                    });
+
+                    loadUserTable();
+                });
+            </script>
+        </th:block>
+    </div>
+
+
+</body>
+
+</html>

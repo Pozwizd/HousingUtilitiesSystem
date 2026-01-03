@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Профиль</title>
+    <th:block layout:fragment="page_css">
+        <style>
+            .profile-header {
+                display: flex;
+                gap: 30px;
+                margin-bottom: 20px;
+            }
+
+            .profile-photo-section {
+                text-align: center;
+            }
+
+            .profile-photo {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: var(--bs-secondary-bg);
+                margin-bottom: 10px;
+            }
+
+            .profile-info {
+                flex: 1;
+            }
+
+            .profile-name {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: var(--bs-body-color);
+                margin-bottom: 5px;
+            }
+
+            .profile-account {
+                color: var(--bs-primary);
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+            .profile-details {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 30px;
+            }
+
+            .profile-detail-group {
+                min-width: 180px;
+            }
+
+            .profile-detail-label {
+                font-weight: 600;
+                color: var(--bs-body-color);
+            }
+
+            .profile-detail-value {
+                color: var(--bs-secondary-color);
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <div class="card mb-4">
+            <div class="card-body">
+                <!-- Profile info -->
+                <div class="profile-header">
+                    <div class="profile-photo-section">
+                        <img id="uploadedAvatar" th:src="@{/assets/img/avatars/1.png}" alt="user-avatar"
+                            class="profile-photo" />
+                        <div>
+                            <label for="photoFile" class="btn btn-outline-secondary btn-sm" tabindex="0">
+                                <span>Выбрать файл</span>
+                                <input type="file" id="photoFile" name="photoFile" hidden
+                                    accept="image/png, image/jpeg, image/jpg, image/gif" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="profile-info">
+                        <div class="profile-name" th:text="${user.fullName}">Tommy Lee Jones</div>
+                        <div class="profile-account">
+                            <span class="profile-detail-label">Лицевой счет:</span>
+                            <span th:text="${user.accountNumber ?: 'Не указан'}">0000-1111-2222-3333</span>
+                        </div>
+
+                        <div class="profile-details">
+                            <div class="profile-detail-group">
+                                <div class="mb-2">
+                                    <span class="profile-detail-label">Телефон:</span>
+                                    <span class="profile-detail-value"
+                                        th:text="${user.phone ?: 'Не указан'}">+380991234567</span>
+                                </div>
+                                <div>
+                                    <span class="profile-detail-label">E-mail:</span>
+                                    <span class="profile-detail-value"
+                                        th:text="${user.email ?: 'Не указан'}">user@mail.com</span>
+                                </div>
+                            </div>
+                            <div class="profile-detail-group">
+                                <div class="mb-2">
+                                    <span class="profile-detail-label">Город:</span>
+                                    <span class="profile-detail-value"
+                                        th:text="${user.city?.name ?: 'Не указан'}">Гомель</span>
+                                </div>
+                                <div>
+                                    <span class="profile-detail-label">Адрес:</span>
+                                    <span class="profile-detail-value">
+                                        <span
+                                            th:text="${user.street?.name != null ? 'ул. ' + user.street.name : ''}"></span>
+                                        <span
+                                            th:text="${user.houseNumber != null ? ', ' + user.houseNumber : ''}"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="profile-detail-group">
+                                <div class="mb-2">
+                                    <span class="profile-detail-label">№ квартиры:</span>
+                                    <span class="profile-detail-value"
+                                        th:text="${user.apartmentNumber ?: 'Не указан'}">10</span>
+                                </div>
+                                <div>
+                                    <span class="profile-detail-label">S квартиры:</span>
+                                    <span class="profile-detail-value"
+                                        th:text="${user.apartmentArea != null ? user.apartmentArea + ' кв. м.' : 'Не указано'}">55
+                                        кв. м.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password section -->
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-4">Данные для входа</h6>
+                <div class="row">
+                    <div class="col-md-5">
+                        <label class="form-label">Пароль</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="passwordInput" placeholder="">
+                            <button type="button" class="btn btn-outline-secondary" id="generatePasswordBtn">
+                                Сгенерировать <i class="icon-base ti tabler-eye ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Повторить пароль</label>
+                        <input type="password" class="form-control" id="confirmPasswordInput" placeholder="">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn btn-outline-secondary"
+                        onclick="window.location.reload()">Отменить</button>
+                    <button type="button" class="btn btn-success" id="saveBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            window.defaultAvatarPath = '[[@{/assets/img/avatars/1.png}]]';
+            window.userPhoto = [[${ user.photo }]];
+        </script>
+        <script>
+            $(document).ready(function () {
+                const avatarImg = document.getElementById('uploadedAvatar');
+                const fileInput = document.getElementById('photoFile');
+
+                // Set user photo on page load
+                if (window.userPhoto && window.userPhoto.trim() !== '' && window.userPhoto !== 'default_photo.jpg') {
+                    avatarImg.src = window.contextPath + '/' + window.userPhoto;
+                } else {
+                    avatarImg.src = window.defaultAvatarPath;
+                }
+
+                // Preview on file selection
+                fileInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    if (!allowedTypes.includes(file.type)) {
+                        showAlert('Разрешены только JPG, PNG или GIF файлы', 'warning');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    if (file.size > 800 * 1024) {
+                        showAlert('Максимальный размер файла 800KB', 'warning');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        avatarImg.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Generate password
+                $('#generatePasswordBtn').click(function () {
+                    $.ajax({
+                        url: window.contextPath + '/api/profile/generate-password',
+                        type: 'POST',
+                        success: function (response) {
+                            $('#passwordInput').attr('type', 'text').val(response.password);
+                            $('#confirmPasswordInput').attr('type', 'text').val(response.password);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error generating password:', error);
+                            showAlert('Ошибка генерации пароля', 'error');
+                        }
+                    });
+                });
+
+                // Save profile
+                $('#saveBtn').click(function () {
+                    const password = $('#passwordInput').val();
+                    const confirmPassword = $('#confirmPasswordInput').val();
+                    const photoFile = fileInput.files[0];
+
+                    if (password && password !== confirmPassword) {
+                        showAlert('Пароли не совпадают!', 'warning');
+                        return;
+                    }
+
+                    if (!password && !photoFile) {
+                        showAlert('Нет изменений для сохранения', 'info');
+                        return;
+                    }
+
+                    const formData = new FormData();
+
+                    if (password) {
+                        formData.append('password', password);
+                        formData.append('confirmPassword', confirmPassword);
+                    }
+
+                    if (photoFile) {
+                        formData.append('photoFile', photoFile);
+                    }
+
+                    $.ajax({
+                        url: window.contextPath + '/api/profile',
+                        type: 'PUT',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            showAlert('Профиль сохранён!', 'success');
+                            window.location.reload();
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error saving profile:', error);
+                            showAlert('Ошибка сохранения профиля', 'error');
+                        }
+                    });
+                });
+            });
+        </script>
+    </th:block>
+</body>
+
+</html>

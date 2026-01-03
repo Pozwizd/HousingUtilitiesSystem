@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-6">
+                    <h5 class="card-header" id="pageTitle" data-i18n="users.newUser"></h5>
+                    <form id="formAccountSettings" enctype="multipart/form-data">
+                        <!-- Account -->
+                        <div class="card-body">
+                            <div class="d-flex align-items-start align-items-sm-center gap-6">
+                                <img th:src="@{/assets/img/avatars/1.png}" alt="user-avatar"
+                                    class="d-block w-px-100 h-px-100 rounded" id="uploadedAvatar" />
+                                <div class="button-wrapper">
+                                    <label for="photo" class="btn btn-primary me-3 mb-4" tabindex="0">
+                                        <span class="d-none d-sm-block" data-i18n="users.uploadPhoto">Загрузить
+                                            фото</span>
+                                        <i class="icon-base ti tabler-upload d-block d-sm-none"></i>
+                                        <input type="file" id="photo" name="photoFile" class="account-file-input" hidden
+                                            accept="image/png, image/jpeg, image/jpg, image/gif" />
+                                    </label>
+                                    <button type="button" class="btn btn-label-secondary account-image-reset mb-4">
+                                        <i class="icon-base ti tabler-reset d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block" data-i18n="users.reset">Сбросить</span>
+                                    </button>
+
+                                    <div data-i18n="users.allowedFormats">Разрешены JPG, GIF или PNG. Максимальный
+                                        размер 800K</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body pt-4">
+
+                            <input type="hidden" id="userId" name="id" />
+                            <input type="hidden" id="houseNumberHidden" name="houseNumber" />
+                            <div class="row gy-4 gx-6 mb-3">
+                                <!-- Фамилия -->
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label"><span
+                                            data-i18n="users.lastName">Фамилия</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" type="text" name="lastName" id="lastName"
+                                        data-i18n="[placeholder]users.placeholders.enterLastName"
+                                        placeholder="Введите фамилию" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Имя -->
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label"><span
+                                            data-i18n="users.firstName">Имя</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input class="form-control" type="text" name="firstName" id="firstName"
+                                        data-i18n="[placeholder]users.placeholders.enterFirstName"
+                                        placeholder="Введите имя" autofocus />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Отчество -->
+                                <div class="col-md-6">
+                                    <label for="middleName" class="form-label"
+                                        data-i18n="users.middleName">Отчество</label>
+                                    <input class="form-control" type="text" name="middleName" id="middleName"
+                                        data-i18n="[placeholder]users.placeholders.enterMiddleName"
+                                        placeholder="Введите отчество" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Телефон -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="phone"><span data-i18n="users.phone">Телефон</span>
+                                        <span class="text-danger">*</span></label>
+                                    <input type="tel" name="phone" id="phone" class="form-control"
+                                        data-i18n="[placeholder]users.placeholders.enterPhone"
+                                        placeholder="+380501234567" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label"><span data-i18n="users.email">E-mail</span>
+                                        <span class="text-danger">*</span></label>
+                                    <input class="form-control" type="text" name="email" id="email"
+                                        data-i18n="[placeholder]users.placeholders.enterEmail"
+                                        placeholder="example@domain.com" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Город -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="cityId"><span data-i18n="users.city">Город</span>
+                                        <span class="text-danger">*</span></label>
+                                    <select name="cityId" id="cityId" class="form-select select2-city">
+                                        <option value="" data-i18n="users.placeholders.selectCity">Выберите город
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Улица -->
+                                <div class="col-md-6">
+                                    <label for="streetId" class="form-label"><span data-i18n="users.street">Улица</span>
+                                        <span class="text-danger">*</span></label>
+                                    <select name="addressId" id="streetId" class="form-select select2-street" disabled>
+                                        <option value="" data-i18n="users.placeholders.selectCityFirst">Сначала выберите
+                                            город</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Номер дома -->
+                                <div class="col-md-6">
+                                    <label for="houseId" class="form-label"><span data-i18n="users.houseNumber">Номер
+                                            дома</span> <span class="text-danger">*</span></label>
+                                    <select name="houseId" id="houseId" class="form-select select2-house" disabled>
+                                        <option value="" data-i18n="users.placeholders.selectStreetFirst">Сначала
+                                            выберите улицу</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Номер квартиры -->
+                                <div class="col-md-6">
+                                    <label for="apartmentNumber" class="form-label"><span
+                                            data-i18n="users.apartmentNumber">Номер квартиры</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="apartmentNumber" id="apartmentNumber"
+                                        class="form-control" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Площадь квартиры -->
+                                <div class="col-md-6">
+                                    <label for="apartmentArea" class="form-label"><span
+                                            data-i18n="users.apartmentArea">Площадь квартиры (м²)</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="apartmentArea" id="apartmentArea" class="form-control"
+                                        data-i18n="[placeholder]users.placeholders.enterApartmentArea"
+                                        placeholder="65.5" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Лицевой счет -->
+                                <div class="col-md-6">
+                                    <label for="accountNumber" class="form-label"><span
+                                            data-i18n="users.accountNumber">Лицевой счет</span> <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="accountNumber" id="accountNumber" class="form-control"
+                                        data-i18n="[placeholder]users.placeholders.enterAccountNumber"
+                                        placeholder="Номер лицевого счета" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Статус -->
+                                <div class="col-md-6">
+                                    <label for="status" class="form-label"><span data-i18n="common.status">Статус</span>
+                                        <span class="text-danger">*</span></label>
+                                    <select name="status" id="status" class="form-select">
+                                        <option value="" data-i18n="users.placeholders.selectStatus">Выберите статус
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <hr class="my-12" />
+                            <!-- Секция: Данные для входа -->
+                            <div class="form-section">
+                                <h6 data-i18n="users.loginData">Данные для входа</h6>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <label for="login" class="form-label"><span data-i18n="users.login">Логин</span>
+                                            <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="text" name="login" id="login"
+                                            data-i18n="[placeholder]users.placeholders.enterLogin"
+                                            placeholder="Введите логин" />
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="password" class="form-label"><span
+                                                data-i18n="users.password">Пароль</span> <span
+                                                class="text-danger">*</span></label>
+                                        <input class="form-control" type="password" name="password" id="password"
+                                            data-i18n="[placeholder]users.placeholders.enterPassword"
+                                            placeholder="••••••••" />
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="repeatPassword" class="form-label"><span
+                                                data-i18n="users.repeatPassword">Повторить пароль</span> <span
+                                                class="text-danger">*</span></label>
+                                        <input class="form-control" type="password" name="repeatPassword"
+                                            id="repeatPassword"
+                                            data-i18n="[placeholder]users.placeholders.enterPassword"
+                                            placeholder="••••••••" />
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="mt-10">
+                                <button type="submit" class="btn btn-primary me-3"
+                                    data-i18n="common.saveChanges">Сохранить изменения</button>
+                                <button type="reset" class="btn btn-label-secondary"
+                                    data-i18n="common.cancel">Отмена</button>
+                            </div>
+
+                        </div>
+                        <!-- /Account -->
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+                window.defaultAvatarPath = '[[@{/assets/img/avatars/14.png}]]';
+                console.log(window.defaultAvatarPath);
+            </script>
+
+            <!-- Подключение DOMPurify для санитизации HTML -->
+            <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+            <!-- Интернационализация формы -->
+            <script th:src="@{/custom/users/user-form-i18n.js}"></script>
+
+            <!-- Модульный JavaScript для страницы редактирования пользователя -->
+            <script th:src="@{/custom/users/user-edit.js}"></script>
+
+        </th:block>
+    </div>
+
+
+
+</body>
+
+</html>

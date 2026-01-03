@@ -1,0 +1,401 @@
+{
+  "nav": {
+    "shortcuts": "Shortcuts",
+    "addShortcuts": "Add shortcuts",
+    "notification": "Notification",
+    "newNotifications": "{{count}} New",
+    "markAllRead": "Mark all as read",
+    "viewAllNotifications": "View all notifications",
+    "toggleTheme": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "admin": "Admin",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "pages": {
+    "users": "Users",
+    "houses": "Houses",
+    "chairmen": "Chairmen",
+    "profile": "Profile",
+    "dashboard": "Dashboard"
+  },
+  "common": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "clear": "Clear",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "status": "Status",
+    "saving": "Saving...",
+    "loading": "Loading...",
+    "saveChanges": "Save changes",
+    "confirmDelete": "Confirm deletion",
+    "areYouSure": "Are you sure?",
+    "noDataFound": "No data found",
+    "pagination": "Page navigation",
+    "validationFailed": "Validation failed",
+    "back": "Back",
+    "statuses": {
+      "new": "New",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "blocked": "Blocked"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "createUser": "Create User",
+    "user": "User",
+    "newUser": "New User",
+    "userProfile": "User Profile",
+    "fullName": "Full Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "middleName": "Middle Name",
+    "city": "City",
+    "street": "Street",
+    "house": "House",
+    "apartment": "Apartment",
+    "apartmentNumber": "Apartment Number",
+    "apartmentArea": "Apartment Area",
+    "account": "Account",
+    "accountNumber": "Account Number",
+    "phone": "Phone",
+    "email": "Email",
+    "login": "Login",
+    "password": "Password",
+    "repeatPassword": "Repeat Password",
+    "address": "Address",
+    "houseNumber": "House Number",
+    "personalAccount": "Personal Account",
+    "contactInfo": "Contact Information",
+    "detailedInfo": "Detailed Information",
+    "userBills": "User Bills",
+    "paymentHistory": "Payment History",
+    "period": "Period",
+    "amount": "Amount",
+    "date": "Date",
+    "noBillsData": "No bills data",
+    "bills": "User Bills",
+    "billPeriod": "Period",
+    "billAmount": "Amount",
+    "billDate": "Date",
+    "back": "Back",
+    "uploadPhoto": "Upload Photo",
+    "reset": "Reset",
+    "allowedFormats": "Allowed JPG, GIF or PNG. Max size 800K",
+    "loginData": "Login Data",
+    "placeholders": {
+      "enterLastName": "Enter last name",
+      "enterFirstName": "Enter first name",
+      "enterMiddleName": "Enter middle name",
+      "enterPhone": "+380501234567",
+      "enterEmail": "example@domain.com",
+      "selectCity": "Select city",
+      "selectCityFirst": "First select a city",
+      "selectStreet": "Select street",
+      "selectStreetFirst": "First select a street",
+      "selectHouse": "House number",
+      "enterApartmentArea": "65.5",
+      "enterAccountNumber": "Account number",
+      "selectStatus": "Select status",
+      "enterLogin": "Enter login",
+      "enterPassword": "••••••••"
+    },
+    "deleteConfirm": "Are you sure you want to delete this user?",
+    "deleteSuccess": "User successfully deleted",
+    "deleteError": "Failed to delete user",
+    "notFound": "Users not found",
+    "validation": {
+      "passwordMismatch": "Passwords do not match",
+      "invalidFileType": "Invalid file type. Only JPG, PNG and GIF are allowed",
+      "fileTooLarge": "File size exceeds {{maxSize}}",
+      "required": "This field is required",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidPhone": "Please enter a valid phone number",
+      "firstName": {
+        "NotBlank": "First name is required",
+        "Size": "First name must be between 2 and 50 characters"
+      },
+      "middleName": {
+        "Size": "Middle name must be less than 50 characters"
+      },
+      "lastName": {
+        "NotBlank": "Last name is required",
+        "Size": "Last name must be between 2 and 50 characters"
+      },
+      "phone": {
+        "NotBlank": "Phone number is required"
+      },
+      "email": {
+        "NotBlank": "Email is required",
+        "Email": "Email should be valid"
+      },
+      "login": {
+        "NotBlank": "Login is required",
+        "Size": "Login must be between 3 and 50 characters"
+      },
+      "cityId": {
+        "NotNull": "City is required"
+      },
+      "addressId": {
+        "NotNull": "Street is required"
+      },
+      "houseId": {
+        "NotNull": "House is required"
+      },
+      "houseNumber": {
+        "NotBlank": "House number is required"
+      },
+      "apartmentNumber": {
+        "NotBlank": "Apartment number is required"
+      },
+      "apartmentArea": {
+        "NotNull": "Apartment area is required"
+      },
+      "accountNumber": {
+        "NotBlank": "Account number is required"
+      },
+      "status": {
+        "NotBlank": "Status is required"
+      },
+      "password": {
+        "NotBlank": "Password is required",
+        "Size": "Password must be at least 6 characters",
+        "notMatch": "Passwords do not match"
+      },
+      "confirmPassword": {
+        "NotBlank": "Confirm password is required"
+      }
+    },
+    "errors": {
+      "initialization": "Page initialization error",
+      "loadFailed": "Failed to load user data",
+      "loadStreets": "Failed to load streets list",
+      "loadHouses": "Failed to load houses list",
+      "populateForm": "Error populating form",
+      "saveFailed": "Failed to save data",
+      "validation": "Please check the correctness of the filled fields",
+      "loadData": "Error loading data"
+    },
+    "success": {
+      "created": "User {{userName}} successfully created",
+      "updated": "User {{userName}} data successfully updated"
+    },
+    "statusOptions": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "blocked": "Blocked"
+    }
+  },
+  "houses": {
+    "title": "Houses",
+    "addHouse": "Add House",
+    "editHouse": "Edit House",
+    "createHouse": "Create House",
+    "house": "House",
+    "newHouse": "New House",
+    "houseProfile": "House Profile",
+    "houseNumber": "House Number",
+    "street": "Street",
+    "city": "City",
+    "chairman": "Chairman",
+    "address": "Address",
+    "chairmanInfo": "Chairman Information",
+    "notAssigned": "Not assigned",
+    "residents": "House Residents",
+    "residentsList": "List of users",
+    "noResidentsData": "No residents data",
+    "detailedInfo": "Detailed Information",
+    "placeholders": {
+      "enterHouseNumber": "Enter house number",
+      "selectStreet": "Select street",
+      "selectChairman": "Select chairman",
+      "selectStatus": "Select status"
+    },
+    "deleteConfirm": "Are you sure you want to delete this house?",
+    "deleteSuccess": "House successfully deleted",
+    "deleteError": "Failed to delete house",
+    "notFound": "Houses not found",
+    "loadError": "Failed to load houses data",
+    "houseLabel": "House",
+    "chairmanLabel": "Chairman:",
+    "statusOptions": {
+      "new": "New",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "blocked": "Blocked"
+    }
+  },
+  "chairmen": {
+    "title": "Chairmen",
+    "addChairman": "Add Chairman",
+    "editChairman": "Edit Chairman",
+    "createChairman": "Create Chairman",
+    "chairman": "Chairman",
+    "newChairman": "New Chairman",
+    "chairmanProfile": "Chairman Profile",
+    "fullName": "Full Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "middleName": "Middle Name",
+    "phone": "Phone",
+    "email": "Email",
+    "login": "Login",
+    "password": "Password",
+    "repeatPassword": "Repeat Password",
+    "contactInfo": "Contact Information",
+    "detailedInfo": "Detailed Information",
+    "uploadPhoto": "Upload Photo",
+    "reset": "Reset",
+    "allowedFormats": "Allowed JPG, GIF or PNG. Max size 800K",
+    "loginData": "Login Data",
+    "placeholders": {
+      "enterFirstName": "Enter first name",
+      "enterLastName": "Enter last name",
+      "enterMiddleName": "Enter middle name",
+      "enterPhone": "+380501234567",
+      "enterEmail": "example@domain.com",
+      "selectStatus": "Select status",
+      "enterLogin": "Enter login",
+      "enterPassword": "••••••••"
+    },
+    "deleteConfirm": "Are you sure you want to delete this chairman?",
+    "deleteSuccess": "Chairman successfully deleted",
+    "deleteError": "Failed to delete chairman",
+    "notFound": "Chairmen not found",
+    "loadError": "Failed to load chairmen data",
+    "allStatuses": "All statuses",
+    "emailLabel": "Email:",
+    "phoneLabel": "Phone:",
+    "statusOptions": {
+      "new": "New",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "blocked": "Blocked"
+    }
+  },
+  "profile": {
+    "title": "Admin Profile",
+    "settings": "Profile Settings",
+    "uploadPhoto": "Upload new photo",
+    "reset": "Reset",
+    "allowedFormats": "Allowed JPG, GIF or PNG. Max size 800K",
+    "username": "Username",
+    "email": "E-mail",
+    "emailReadonly": "Email cannot be changed",
+    "phone": "Phone",
+    "organization": "Organization",
+    "address": "Address",
+    "city": "City",
+    "state": "State / Region",
+    "zipCode": "Zip Code",
+    "country": "Country",
+    "selectCountry": "Select country",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "timezone": "Timezone",
+    "selectTimezone": "Select timezone",
+    "currency": "Currency",
+    "selectCurrency": "Select currency",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "enterCurrentPassword": "Enter current password",
+    "enterNewPassword": "Enter new password",
+    "repeatNewPassword": "Repeat new password",
+    "enterUsername": "Enter username",
+    "enterAddress": "Street, house, apartment",
+    "enterCity": "City name",
+    "enterState": "State or region",
+    "profileUpdated": "Profile successfully updated",
+    "passwordChanged": "Password successfully changed",
+    "avatarUploaded": "Avatar successfully uploaded",
+    "avatarDeleted": "Avatar successfully deleted",
+    "deleteAvatarConfirm": "Are you sure you want to delete the avatar?",
+    "fileSizeError": "File size must not exceed 800KB",
+    "onlyImages": "Only images allowed",
+    "updateError": "Error updating profile",
+    "passwordChangeError": "Error changing password",
+    "avatarUploadError": "Error uploading avatar",
+    "avatarDeleteError": "Error deleting avatar",
+    "loadError": "Error loading profile",
+    "passwordMinLength": "Password must contain at least 6 characters",
+    "countries": {
+      "ukraine": "Ukraine",
+      "usa": "USA",
+      "uk": "United Kingdom",
+      "germany": "Germany",
+      "france": "France",
+      "poland": "Poland",
+      "canada": "Canada",
+      "australia": "Australia"
+    },
+    "languages": {
+      "ukrainian": "Ukrainian",
+      "russian": "Russian",
+      "english": "English",
+      "german": "German",
+      "french": "French",
+      "polish": "Polish"
+    }
+  },
+  "status": {
+    "new": "New",
+    "active": "Active",
+    "deactivated": "Deactivated",
+    "blocked": "Blocked"
+  },
+  "notifications": {
+    "titles": {
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning",
+      "info": "Information"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "enterEmail": "Enter email",
+    "enterPassword": "Enter password",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember me",
+    "signIn": "Sign In",
+    "signInWithGoogle": "Sign in with Google",
+    "invalidCredentials": "Invalid email or password",
+    "forgotPasswordTitle": "Forgot Password? 🔒",
+    "forgotPasswordDescription": "Enter your email and we'll send you instructions to reset your password",
+    "sendMessage": "Send Message",
+    "backToLogin": "Back to login",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "saveNewPassword": "Save New Password",
+    "wrongEmail": "Invalid email",
+    "fieldCannotBeEmpty": "Field cannot be empty",
+    "wrongPassword": "Invalid password",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "welcome": "Welcome! 👋",
+    "signInMessage": "Please sign-in to your account",
+    "registrationSuccess": "Registration successful! You can now log in.",
+    "newUser": "New user?",
+    "createAccount": "Create an account",
+    "or": "or"
+  },
+  "errors": {
+    "asyncOperationFailed": "Async operation failed",
+    "internalServerError": "Internal server error"
+  }
+}

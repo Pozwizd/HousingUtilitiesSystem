@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<!-- Menu -->
+<aside layout:fragment="aside" id="layout-menu" class="layout-menu-horizontal menu-horizontal menu flex-grow-0">
+    <div class="container-xxl d-flex h-100">
+        <ul class="menu-inner">
+            <li class="menu-item" th:classappend="${pageActive == 'profile' ? 'active' : ''}">
+                <a th:href="@{/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-user"></i>
+                    <div data-i18n="pages.profile">Профиль</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'bills' ? 'active' : ''}">
+                <a th:href="@{/bills/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-file-dollar"></i>
+                    <div data-i18n="pages.bills">Счета</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'chat' ? 'active' : ''}">
+                <a th:href="@{/chat/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-message-circle"></i>
+                    <div data-i18n="pages.chat">Чат</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'voting' ? 'active' : ''}">
+                <a th:href="@{/voting/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-thumb-up"></i>
+                    <div data-i18n="pages.voting">Голосование</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'requests' ? 'active' : ''}">
+                <a th:href="@{/requests/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-tool"></i>
+                    <div data-i18n="pages.requests">Заявки</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'contacts' ? 'active' : ''}">
+                <a th:href="@{/contacts/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-address-book"></i>
+                    <div data-i18n="pages.contacts">Контакты</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+</aside>
+<!-- / Menu -->

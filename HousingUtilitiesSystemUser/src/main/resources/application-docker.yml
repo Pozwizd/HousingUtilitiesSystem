@@ -1,0 +1,47 @@
+spring:
+  data:
+    mongodb:
+      # MongoDB URI is passed via environment variable in docker-compose
+      uri: ${SPRING_DATA_MONGODB_URI}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+  application:
+    name: HousingUtilitiesSystemChairman
+
+logging:
+  level:
+    org.springframework.data.mongodb.core: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.springframework.data.mongodb.repository.query: DEBUG
+    org.mongodb.driver: WARN
+    org.mongodb.driver.connection: INFO
+    org.mongodb.driver.operation: WARN
+    org.mongodb.driver.query: WARN
+    org.mongodb.driver.write: WARN
+    org.mongodb.driver.protocol.command: WARN
+    org.spacelab.housingutilitiessystemchairman: INFO
+    org.springframework.data.mongodb.core.convert: WARN
+    org.springframework.data.mongodb.core.mapping: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+file:
+  upload:
+    dir: "/app/uploads"
+  temp:
+    dir: "/app/temp-uploads"
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000 # 24 часа в миллисекундах
+

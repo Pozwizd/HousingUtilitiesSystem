@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информация о пользователе - Housing Utilities System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .user-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .info-section {
+            margin: 20px 0;
+        }
+        .info-title {
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .info-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: block;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #a71e2a;
+        }
+        .json-viewer {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Housing Utilities System Admin</h1>
+            <h2>Информация об администраторе</h2>
+        </div>
+
+        <!-- Если администратор авторизован через OIDC -->
+        <div th:if="${customUser}" class="user-card">
+            <img th:if="${admin.pathAvatar}" th:src="${admin.pathAvatar}" alt="Avatar" class="avatar">
+            <h3 style="text-align: center; margin: 0;">
+                <span th:text="${admin.displayName}">Имя администратора</span>
+            </h3>
+            <p style="text-align: center; color: #666; margin: 5px 0;">
+                <span th:text="${customUser.email}">email@example.com</span>
+            </p>
+            <p style="text-align: center;">
+                <span class="badge" th:text="${admin.role}" 
+                      style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 12px;">ADMIN</span>
+            </p>
+        </div>
+
+        <!-- Информация об аутентификации -->
+        <div class="info-section">
+            <div class="info-title">🔐 Детали аутентификации</div>
+            <div class="info-item" th:if="${authentication}">
+                <strong>Тип аутентификации:</strong> <span th:text="${authentication.class.simpleName}">Type</span>
+            </div>
+            <div class="info-item" th:if="${principal}">
+                <strong>Тип Principal:</strong> <span th:text="${principal.class.simpleName}">Principal</span>
+            </div>
+            <div class="info-item" th:if="${authorities}">
+                <strong>Права доступа:</strong> <span th:text="${authorities}">Authorities</span>
+            </div>
+        </div>
+
+        <!-- Информация об администраторе из базы данных -->
+        <div th:if="${admin}" class="info-section">
+            <div class="info-title">👨‍💼 Данные администратора</div>
+            <div class="info-item">
+                <strong>ID:</strong> <span th:text="${admin.id}">ID</span>
+            </div>
+            <div class="info-item">
+                <strong>Email:</strong> <span th:text="${admin.email}">Email</span>
+            </div>
+            <div class="info-item">
+                <strong>Имя пользователя:</strong> <span th:text="${admin.username}">Username</span>
+            </div>
+            <div class="info-item">
+                <strong>Отображаемое имя:</strong> <span th:text="${admin.displayName}">Display Name</span>
+            </div>
+            <div class="info-item">
+                <strong>Роль:</strong> <span th:text="${admin.role}">Роль</span>
+            </div>
+            <div class="info-item">
+                <strong>Активен:</strong> 
+                <span th:text="${admin.enabled ? 'Да' : 'Нет'}" 
+                      th:style="${admin.enabled ? 'color: green;' : 'color: red;'}">Статус</span>
+            </div>
+            <div class="info-item" th:if="${admin.pathAvatar}">
+                <strong>Аватар URL:</strong> 
+                <a th:href="${admin.pathAvatar}" target="_blank" th:text="${admin.pathAvatar}">Avatar URL</a>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" class="btn">🏠 Главная страница</a>
+            <a href="/current-user" class="btn">📋 API JSON</a>
+            <a href="/debug/auth" class="btn">🔍 Debug Info</a>
+            <a href="/logout" class="btn btn-danger">🚪 Выйти</a>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
+            <p>Housing Utilities System Admin Panel</p>
+            <p>OAuth2/OIDC авторизация для администраторов успешно настроена! 🎉</p>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+    </script>
+    <script>
+        // Добавляем интерактивность для JSON API
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin Info Page loaded');
+            
+            // Загружаем дополнительную информацию через API
+            fetch(window.contextPath + 'current-user')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Current admin API response:', data);
+                })
+                .catch(error => {
+                    console.error('Error fetching admin info:', error);
+                });
+        });
+    </script>
+</body>
+</html>

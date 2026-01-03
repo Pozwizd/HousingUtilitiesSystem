@@ -1,0 +1,22 @@
+package org.spacelab.housingutilitiessystemchairman.models.admin;
+import lombok.Data;
+import org.spacelab.housingutilitiessystemchairman.entity.Role;
+@Data
+public class ProfileResponse {
+    private String id;
+    private String email;
+    private String username;
+    private String pathAvatar;
+    private Role role;
+    private boolean enabled;
+    private String phone;
+    private String organization;
+    private String address;
+    private String city;
+    private String state;
+    private String zipCode;
+    private String country;
+    private String language;
+    private String timezone;
+    private String currency;
+}

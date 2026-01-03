@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+        <link rel="stylesheet" th:href="@{/assets/vendor/css/pages/app-chat.css}" />
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar avatar-lg bg-label-primary">
+                    <span class="avatar-initial rounded-circle">
+                        <i class="icon-base ti tabler-messages"></i>
+                    </span>
+                </div>
+                <div>
+                    <h4 class="mb-1" data-i18n="pages.chat">Чат</h4>
+                    <p class="mb-0 text-body-secondary" data-i18n="chat.subtitle">Общайтесь с жителями и управляйте
+                        обращениями</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-label-secondary" id="chat-refresh-btn">
+                    <i class="icon-base ti tabler-refresh me-1"></i>
+                    <span data-i18n="chat.refresh">Обновить</span>
+                </button>
+                <button type="button" class="btn btn-primary" id="chat-new-conversation-btn">
+                    <i class="icon-base ti tabler-message-plus me-1"></i>
+                    <span data-i18n="chat.newConversation">Новый диалог</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="app-chat card overflow-hidden">
+            <div class="row g-0">
+                <!-- Contacts -->
+                <div class="col app-chat-contacts app-sidebar flex-grow-0 flex-shrink-0" id="app-chat-contacts">
+                    <div class="border-end h-100 d-flex flex-column">
+                        <div class="px-4 py-4 border-bottom">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0" data-i18n="chat.dialogues">Диалоги</h5>
+                                <button type="button" class="btn btn-icon btn-text-secondary rounded-pill"
+                                    data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay>
+                                    <i class="icon-base ti tabler-info-circle"></i>
+                                </button>
+                            </div>
+                            <div class="input-group mt-4">
+                                <span class="input-group-text border-end-0">
+                                    <i class="icon-base ti tabler-search"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" placeholder="Поиск"
+                                    data-i18n="[placeholder]chat.search" />
+                            </div>
+                        </div>
+
+                        <div class="flex-grow-1 overflow-auto">
+                            <div class="py-3">
+                                <div class="px-4 pb-2 text-uppercase text-body-secondary small"
+                                    data-i18n="chat.recentConversations">Недавние диалоги</div>
+                                <ul class="list-unstyled mb-0" id="chat-recent-conversations">
+                                    <li class="px-4 py-5 text-center text-body-secondary" data-empty-recents>
+                                        <span data-i18n="chat.noConversations">Диалоги отсутствуют</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Removed Chairman section -->
+                            <div class="py-3 border-top">
+                                <div class="px-4 pb-2 text-uppercase text-body-secondary small"
+                                    data-i18n="chat.residents">Жители дома</div>
+                                <ul class="list-unstyled mb-0" id="chat-resident-list">
+                                    <li class="px-4 py-5 text-center text-body-secondary" data-empty-residents>
+                                        <span data-i18n="chat.noResidents">Жители не найдены</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--/ Contacts -->
+
+                <!-- Chat History -->
+                <div class="col app-chat-history">
+                    <div class="chat-history-wrapper h-100 d-flex flex-column">
+                        <div
+                            class="chat-history-header py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-sm" id="chat-recipient-avatar">
+                                    <span class="avatar-initial bg-label-secondary rounded-circle">?</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0" id="chat-recipient-name" data-i18n="chat.emptyTitle">Выберите
+                                        диалог</h6>
+                                    <small class="text-body-secondary" id="chat-recipient-status"
+                                        data-i18n="chat.emptySubtitle">История сообщений появится здесь</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-icon btn-text-secondary rounded-pill">
+                                    <i class="icon-base ti tabler-phone"></i>
+                                </button>
+                                <button class="btn btn-icon btn-text-secondary rounded-pill">
+                                    <i class="icon-base ti tabler-video"></i>
+                                </button>
+                                <button class="btn btn-icon btn-text-secondary rounded-pill" data-bs-toggle="dropdown">
+                                    <i class="icon-base ti tabler-dots-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a class="dropdown-item" href="javascript:void(0);"
+                                        data-i18n="chat.viewProfile">Просмотреть профиль</a>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.mute">Отключить
+                                        уведомления</a>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.clear">Очистить
+                                        чат</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-history-body px-4 py-4 flex-grow-1 overflow-auto" id="chat-history-container">
+                            <ul class="list-unstyled chat-history mb-0" id="chat-messages">
+                                <li class="py-5 text-center text-body-secondary" id="chat-empty-state"
+                                    data-i18n="chat.selectConversation">Выберите диалог или начните новый</li>
+                            </ul>
+                        </div>
+
+                        <div class="chat-history-footer px-4 py-3 border-top">
+                            <form class="form-send-message d-flex align-items-center gap-3" id="chat-send-form">
+                                <label class="btn btn-icon btn-text-secondary rounded-pill mb-0">
+                                    <i class="icon-base ti tabler-microphone"></i>
+                                    <input type="file" hidden disabled>
+                                </label>
+                                <input class="form-control message-input border-0 shadow-none" type="text"
+                                    id="chat-message-input" placeholder="Введите сообщение"
+                                    data-i18n="[placeholder]chat.typeMessage" autocomplete="off" />
+                                <button type="submit" class="btn btn-primary d-flex align-items-center"
+                                    id="chat-send-button" disabled>
+                                    <span class="d-none d-sm-inline-block me-2" data-i18n="chat.send">Отправить</span>
+                                    <i class="icon-base ti tabler-send"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!--/ Chat History -->
+
+                <!-- Sidebar Right -->
+                <div class="col app-chat-sidebar-right app-sidebar overflow-hidden" id="app-chat-sidebar-right">
+                    <div
+                        class="sidebar-header d-flex flex-column align-items-center justify-content-center px-4 pt-5 pb-4">
+                        <div class="avatar avatar-xl" id="chat-sidebar-avatar">
+                            <span class="avatar-initial bg-label-secondary rounded-circle">?</span>
+                        </div>
+                        <h5 class="mt-4 mb-0" id="chat-sidebar-name" data-i18n="chat.emptyTitle">Выберите диалог</h5>
+                        <span class="text-body-secondary" id="chat-sidebar-role"></span>
+                        <i class="icon-base ti tabler-x icon-lg cursor-pointer close-sidebar mt-3"
+                            data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay></i>
+                    </div>
+                    <div class="sidebar-body px-4 pb-4 overflow-auto" id="chat-sidebar-body">
+                        <div class="text-center text-body-secondary" data-i18n="chat.sidebarEmpty">Информация о жильце
+                            появится после выбора диалога</div>
+                    </div>
+                </div>
+                <!--/ Sidebar Right -->
+            </div>
+        </div>
+    </div>
+    <th:block layout:fragment="page_js">
+        <script th:src="@{/assets/js/sockjs.js}"></script>
+        <script th:src="@{/assets/js/stomp.umd.js}"></script>
+
+        <script th:inline="javascript">
+            /* Context path для динамических путей */
+            let contextPath = '[[@{/}]]'.replaceAll("\"", "");
+            console.log('Context path:', contextPath);
+
+            /* Current user ID for isOwn calculation */
+            let currentUserId = /*[[${currentUserId}]]*/ null;
+            console.log('Current user ID:', currentUserId);
+
+            // === Chat State ===
+            let stompClient = null;
+            let currentConversationId = null;
+            let currentParticipantId = null; // Track current chat participant for presence updates
+            let currentSubscription = null; // Track current conversation subscription
+            let isConnected = false;
+
+            // === DOM Elements ===
+            const conversationsList = document.getElementById('chat-recent-conversations');
+            const residentsList = document.getElementById('chat-resident-list');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatSendForm = document.getElementById('chat-send-form');
+            const chatMessageInput = document.getElementById('chat-message-input');
+            const chatSendButton = document.getElementById('chat-send-button');
+            const refreshBtn = document.getElementById('chat-refresh-btn');
+
+            // === Initialize on page load ===
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('[Chat] Initializing...');
+                loadSidebar();
+                initWebSocket();
+                setupEventListeners();
+            });
+
+            // === Load Sidebar via HTTP ===
+            async function loadSidebar() {
+                console.log('[Chat] Loading sidebar via HTTP...');
+                console.log('[Chat DEBUG] Fetch URL:', contextPath + 'chat/sidebar');
+                try {
+                    const response = await fetch(contextPath + 'chat/sidebar', {
+                        method: 'GET',
+                        credentials: 'include',  // Include cookies for authentication
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    console.log('[Chat DEBUG] Response status:', response.status, response.statusText);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('[Chat DEBUG] Sidebar data received (full):', JSON.stringify(data, null, 2));
+                    console.log('[Chat DEBUG] Conversations count:', data.chatConversationResponses?.length || 0);
+                    console.log('[Chat DEBUG] Contacts count:', data.chatContactResponses?.length || 0);
+                    updateSidebarUI(data);
+                } catch (error) {
+                    console.error('[Chat ERROR] Failed to load sidebar:', error);
+                    showEmptyState(conversationsList, 'chat.noConversations');
+                    showEmptyState(residentsList, 'chat.noResidents');
+                }
+            }
+
+            // === Update Sidebar UI ===
+            function updateSidebarUI(data) {
+                console.log('[Chat DEBUG] updateSidebarUI called with data:', data);
+
+                // Update conversations list
+                if (data.chatConversationResponses && data.chatConversationResponses.length > 0) {
+                    console.log('[Chat DEBUG] Processing conversations:', data.chatConversationResponses.length);
+                    conversationsList.innerHTML = '';
+                    data.chatConversationResponses.forEach((conv, index) => {
+                        console.log(`[Chat DEBUG] Conversation ${index}:`, conv);
+                        console.log(`[Chat DEBUG]   - id: ${conv.id}, name: ${conv.name}, online: ${conv.online}, participantId: ${conv.participantId}`);
+                        conversationsList.appendChild(createConversationItem(conv));
+                    });
+                } else {
+                    console.log('[Chat DEBUG] No conversations found');
+                    showEmptyState(conversationsList, 'chat.noConversations');
+                }
+
+                // Update residents/contacts list
+                if (data.chatContactResponses && data.chatContactResponses.length > 0) {
+                    console.log('[Chat DEBUG] Processing contacts:', data.chatContactResponses.length);
+                    residentsList.innerHTML = '';
+                    data.chatContactResponses.forEach((contact, index) => {
+                        console.log(`[Chat DEBUG] Contact ${index}:`, contact);
+                        console.log(`[Chat DEBUG]   - id: ${contact.id}, name: ${contact.name}, online: ${contact.online}`);
+                        residentsList.appendChild(createContactItem(contact));
+                    });
+                } else {
+                    console.log('[Chat DEBUG] No contacts found');
+                    showEmptyState(residentsList, 'chat.noResidents');
+                }
+            }
+
+            // === Create Conversation List Item ===
+            function createConversationItem(conv) {
+                console.log('[Chat DEBUG] createConversationItem:', conv.id, conv.name, 'online:', conv.online);
+
+                const li = document.createElement('li');
+                li.className = 'chat-contact-list-item px-4 py-3 cursor-pointer';
+                li.setAttribute('data-conversation-id', conv.id);
+                li.setAttribute('data-participant-id', conv.participantId || ''); // For presence updates
+                li.onclick = () => selectConversation(conv.id, conv.name);
+
+                const avatarClass = conv.online ? 'avatar-online' : 'avatar-offline';
+                console.log('[Chat DEBUG]   avatarClass set to:', avatarClass);
+
+                const initial = conv.name ? conv.name.charAt(0).toUpperCase() : '?';
+                const timeStr = conv.lastMessageTime ? formatTime(conv.lastMessageTime) : '';
+
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar ${avatarClass}">
+                            ${conv.avatar
+                        ? `<img src="${contextPath}${conv.avatar}" class="rounded-circle" alt="${conv.name}">`
+                        : `<span class="avatar-initial bg-label-primary rounded-circle">${initial}</span>`
+                    }
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h6 class="mb-0 text-truncate">${conv.name || 'Без имени'}</h6>
+                            <small class="text-body-secondary text-truncate chat-message-preview">${conv.lastMessage || ''}</small>
+                        </div>
+                        <small class="text-body-secondary chat-message-time">${timeStr}</small>
+                    </div>
+                `;
+                return li;
+            }
+
+            // === Create Contact List Item ===
+            function createContactItem(contact) {
+                console.log('[Chat DEBUG] createContactItem:', contact.id, contact.name, 'online:', contact.online);
+
+                const li = document.createElement('li');
+                li.className = 'chat-contact-list-item px-4 py-3 cursor-pointer';
+                li.setAttribute('data-user-id', contact.id);
+                li.onclick = () => startConversationWith(contact.id, contact.name, contact.participantType || 'USER');
+
+                const avatarClass = contact.online ? 'avatar-online' : 'avatar-offline';
+                console.log('[Chat DEBUG]   avatarClass set to:', avatarClass);
+                const statusText = contact.online ? 'В сети' : 'Не в сети';
+                console.log('[Chat DEBUG]   statusText set to:', statusText);
+
+                const initial = contact.name ? contact.name.charAt(0).toUpperCase() : '?';
+
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar ${avatarClass}">
+                            ${contact.avatar
+                        ? `<img src="${contextPath}${contact.avatar}" class="rounded-circle" alt="${contact.name}">`
+                        : `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`
+                    }
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h6 class="mb-0 text-truncate">${contact.name || 'Без имени'}</h6>
+                            <small class="text-body-secondary">${statusText}</small>
+                        </div>
+                    </div>
+                `;
+                return li;
+            }
+
+            // === Show Empty State ===
+            function showEmptyState(container, i18nKey) {
+                container.innerHTML = `
+                    <li class="px-4 py-5 text-center text-body-secondary">
+                        <span data-i18n="${i18nKey}">Нет данных</span>
+                    </li>
+                `;
+            }
+
+
+
+            // === Initialize WebSocket Connection ===
+            function initWebSocket() {
+                console.log('[WebSocket] Checking for global connection...');
+
+                // Функция для настройки подписок
+                function setupSubscriptions(client) {
+                    console.log('[WebSocket] Setting up chat subscriptions');
+                    isConnected = true;
+                    stompClient = client;
+
+                    // Subscribe to personal sidebar updates (from Redis Pub/Sub)
+                    client.subscribe('/user/queue/sidebar', function (message) {
+                        console.log('[WebSocket] Received sidebar update from /user/queue/sidebar');
+                        handleSidebarEvent(JSON.parse(message.body));
+                    });
+
+                    // Subscribe to broadcast presence events
+                    client.subscribe('/topic/presence', function (message) {
+                        console.log('[WebSocket] Received presence event');
+                        handlePresenceEvent(JSON.parse(message.body));
+                    });
+
+                    // Subscribe to general sidebar topic
+                    client.subscribe('/topic/sidebar', function (message) {
+                        console.log('[WebSocket] Received sidebar broadcast');
+                        handleSidebarUpdate(JSON.parse(message.body));
+                    });
+                }
+
+                // Если глобальное соединение уже готово - используем его
+                if (window.globalStompConnected && window.globalStompClient) {
+                    console.log('[WebSocket] Reusing global connection');
+                    setupSubscriptions(window.globalStompClient);
+                } else {
+                    // Ждём когда глобальное соединение будет готово
+                    console.log('[WebSocket] Waiting for global connection...');
+                    window.addEventListener('globalStompConnected', function (e) {
+                        console.log('[WebSocket] Global connection ready, setting up subscriptions');
+                        setupSubscriptions(e.detail);
+                    });
+                }
+            }
+
+            // === Handle Sidebar Event from Redis ===
+            function handleSidebarEvent(event) {
+                console.log('[Chat] Handling sidebar event:', event);
+
+                if (event.eventType === 'MESSAGE_SENT') {
+                    // Check if conversation exists in sidebar
+                    const existingConv = conversationsList.querySelector(`[data-conversation-id="${event.conversationId}"]`);
+
+                    if (existingConv) {
+                        // Conversation exists - move to top and update preview
+                        moveConversationToTop(event.conversationId);
+                        updateConversationPreview(event.conversationId, event.lastMessage, event.timestamp, event.senderName);
+                    } else {
+                        // Conversation doesn't exist - create new item and prepend to list
+                        console.log('[Chat] Creating new conversation item in sidebar');
+
+                        // Remove empty state from conversations list if exists
+                        const emptyRecents = conversationsList.querySelector('[data-empty-recents]');
+                        if (emptyRecents) {
+                            emptyRecents.remove();
+                        }
+
+                        const newConv = createConversationItem({
+                            id: event.conversationId,
+                            participantId: event.senderId,
+                            participantType: event.senderType, // "CHAIRMAN" or "USER" for badge display
+                            name: event.senderName,
+                            avatar: event.senderAvatar,
+                            lastMessage: event.lastMessage,
+                            lastMessageTime: event.timestamp,
+                            online: event.online || false
+                        });
+                        conversationsList.prepend(newConv);
+
+                        // Remove sender from contacts list (they now have a conversation)
+                        const contactToRemove = residentsList.querySelector(`[data-user-id="${event.senderId}"]`);
+                        if (contactToRemove) {
+                            console.log('[Chat] Removing sender from contacts list:', event.senderId);
+                            contactToRemove.remove();
+
+                            // Show empty state if no more contacts
+                            if (residentsList.querySelectorAll('.chat-contact-list-item').length === 0) {
+                                showEmptyState(residentsList, 'chat.noResidents');
+                            }
+                        }
+                    }
+
+                    // If this is the currently active conversation, append the message
+                    if (currentConversationId === event.conversationId) {
+                        console.log('[Chat] Active conversation received message via sidebar event, appending...');
+                        appendMessage({
+                            id: event.messageId || event.conversationId + '-' + Date.now(), // Use messageId if available
+                            conversationId: event.conversationId,
+                            senderId: event.senderId,
+                            senderName: event.senderName,
+                            senderAvatar: event.senderAvatar,
+                            senderType: event.senderType,
+                            content: event.lastMessage,
+                            timestamp: event.timestamp,
+                            isOwn: false
+                        });
+                    } else {
+                        // Show notification if not current conversation
+                        showNotification(event.senderName, event.lastMessage);
+                    }
+                }
+            }
+
+            // === Handle Presence Event ===
+            function handlePresenceEvent(event) {
+                console.log('[Chat DEBUG] handlePresenceEvent called');
+                console.log('[Chat DEBUG] Full event data:', JSON.stringify(event, null, 2));
+
+                const userId = event.targetUserId;
+                const isOnline = event.online; // JSON field is 'online', not 'isOnline'
+                console.log('[Chat DEBUG] Parsed: userId =', userId, ', isOnline =', isOnline);
+
+                // Update contact status
+                console.log('[Chat DEBUG] Calling updateContactOnlineStatus...');
+                updateContactOnlineStatus(userId, isOnline);
+
+                // Update conversation participant status
+                console.log('[Chat DEBUG] Calling updateConversationOnlineStatus...');
+                updateConversationOnlineStatus(userId, isOnline);
+
+                // Update chat header if this is current participant
+                console.log('[Chat DEBUG] Calling updateChatHeaderStatus... (currentParticipantId =', currentParticipantId, ')');
+                updateChatHeaderStatus(userId, isOnline);
+            }
+
+            // === Update Chat Header Status (when current participant changes online status) ===
+            function updateChatHeaderStatus(userId, isOnline) {
+                if (currentParticipantId === userId) {
+                    console.log('[Chat] Updating chat header status for current participant:', userId, isOnline);
+
+                    // Update status text
+                    const statusEl = document.getElementById('chat-recipient-status');
+                    if (statusEl) {
+                        statusEl.textContent = isOnline ? 'В сети' : 'Не в сети';
+                    }
+
+                    // Update avatar online/offline indicator
+                    const avatarContainer = document.getElementById('chat-recipient-avatar');
+                    if (avatarContainer) {
+                        avatarContainer.classList.remove('avatar-online', 'avatar-offline');
+                        avatarContainer.classList.add(isOnline ? 'avatar-online' : 'avatar-offline');
+                    }
+                }
+            }
+
+            // === Handle Sidebar Update (broadcast) ===
+            function handleSidebarUpdate(update) {
+                console.log('[Chat] Handling sidebar update:', update);
+                moveConversationToTop(update.conversationId);
+                updateConversationPreview(update.conversationId, update.lastMessagePreview, update.lastMessageAt);
+            }
+
+            // === Move Conversation to Top ===
+            function moveConversationToTop(conversationId) {
+                const item = conversationsList.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (item) {
+                    conversationsList.prepend(item);
+                    console.log('[Chat] Moved conversation to top:', conversationId);
+                }
+            }
+
+            // === Update Conversation Preview ===
+            function updateConversationPreview(conversationId, message, timestamp, senderName) {
+                const item = conversationsList.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (item) {
+                    const preview = item.querySelector('.chat-message-preview');
+                    const time = item.querySelector('.chat-message-time');
+                    if (preview && message) {
+                        const truncated = message.length > 50 ? message.substring(0, 50) + '...' : message;
+                        preview.textContent = truncated;
+                    }
+                    if (time && timestamp) {
+                        time.textContent = formatTime(timestamp);
+                    }
+                }
+            }
+
+            // === Update Contact Online Status ===
+            function updateContactOnlineStatus(userId, isOnline) {
+                const contact = residentsList.querySelector(`[data-user-id="${userId}"]`);
+                if (contact) {
+                    const avatar = contact.querySelector('.avatar');
+                    if (avatar) {
+                        avatar.classList.remove('avatar-online', 'avatar-offline');
+                        avatar.classList.add(isOnline ? 'avatar-online' : 'avatar-offline');
+                    }
+                    const statusText = contact.querySelector('small.text-body-secondary');
+                    if (statusText) {
+                        statusText.textContent = isOnline ? 'В сети' : 'Не в сети';
+                    }
+                    console.log('[Chat] Updated contact status:', userId, isOnline);
+                }
+            }
+
+            // === Update Conversation Online Status ===
+            function updateConversationOnlineStatus(userId, isOnline) {
+                // Find conversations that may include this user
+                const conversations = conversationsList.querySelectorAll('.chat-contact-list-item');
+                conversations.forEach(conv => {
+                    const avatar = conv.querySelector('.avatar');
+                    if (avatar && conv.getAttribute('data-participant-id') === userId) {
+                        avatar.classList.remove('avatar-online', 'avatar-offline');
+                        avatar.classList.add(isOnline ? 'avatar-online' : 'avatar-offline');
+                    }
+                });
+            }
+
+            // === Format Time ===
+            function formatTime(timestamp) {
+                if (!timestamp) return '';
+                const date = new Date(timestamp);
+                const now = new Date();
+                const isToday = date.toDateString() === now.toDateString();
+
+                if (isToday) {
+                    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+                }
+            }
+
+            // === Show Browser Notification ===
+            function showNotification(title, message) {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, { body: message });
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(title, { body: message });
+                        }
+                    });
+                }
+            }
+
+            // === Select Conversation ===
+            function selectConversation(conversationId, name) {
+                console.log('[Chat] Selected conversation:', conversationId);
+
+                // Unsubscribe from previous conversation if any
+                if (currentSubscription) {
+                    console.log('[Chat] Unsubscribing from previous conversation');
+                    currentSubscription.unsubscribe();
+                    currentSubscription = null;
+                }
+
+                currentConversationId = conversationId;
+
+                // Update header UI
+                document.getElementById('chat-recipient-name').textContent = name || 'Диалог';
+                document.getElementById('chat-recipient-status').textContent = 'Загрузка...';
+                chatSendButton.disabled = false;
+
+                // Mark as active in sidebar
+                conversationsList.querySelectorAll('.chat-contact-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const selectedItem = conversationsList.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (selectedItem) {
+                    selectedItem.classList.add('active');
+                }
+
+                // Subscribe to conversation messages (store subscription reference)
+                if (isConnected && stompClient) {
+                    currentSubscription = stompClient.subscribe(`/topic/chat/${conversationId}`, function (message) {
+                        console.log('[WebSocket] Received message in conversation:', conversationId);
+                        const msg = JSON.parse(message.body);
+                        console.log('[WebSocket] Message data:', msg);
+                        appendMessage(msg);
+                        // Update sidebar preview when new message arrives
+                        updateConversationPreview(conversationId, msg.content, msg.timestamp, msg.senderName);
+                        moveConversationToTop(conversationId);
+                    });
+                }
+
+                // Load conversation messages and info
+                loadConversationMessages(conversationId);
+                loadConversationInfo(conversationId);
+            }
+
+            // === Load Conversation Info ===
+            async function loadConversationInfo(conversationId) {
+                console.log('[Chat DEBUG] loadConversationInfo called for:', conversationId);
+                try {
+                    const url = contextPath + `chat/conversation/${conversationId}`;
+                    console.log('[Chat DEBUG] Fetching conversation info from:', url);
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    console.log('[Chat DEBUG] Conversation info response status:', response.status);
+
+                    if (response.ok) {
+                        const info = await response.json();
+                        console.log('[Chat DEBUG] Conversation info (full):', JSON.stringify(info, null, 2));
+                        console.log('[Chat DEBUG] online value:', info.online, 'type:', typeof info.online);
+                        console.log('[Chat DEBUG] participantId:', info.participantId);
+
+                        // Update online status text
+                        const statusText = info.online ? 'В сети' : 'Не в сети';
+                        console.log('[Chat DEBUG] Setting status text to:', statusText);
+                        document.getElementById('chat-recipient-status').textContent = statusText;
+
+                        // Save participant ID for presence updates
+                        currentParticipantId = info.participantId;
+                        console.log('[Chat DEBUG] Set currentParticipantId to:', currentParticipantId);
+
+                        // Update name
+                        document.getElementById('chat-recipient-name').textContent = info.name || 'Диалог';
+                        document.getElementById('chat-sidebar-name').textContent = info.name || 'Диалог';
+
+                        // Update avatar with image or initial
+                        const avatarContainer = document.getElementById('chat-recipient-avatar');
+                        if (avatarContainer) {
+                            // Set online/offline class
+                            avatarContainer.classList.remove('avatar-online', 'avatar-offline');
+                            const avatarClass = info.online ? 'avatar-online' : 'avatar-offline';
+                            console.log('[Chat DEBUG] Setting avatar class to:', avatarClass);
+                            avatarContainer.classList.add(avatarClass);
+
+                            // Set avatar content
+                            if (info.avatar) {
+                                avatarContainer.innerHTML = `<img src="${contextPath}${info.avatar}" class="rounded-circle" alt="${info.name}">`;
+                            } else {
+                                const initial = (info.name || '?').charAt(0).toUpperCase();
+                                avatarContainer.innerHTML = `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`;
+                            }
+                        }
+                    } else {
+                        console.error('[Chat ERROR] Failed to load conversation info, status:', response.status);
+                    }
+                } catch (error) {
+                    console.error('[Chat ERROR] Failed to load conversation info:', error);
+                    document.getElementById('chat-recipient-status').textContent = '';
+                }
+            }
+
+            // === Start Conversation With User ===
+            async function startConversationWith(userId, name, targetType) {
+                console.log('[Chat] Starting conversation with:', userId, 'type:', targetType);
+                try {
+                    const response = await fetch(contextPath + 'chat/conversation', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ userId: userId, targetType: targetType || 'USER' })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const conversation = await response.json();
+                    console.log('[Chat] Conversation created/retrieved:', conversation);
+
+                    // Select the conversation
+                    selectConversation(conversation.id, conversation.name || name);
+
+                    // Refresh sidebar to show new conversation
+                    loadSidebar();
+                } catch (error) {
+                    console.error('[Chat] Failed to start conversation:', error);
+                    showAlert('Не удалось начать диалог. Попробуйте ещё раз.', 'error');
+                }
+            }
+
+            // === Load Conversation Messages ===
+            async function loadConversationMessages(conversationId) {
+                console.log('[Chat] Loading messages for conversation:', conversationId);
+                chatMessages.innerHTML = `
+                    <li class="py-5 text-center text-body-secondary">
+                        Загрузка сообщений...
+                    </li>
+                `;
+
+                try {
+                    const response = await fetch(contextPath + `chat/conversation/${conversationId}/messages?limit=50`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const messages = await response.json();
+                    console.log('[Chat] Messages loaded:', messages.length);
+
+                    // Clear loading state
+                    chatMessages.innerHTML = '';
+
+                    if (messages.length === 0) {
+                        chatMessages.innerHTML = `
+                            <li class="py-5 text-center text-body-secondary" data-i18n="chat.noMessages">
+                                Нет сообщений. Начните диалог!
+                            </li>
+                        `;
+                    } else {
+                        messages.forEach(msg => appendMessage(msg));
+                    }
+
+                    // Scroll to bottom
+                    const container = document.getElementById('chat-history-container');
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                } catch (error) {
+                    console.error('[Chat] Failed to load messages:', error);
+                    chatMessages.innerHTML = `
+                        <li class="py-5 text-center text-danger">
+                            Ошибка загрузки сообщений
+                        </li>
+                    `;
+                }
+            }
+
+            // === Append Message to Chat ===
+            function appendMessage(msg) {
+                console.log('[Chat] appendMessage called with:', msg);
+
+                // Remove empty state if present
+                const emptyState = chatMessages.querySelector('[data-i18n="chat.noMessages"], [data-i18n="chat.selectConversation"], #chat-empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                // Check if message already exists (prevent duplicates)
+                if (chatMessages.querySelector(`[data-message-id="${msg.id}"]`)) {
+                    console.log('[Chat] Message already exists, skipping:', msg.id);
+                    return;
+                }
+
+                // Calculate isOwn on client-side using senderId and currentUserId
+                const isOwn = msg.senderId === currentUserId;
+                console.log('[Chat] Message senderId:', msg.senderId, 'currentUserId:', currentUserId, 'isOwn:', isOwn);
+
+                const li = document.createElement('li');
+                li.className = isOwn ? 'chat-message chat-message-right' : 'chat-message';
+                li.setAttribute('data-message-id', msg.id);
+
+                const avatarHtml = msg.senderAvatar
+                    ? `<img src="${contextPath}${msg.senderAvatar}" class="rounded-circle" alt="${msg.senderName}">`
+                    : `<span class="avatar-initial ${isOwn ? 'bg-primary' : 'bg-label-secondary'} rounded-circle">${(msg.senderName || '?').charAt(0).toUpperCase()}</span>`;
+
+                const time = msg.timestamp ? formatTime(msg.timestamp) : '';
+
+                li.innerHTML = `
+                    <div class="d-flex ${isOwn ? 'flex-row-reverse' : ''} gap-2">
+                        <div class="avatar avatar-sm">
+                            ${avatarHtml}
+                        </div>
+                        <div class="chat-message-wrapper">
+                            <div class="chat-message-text ${isOwn ? 'bg-primary text-white' : 'bg-body-secondary'}">
+                                <p class="mb-0">${escapeHtml(msg.content)}</p>
+                            </div>
+                            <div class="text-body-secondary mt-1 ${isOwn ? 'text-end' : ''}">
+                                <small>${time}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatMessages.appendChild(li);
+
+                // Scroll to bottom
+                const container = document.getElementById('chat-history-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+
+            // === Escape HTML ===
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // === Setup Event Listeners ===
+            function setupEventListeners() {
+                // Refresh button
+                if (refreshBtn) {
+                    refreshBtn.onclick = loadSidebar;
+                }
+
+                // Message input
+                if (chatMessageInput) {
+                    chatMessageInput.oninput = () => {
+                        chatSendButton.disabled = !chatMessageInput.value.trim() || !currentConversationId;
+                    };
+                }
+
+                // Send form
+                if (chatSendForm) {
+                    chatSendForm.onsubmit = (e) => {
+                        e.preventDefault();
+                        sendMessage();
+                    };
+                }
+            }
+
+            // === Send Message ===
+            function sendMessage() {
+                const content = chatMessageInput.value.trim();
+                if (!content || !currentConversationId || !isConnected) return;
+
+                console.log('[Chat] Sending message to conversation:', currentConversationId);
+
+                const message = { content: content };
+                // Используем старый Stomp API (send вместо publish)
+                stompClient.send(
+                    `/app/chat/${currentConversationId}/sendMessage`,
+                    {},
+                    JSON.stringify(message)
+                );
+
+                chatMessageInput.value = '';
+                chatSendButton.disabled = true;
+
+                // Update sidebar preview immediately (optimistic update)
+                updateConversationPreview(currentConversationId, content, new Date().toISOString(), 'Вы');
+                moveConversationToTop(currentConversationId);
+            }
+
+        </script>
+    </th:block>
+</body>
+
+</html>

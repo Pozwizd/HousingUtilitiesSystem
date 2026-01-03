@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Голосование</title>
+    <th:block layout:fragment="page_css">
+        <style>
+            .vote-info-item {
+                margin-bottom: 0.5rem;
+            }
+
+            .vote-info-label {
+                font-weight: 500;
+                color: #6c757d;
+            }
+
+            .vote-info-value {
+                font-weight: 600;
+            }
+
+            .badge-for {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-against {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .badge-abstain {
+                background-color: #ff9800;
+                color: white;
+            }
+
+            .badge-active {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-closed {
+                background-color: #6c757d;
+                color: white;
+            }
+
+            .badge-accepted {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-rejected {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .chart-container {
+                min-height: 350px;
+            }
+
+            .vote-btn {
+                min-width: 120px;
+            }
+
+            .vote-description {
+                background-color: #fffde7;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .user-vote-info {
+                padding: 0.75rem;
+                border-radius: 0.5rem;
+                margin-bottom: 1rem;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <!-- Back button -->
+        <div class="mb-3">
+            <a th:href="@{/voting}" class="btn btn-label-secondary">
+                <i class="icon-base ti tabler-arrow-left me-1"></i>
+                Назад к списку
+            </a>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Description & Voting/Chart -->
+            <div class="col-lg-8 col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0" id="voteTitle">Загрузка...</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Description -->
+                        <div class="vote-description" id="voteDescriptionBlock">
+                            <p id="voteDescription" class="mb-0"></p>
+                        </div>
+
+                        <!-- Voting Section (for active votes) -->
+                        <div id="votingSection" style="display: none;">
+                            <div class="user-vote-info bg-light" id="userVoteInfo">
+                                <p class="mb-1"><strong>Всего проголосовало:</strong> <span id="totalVotedArea">0</span>
+                                    кв. м.</p>
+                                <p class="mb-0" id="userVoteStatus"></p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-success">Голосовать:</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-warning vote-btn"
+                                        onclick="castVote('ABSTENTION')">
+                                        Воздержаться
+                                    </button>
+                                    <button type="button" class="btn btn-danger vote-btn" onclick="castVote('AGAINST')">
+                                        Против
+                                    </button>
+                                    <button type="button" class="btn btn-success vote-btn" onclick="castVote('FOR')">
+                                        За
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Section (for closed votes) -->
+                        <div id="chartSection" style="display: none;">
+                            <div class="chart-container">
+                                <div id="voteChart"></div>
+                            </div>
+                            <div class="d-flex justify-content-center mt-3">
+                                <div class="d-flex gap-4">
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge badge-against me-1">&nbsp;</span>
+                                        <span>Против</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge badge-abstain me-1">&nbsp;</span>
+                                        <span>Воздержались</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge badge-for me-1">&nbsp;</span>
+                                        <span>За</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Vote Info -->
+            <div class="col-lg-4 col-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="vote-info-item">
+                            <span class="vote-info-label">Время завершения голосования:</span>
+                            <span id="voteEndTime" class="vote-info-value d-block"></span>
+                        </div>
+                        <hr>
+                        <div class="vote-info-item">
+                            <span class="vote-info-label">Статус:</span>
+                            <span id="voteStatus" class="vote-info-value"></span>
+                        </div>
+                        <div class="vote-info-item" id="resultBlock">
+                            <span class="vote-info-label">Голосование:</span>
+                            <span id="voteResult" class="vote-info-value"></span>
+                        </div>
+                        <div class="vote-info-item" id="closedUserVoteBlock" style="display: none;">
+                            <span class="vote-info-label">Вы проголосовали:</span>
+                            <span id="closedUserVote" class="vote-info-value"></span>
+                        </div>
+                        <div id="notVotedBlock" style="display: none;">
+                            <span class="text-muted fst-italic">Вы не приняли участие в голосовании</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:src="@{/assets/vendor/libs/apexcharts/apexcharts.js}"></script>
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            window.voteId = [[${ voteId }]];
+            window.userId = [[${ userId }]];
+        </script>
+        <script>
+            let voteData = null;
+            let chart = null;
+
+            $(document).ready(function () {
+                loadVoteDetail();
+            });
+
+            function loadVoteDetail() {
+                $.ajax({
+                    url: window.contextPath + '/api/voting/' + window.voteId + '/detail',
+                    type: 'GET',
+                    success: function (vote) {
+                        voteData = vote;
+                        renderVoteDetail(vote);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading vote detail:', error);
+                        if (xhr.status === 401) {
+                            window.location.href = window.contextPath + '/login';
+                        }
+                    }
+                });
+            }
+
+            function renderVoteDetail(vote) {
+                $('#voteTitle').text(vote.title || 'Без названия');
+                $('#voteDescription').text(vote.description || '');
+
+                if (!vote.description) {
+                    $('#voteDescriptionBlock').hide();
+                }
+
+                // End time
+                $('#voteEndTime').text(formatDate(vote.endTime));
+
+                // Status
+                const statusBadge = vote.status === 'Активное'
+                    ? '<span class="badge badge-active">Активное</span>'
+                    : '<span class="badge badge-closed">Закрыто</span>';
+                $('#voteStatus').html(statusBadge);
+
+                // Result
+                if (vote.result) {
+                    const resultBadge = vote.result === 'Принято'
+                        ? '<span class="badge badge-accepted">Принято</span>'
+                        : '<span class="badge badge-rejected">Отклонено</span>';
+                    $('#voteResult').html(resultBadge);
+                    $('#resultBlock').show();
+                } else {
+                    $('#resultBlock').hide();
+                }
+
+                // Show appropriate section based on status
+                if (vote.status === 'Активное') {
+                    $('#votingSection').show();
+                    $('#chartSection').hide();
+
+                    // Total voted area
+                    $('#totalVotedArea').text((vote.totalVotedArea || 0).toFixed(2));
+
+                    // User vote status
+                    if (vote.userHasVoted) {
+                        $('#userVoteStatus').html('Вы проголосовали: <strong class="text-success">' + vote.userVoteTypeDisplay + '</strong>');
+                    } else {
+                        $('#userVoteStatus').html('<span class="text-warning">Вы еще не приняли участие в голосовании</span>');
+                    }
+                } else {
+                    // Closed vote - show chart
+                    $('#votingSection').hide();
+                    $('#chartSection').show();
+                    renderChart(vote);
+
+                    // User vote info for closed vote
+                    if (vote.userHasVoted) {
+                        $('#closedUserVote').html('<strong>' + vote.userVoteTypeDisplay + '</strong>');
+                        $('#closedUserVoteBlock').show();
+                        $('#notVotedBlock').hide();
+                    } else {
+                        $('#closedUserVoteBlock').hide();
+                        $('#notVotedBlock').show();
+                    }
+                }
+            }
+
+            function renderChart(vote) {
+                const forArea = vote.forVotesArea || 0;
+                const againstArea = vote.againstVotesArea || 0;
+                const abstainArea = vote.abstentionsArea || 0;
+
+                const options = {
+                    series: [againstArea, abstainArea, forArea],
+                    chart: {
+                        type: 'pie',
+                        height: 350
+                    },
+                    labels: ['Против', 'Воздержались', 'За'],
+                    colors: ['#dc3545', '#ff9800', '#4caf50'],
+                    legend: {
+                        show: false
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function (val, opts) {
+                            return opts.w.config.series[opts.seriesIndex].toFixed(2) + ' кв.м.';
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function (val) {
+                                return val.toFixed(2) + ' кв. м.';
+                            }
+                        }
+                    },
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                width: 300
+                            }
+                        }
+                    }]
+                };
+
+                if (chart) {
+                    chart.destroy();
+                }
+                chart = new ApexCharts(document.querySelector("#voteChart"), options);
+                chart.render();
+            }
+
+            function castVote(voteType) {
+                $.ajax({
+                    url: window.contextPath + '/api/voting/' + window.voteId + '/vote',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ voteType: voteType }),
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('Успешно', response.message, 'success');
+                            loadVoteDetail(); // Reload to show updated vote status
+                        } else {
+                            showToast('Ошибка', response.message, 'error');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error casting vote:', error);
+                        showToast('Ошибка', 'Не удалось проголосовать', 'error');
+                        if (xhr.status === 401) {
+                            window.location.href = window.contextPath + '/login';
+                        }
+                    }
+                });
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '-';
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day}.${month}.${year} ${hours}:${minutes}`;
+            }
+
+            function showToast(title, message, type) {
+                const toastEl = document.getElementById('universalToast');
+                const toastTitle = document.getElementById('toastTitle');
+                const toastBody = document.getElementById('toastBody');
+                const toastIcon = document.getElementById('toastIcon');
+
+                toastTitle.textContent = title;
+                toastBody.textContent = message;
+
+                // Set icon based on type
+                toastIcon.className = 'icon-base ti me-2';
+                if (type === 'success') {
+                    toastIcon.classList.add('tabler-check');
+                    toastIcon.style.color = '#28a745';
+                } else if (type === 'error') {
+                    toastIcon.classList.add('tabler-x');
+                    toastIcon.style.color = '#dc3545';
+                } else {
+                    toastIcon.classList.add('tabler-info-circle');
+                    toastIcon.style.color = '#007bff';
+                }
+
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+        <style>
+            .section-card {
+                border: 1px solid var(--bs-border-color);
+                border-radius: 8px;
+                margin-bottom: 20px;
+                padding: 20px;
+                background: var(--bs-card-bg);
+            }
+
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid var(--bs-border-color);
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .section-content {
+                margin-bottom: 20px;
+                color: var(--bs-secondary-color);
+            }
+
+            .contact-card {
+                display: flex;
+                gap: 15px;
+                padding: 15px;
+                border: 1px solid var(--bs-border-color);
+                border-radius: 8px;
+                margin-bottom: 10px;
+                background: var(--bs-tertiary-bg);
+            }
+
+            .contact-photo {
+                width: 80px;
+                height: 80px;
+                border-radius: 8px;
+                object-fit: cover;
+                background: var(--bs-secondary-bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--bs-secondary-color);
+                font-size: 0.75rem;
+            }
+
+            .contact-photo img {
+                width: 100%;
+                height: 100%;
+                border-radius: 8px;
+                object-fit: cover;
+            }
+
+            .contact-info {
+                flex: 1;
+            }
+
+            .contact-name {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--bs-body-color);
+                margin-bottom: 5px;
+            }
+
+            .contact-role {
+                color: var(--bs-success);
+                font-size: 0.9rem;
+                margin-bottom: 3px;
+            }
+
+            .contact-phone {
+                color: var(--bs-primary);
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+            }
+
+            .contact-description {
+                color: var(--bs-secondary-color);
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+
+            .contact-actions {
+                display: flex;
+                gap: 5px;
+                align-items: flex-start;
+            }
+
+            .toolbar-btn {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+                border: 1px solid var(--bs-border-color);
+                background: var(--bs-body-bg);
+                color: var(--bs-body-color);
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+            .toolbar-btn:hover {
+                background: var(--bs-tertiary-bg);
+            }
+
+            .toolbar-btn.active {
+                background: var(--bs-success);
+                color: white;
+                border-color: var(--bs-success);
+            }
+
+            .content-toolbar {
+                display: flex;
+                gap: 5px;
+                margin-bottom: 10px;
+                flex-wrap: wrap;
+            }
+
+            .add-contact-btn {
+                border: 2px dashed var(--bs-border-color);
+                border-radius: 8px;
+                padding: 20px;
+                text-align: center;
+                cursor: pointer;
+                color: var(--bs-secondary-color);
+                transition: all 0.2s;
+            }
+
+            .add-contact-btn:hover {
+                border-color: var(--bs-success);
+                color: var(--bs-success);
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="main-card mb-3 card" id="card-block">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" data-i18n="contactsPage.title">Редактирование страницы "Контакты"</h5>
+                <div>
+                    <button type="button" class="btn btn-outline-primary btn-sm me-2" id="addSectionBtn">
+                        <i class="icon-base ti tabler-plus me-1"></i><span data-i18n="contactsPage.addSection">Добавить секцию</span>
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" id="saveAllBtn">
+                        <i class="icon-base ti tabler-device-floppy me-1"></i><span data-i18n="contactsPage.save">Сохранить</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" id="sectionsContainer">
+                <!-- Sections will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Section Template - MUST be inside layout:fragment for Thymeleaf to render it -->
+        <template id="sectionTemplate">
+            <div class="section-card" data-section-id="">
+                <div class="section-header">
+                    <div class="flex-grow-1 me-3">
+                        <label class="form-label small mb-1" data-i18n="contactsPage.sectionTitle">Заголовок</label>
+                        <input type="text" class="form-control section-title-input" data-i18n="[placeholder]contactsPage.sectionTitlePlaceholder" placeholder="Название секции">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm delete-section-btn">
+                            <i class="icon-base ti tabler-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small" data-i18n="contactsPage.content">Содержание</label>
+                    <div class="content-toolbar">
+                        <button type="button" class="toolbar-btn" data-format="bold"><b data-i18n="contactsPage.bold">Полужирный</b></button>
+                        <button type="button" class="toolbar-btn" data-format="italic"><i data-i18n="contactsPage.italic">Курсив</i></button>
+                        <button type="button" class="toolbar-btn" data-format="underline"><u data-i18n="contactsPage.underline">Подчёркнутый</u></button>
+                        <button type="button" class="toolbar-btn" data-format="insertUnorderedList">☰</button>
+                        <button type="button" class="toolbar-btn" data-format="insertOrderedList">1.</button>
+                    </div>
+                    <div class="form-control section-content-editor" contenteditable="true"
+                        style="min-height: 100px; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="contacts-container">
+                    <!-- Contact cards will be added here -->
+                </div>
+                <div class="add-contact-btn" onclick="addContactToSection(this)">
+                    <i class="icon-base ti tabler-plus me-2"></i><span data-i18n="contactsPage.addContact">Добавить контакт</span>
+                </div>
+            </div>
+        </template>
+
+        <!-- Contact Template - MUST be inside layout:fragment for Thymeleaf to render it -->
+        <template id="contactTemplate">
+            <div class="contact-card" data-contact-id="">
+                <div class="contact-photo">
+                    <span class="no-photo-text" data-i18n="contactsPage.image">Image</span>
+                    <img src="" alt="" style="display: none;">
+                </div>
+                <div class="contact-info">
+                    <input type="text" class="form-control form-control-sm mb-2 contact-name-input" data-i18n="[placeholder]contactsPage.fullName" placeholder="ФИО">
+                    <div class="row">
+                        <div class="col-4">
+                            <select class="form-select form-select-sm mb-2 contact-type-select">
+                                <option value="chairman" data-i18n="contactsPage.contactTypes.chairman">Председатель</option>
+                                <option value="employee" data-i18n="contactsPage.contactTypes.employee">Сотрудник</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" class="form-control form-control-sm mb-2 contact-role-input"
+                                data-i18n="[placeholder]contactsPage.position" placeholder="Должность">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" class="form-control form-control-sm mb-2 contact-phone-input"
+                                placeholder="+380...">
+                        </div>
+                    </div>
+                    <textarea class="form-control form-control-sm contact-description-input" rows="2"
+                        data-i18n="[placeholder]contactsPage.description" placeholder="Описание"></textarea>
+                </div>
+                <div class="contact-actions">
+                    <button type="button" class="btn btn-sm btn-outline-secondary upload-photo-btn"
+                        data-i18n="[title]contactsPage.uploadPhoto" title="Загрузить фото">
+                        <i class="icon-base ti tabler-upload"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-contact-btn" title="Удалить">
+                        <i class="icon-base ti tabler-trash"></i>
+                    </button>
+                </div>
+                <input type="file" class="contact-photo-input" accept="image/*" style="display: none;">
+            </div>
+        </template>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            $(document).ready(function () {
+                loadSections();
+
+                // Toolbar formatting
+                $(document).on('click', '.toolbar-btn', function () {
+                    const format = $(this).data('format');
+                    document.execCommand(format, false, null);
+                });
+
+                // Add section button
+                $('#addSectionBtn').click(function () {
+                    addNewSection();
+                });
+
+                // Delete section button
+                $(document).on('click', '.delete-section-btn', function () {
+                    const sectionCard = $(this).closest('.section-card');
+                    const sectionId = sectionCard.data('section-id');
+
+                    if (sectionId) {
+                        showConfirmModal('Удаление секции', 'Удалить секцию со всеми контактами?', function () {
+                            $.ajax({
+                                url: window.contextPath + '/contacts/sections/' + sectionId,
+                                type: 'DELETE',
+                                success: function () {
+                                    sectionCard.remove();
+                                    showAlert('Секция удалена', 'success');
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error('Error deleting section:', error);
+                                    showAlert('Ошибка удаления секции', 'error');
+                                }
+                            });
+                        }, { confirmClass: 'btn-danger', confirmText: 'Удалить' });
+                    } else {
+                        sectionCard.remove();
+                    }
+                });
+
+                // Delete contact button
+                $(document).on('click', '.delete-contact-btn', function () {
+                    const contactCard = $(this).closest('.contact-card');
+                    const contactId = contactCard.data('contact-id');
+
+                    if (contactId) {
+                        $.ajax({
+                            url: window.contextPath + '/contacts/' + contactId,
+                            type: 'DELETE',
+                            success: function () {
+                                contactCard.remove();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error deleting contact:', error);
+                            }
+                        });
+                    } else {
+                        contactCard.remove();
+                    }
+                });
+
+                // Upload photo button
+                $(document).on('click', '.upload-photo-btn', function () {
+                    $(this).closest('.contact-card').find('.contact-photo-input').click();
+                });
+
+                // Photo file input change
+                $(document).on('change', '.contact-photo-input', function () {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        const contactCard = $(this).closest('.contact-card');
+                        reader.onload = function (e) {
+                            contactCard.find('.contact-photo img').attr('src', e.target.result).show();
+                            contactCard.find('.no-photo-text').hide();
+                            // Mark as having new photo file
+                            contactCard.data('has-new-photo', true);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Save all button
+                $('#saveAllBtn').click(function () {
+                    saveAllSections();
+                });
+            });
+
+            function loadSections() {
+                $.ajax({
+                    url: window.contextPath + '/contacts/sections',
+                    type: 'GET',
+                    success: function (sections) {
+                        const container = $('#sectionsContainer');
+                        container.empty();
+
+                        if (sections && sections.length > 0) {
+                            sections.forEach(section => {
+                                const sectionEl = createSectionElement(section);
+                                container.append(sectionEl);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading sections:', error);
+                    }
+                });
+            }
+
+            function createSectionElement(section) {
+                const template = document.getElementById('sectionTemplate');
+                const sectionEl = template.content.cloneNode(true);
+                const sectionCard = sectionEl.querySelector('.section-card');
+
+                sectionCard.dataset.sectionId = section.id || '';
+                sectionCard.querySelector('.section-title-input').value = section.title || '';
+                sectionCard.querySelector('.section-content-editor').innerHTML = section.content || '';
+
+                if (section.contacts && section.contacts.length > 0) {
+                    const contactsContainer = sectionCard.querySelector('.contacts-container');
+                    section.contacts.forEach(contact => {
+                        const contactEl = createContactElement(contact);
+                        contactsContainer.appendChild(contactEl);
+                    });
+                }
+
+                return sectionEl;
+            }
+
+            function createContactElement(contact) {
+                const template = document.getElementById('contactTemplate');
+                const contactEl = template.content.cloneNode(true);
+                const contactCard = contactEl.querySelector('.contact-card');
+
+                contactCard.dataset.contactId = contact.id || '';
+                contactCard.querySelector('.contact-name-input').value = contact.fullName || '';
+                contactCard.querySelector('.contact-type-select').value = contact.contactType || 'employee';
+                contactCard.querySelector('.contact-role-input').value = contact.role || '';
+                contactCard.querySelector('.contact-phone-input').value = contact.phone || '';
+                contactCard.querySelector('.contact-description-input').value = contact.description || '';
+
+                if (contact.photoPath) {
+                    const img = contactCard.querySelector('.contact-photo img');
+                    img.src = window.contextPath + '/' + contact.photoPath;
+                    img.style.display = 'block';
+                    contactCard.querySelector('.no-photo-text').style.display = 'none';
+                    $(contactCard).data('photo-path', contact.photoPath);
+                }
+
+                return contactEl;
+            }
+
+            function addNewSection() {
+                const template = document.getElementById('sectionTemplate');
+                const sectionEl = template.content.cloneNode(true);
+                $('#sectionsContainer').append(sectionEl);
+            }
+
+            function addContactToSection(btn) {
+                const sectionCard = $(btn).closest('.section-card');
+                const template = document.getElementById('contactTemplate');
+                const contactEl = template.content.cloneNode(true);
+                sectionCard.find('.contacts-container').append(contactEl);
+            }
+
+            function saveAllSections() {
+                const sectionCards = $('.section-card').toArray();
+                saveSectionsSequentially(sectionCards, 0);
+            }
+
+            function saveSectionsSequentially(sectionCards, index) {
+                if (index >= sectionCards.length) {
+                    showAlert('Сохранено успешно!', 'success');
+                    loadSections();
+                    return;
+                }
+
+                const sectionCard = $(sectionCards[index]);
+                const sectionId = sectionCard.data('section-id');
+                const url = sectionId
+                    ? window.contextPath + '/contacts/sections/' + sectionId
+                    : window.contextPath + '/contacts/sections';
+                const method = sectionId ? 'PUT' : 'POST';
+
+                // Collect section data
+                const sectionData = {
+                    title: sectionCard.find('.section-title-input').val(),
+                    content: sectionCard.find('.section-content-editor').html(),
+                    contacts: []
+                };
+
+                if (sectionId) {
+                    sectionData.id = sectionId;
+                }
+
+                // Collect photos and build contacts
+                const formData = new FormData();
+                let photoIndex = 0;
+
+                sectionCard.find('.contact-card').each(function () {
+                    const contactCard = $(this);
+                    const contactId = contactCard.data('contact-id');
+                    const hasNewPhoto = contactCard.data('has-new-photo');
+
+                    const contactData = {
+                        fullName: contactCard.find('.contact-name-input').val(),
+                        contactType: contactCard.find('.contact-type-select').val(),
+                        role: contactCard.find('.contact-role-input').val(),
+                        phone: contactCard.find('.contact-phone-input').val(),
+                        description: contactCard.find('.contact-description-input').val()
+                    };
+
+                    if (contactId) {
+                        contactData.id = contactId;
+                    }
+
+                    // Add photo file if there's a new one
+                    if (hasNewPhoto) {
+                        const photoInput = contactCard.find('.contact-photo-input')[0];
+                        if (photoInput && photoInput.files[0]) {
+                            formData.append('photos', photoInput.files[0]);
+                            contactData.photoIndex = photoIndex;
+                            photoIndex++;
+                        }
+                    }
+
+                    sectionData.contacts.push(contactData);
+                });
+
+                // Add section JSON as blob
+                formData.append('section', new Blob([JSON.stringify(sectionData)], { type: 'application/json' }));
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function () {
+                        saveSectionsSequentially(sectionCards, index + 1);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error saving section:', error);
+                        showAlert('Ошибка сохранения секции: ' + (sectionData.title || 'без названия'), 'error');
+                    }
+                });
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Maven
+target/
+!target/*.jar
+mvnw
+mvnw.cmd
+.mvn/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+HELP.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Uploads
+uploads/
+
+# Sample data
+sample_data/
+

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Просмотр сообщения</title>
+    <th:block layout:fragment="page_css">
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="requestSubject">Загрузка...</h5>
+                        <span class="text-muted" id="requestDate"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-4 bg-lighter rounded mb-4" id="requestMessage">
+                            Загрузка...
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3">
+                            <a th:href="@{/requests/}" class="btn btn-label-secondary">
+                                <i class="icon-base ti tabler-arrow-left me-1"></i>
+                                Назад
+                            </a>
+                            <button type="button" class="btn btn-label-danger" id="deleteBtn">
+                                <i class="icon-base ti tabler-trash me-1"></i>
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            let requestId = null;
+
+            $(document).ready(function () {
+                // Get request ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                requestId = urlParams.get('id');
+
+                if (!requestId) {
+                    showAlert('ID сообщения не указан', 'warning');
+                    window.location.href = window.contextPath + '/requests/';
+                    return;
+                }
+
+                loadRequest(requestId);
+
+                $('#deleteBtn').click(function () {
+                    showConfirmModal('Удаление сообщения', 'Удалить это сообщение?', function () {
+                        $.ajax({
+                            url: window.contextPath + '/api/requests/' + requestId,
+                            type: 'DELETE',
+                            success: function (response) {
+                                showAlert('Сообщение удалено', 'success');
+                                window.location.href = window.contextPath + '/requests/';
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error deleting request:', error);
+                                showAlert('Ошибка удаления сообщения', 'error');
+                            }
+                        });
+                    }, { confirmClass: 'btn-danger', confirmText: 'Удалить' });
+                });
+            });
+
+            function loadRequest(id) {
+                $.ajax({
+                    url: window.contextPath + '/api/requests/' + id,
+                    type: 'GET',
+                    success: function (response) {
+                        $('#requestSubject').text(response.subject);
+                        $('#requestMessage').text(response.message);
+
+                        const date = new Date(response.createdAt);
+                        const formattedDate = date.toLocaleDateString('ru-RU') + ' ' +
+                            date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                        $('#requestDate').text(formattedDate);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading request:', error);
+                        showAlert('Ошибка загрузки сообщения', 'error');
+                        window.location.href = window.contextPath + '/requests/';
+                    }
+                });
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

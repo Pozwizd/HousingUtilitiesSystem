@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout.html}">
+
+<head>
+    <title>Профиль администратора</title>
+    <th:block layout:fragment="page_css">
+        <style>
+            .avatar-preview {
+                width: 100px;
+                height: 100px;
+                border-radius: 8px;
+                object-fit: cover;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Account Settings Card -->
+                <div class="card mb-6">
+                    <h5 class="card-header" data-i18n="profile.settings">Настройки профиля</h5>
+                    <!-- Account -->
+                    <div class="card-body">
+                        <div class="d-flex align-items-start align-items-sm-center gap-6">
+                            <img th:src="${admin?.pathAvatar != null ? admin.pathAvatar : '/assets/img/avatars/1.png'}"
+                                alt="user-avatar" class="d-block w-px-100 h-px-100 rounded avatar-preview"
+                                id="uploadedAvatar" />
+                            <div class="button-wrapper">
+                                <label for="upload" class="btn btn-primary me-3 mb-4" tabindex="0">
+                                    <span class="d-none d-sm-block" data-i18n="profile.uploadPhoto">Загрузить новое
+                                        фото</span>
+                                    <i class="icon-base ti tabler-upload d-block d-sm-none"></i>
+                                    <input type="file" id="upload" class="account-file-input" hidden
+                                        accept="image/png, image/jpeg, image/jpg, image/gif" />
+                                </label>
+                                <button type="button" class="btn btn-label-secondary account-image-reset mb-4">
+                                    <i class="icon-base ti tabler-reset d-block d-sm-none"></i>
+                                    <span class="d-none d-sm-block" data-i18n="profile.reset">Сбросить</span>
+                                </button>
+
+                                <div data-i18n="profile.allowedFormats">Допустимы JPG, GIF или PNG. Максимальный размер
+                                    800K</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body pt-4">
+                        <form id="formAccountSettings" method="POST" onsubmit="return false">
+                            <div class="row gy-4 gx-6 mb-6">
+                                <!-- Username -->
+                                <div class="col-md-6 form-control-validation">
+                                    <label for="username" class="form-label" data-i18n="profile.username">Имя
+                                        пользователя</label>
+                                    <input class="form-control" type="text" id="username" name="username"
+                                        th:value="${admin?.username}" data-i18n="[placeholder]profile.enterUsername"
+                                        placeholder="Введите имя пользователя" autofocus />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label" data-i18n="profile.email">E-mail</label>
+                                    <input class="form-control" type="email" id="email" name="email"
+                                        th:value="${admin?.email}" placeholder="admin@example.com" readonly />
+                                    <small class="text-muted" data-i18n="profile.emailReadonly">Email нельзя
+                                        изменить</small>
+                                </div>
+
+                                <!-- Phone -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="phone" data-i18n="profile.phone">Телефон</label>
+                                    <div class="input-group input-group-merge">
+                                        <input type="tel" id="phone" name="phone" class="form-control"
+                                            th:value="${admin?.phone}" placeholder="+380 50 123 4567" />
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Organization -->
+                                <div class="col-md-6">
+                                    <label for="organization" class="form-label"
+                                        data-i18n="profile.organization">Организация</label>
+                                    <input type="text" class="form-control" id="organization" name="organization"
+                                        th:value="${admin?.organization}" placeholder="Название организации" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Address -->
+                                <div class="col-md-6">
+                                    <label for="address" class="form-label" data-i18n="profile.address">Адрес</label>
+                                    <input type="text" class="form-control" id="address" name="address"
+                                        th:value="${admin?.address}" placeholder="Улица, дом, квартира"
+                                        data-i18n="[placeholder]profile.enterAddress" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- City -->
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label" data-i18n="profile.city">Город</label>
+                                    <input class="form-control" type="text" id="city" name="city"
+                                        th:value="${admin?.city}" placeholder="Киев"
+                                        data-i18n="[placeholder]profile.enterCity" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- State -->
+                                <div class="col-md-6">
+                                    <label for="state" class="form-label" data-i18n="profile.state">Область /
+                                        Регион</label>
+                                    <input class="form-control" type="text" id="state" name="state"
+                                        th:value="${admin?.state}" placeholder="Киевская область"
+                                        data-i18n="[placeholder]profile.enterState" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Zip Code -->
+                                <div class="col-md-6">
+                                    <label for="zipCode" class="form-label" data-i18n="profile.zipCode">Почтовый
+                                        индекс</label>
+                                    <input type="text" class="form-control" id="zipCode" name="zipCode"
+                                        th:value="${admin?.zipCode}" placeholder="01001" maxlength="6" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Country -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="country" data-i18n="profile.country">Страна</label>
+                                    <select id="country" name="country" class="select2 form-select">
+                                        <option value="" data-i18n="profile.selectCountry">Выберите страну</option>
+                                        <option value="Ukraine" th:selected="${admin?.country == 'Ukraine'}">Украина
+                                        </option>
+                                        <option value="United States"
+                                            th:selected="${admin?.country == 'United States'}">США</option>
+                                        <option value="United Kingdom"
+                                            th:selected="${admin?.country == 'United Kingdom'}">Великобритания</option>
+                                        <option value="Germany" th:selected="${admin?.country == 'Germany'}">Германия
+                                        </option>
+                                        <option value="France" th:selected="${admin?.country == 'France'}">Франция
+                                        </option>
+                                        <option value="Poland" th:selected="${admin?.country == 'Poland'}">Польша
+                                        </option>
+                                        <option value="Canada" th:selected="${admin?.country == 'Canada'}">Канада
+                                        </option>
+                                        <option value="Australia" th:selected="${admin?.country == 'Australia'}">
+                                            Австралия</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Language -->
+                                <div class="col-md-6">
+                                    <label for="language" class="form-label" data-i18n="profile.language">Язык</label>
+                                    <select id="language" name="language" class="select2 form-select">
+                                        <option value="" data-i18n="profile.selectLanguage">Выберите язык</option>
+                                        <option value="uk" th:selected="${admin?.language == 'uk'}">Українська</option>
+                                        <option value="ru" th:selected="${admin?.language == 'ru'}">Русский</option>
+                                        <option value="en" th:selected="${admin?.language == 'en'}">English</option>
+                                        <option value="de" th:selected="${admin?.language == 'de'}">Deutsch</option>
+                                        <option value="fr" th:selected="${admin?.language == 'fr'}">Français</option>
+                                        <option value="pl" th:selected="${admin?.language == 'pl'}">Polski</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Timezone -->
+                                <div class="col-md-6">
+                                    <label for="timezone" class="form-label" data-i18n="profile.timezone">Часовой
+                                        пояс</label>
+                                    <select id="timezone" name="timezone" class="select2 form-select">
+                                        <option value="" data-i18n="profile.selectTimezone">Выберите часовой пояс
+                                        </option>
+                                        <option value="Europe/Kiev" th:selected="${admin?.timezone == 'Europe/Kiev'}">
+                                            Киев (GMT+2/+3)</option>
+                                        <option value="Europe/London"
+                                            th:selected="${admin?.timezone == 'Europe/London'}">Лондон (GMT+0/+1)
+                                        </option>
+                                        <option value="Europe/Berlin"
+                                            th:selected="${admin?.timezone == 'Europe/Berlin'}">Берлин (GMT+1/+2)
+                                        </option>
+                                        <option value="America/New_York"
+                                            th:selected="${admin?.timezone == 'America/New_York'}">Нью-Йорк (GMT-5/-4)
+                                        </option>
+                                        <option value="America/Los_Angeles"
+                                            th:selected="${admin?.timezone == 'America/Los_Angeles'}">Лос-Анджелес
+                                            (GMT-8/-7)</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+
+                                <!-- Currency -->
+                                <div class="col-md-6">
+                                    <label for="currency" class="form-label" data-i18n="profile.currency">Валюта</label>
+                                    <select id="currency" name="currency" class="select2 form-select">
+                                        <option value="" data-i18n="profile.selectCurrency">Выберите валюту</option>
+                                        <option value="UAH" th:selected="${admin?.currency == 'UAH'}">₴ UAH</option>
+                                        <option value="USD" th:selected="${admin?.currency == 'USD'}">$ USD</option>
+                                        <option value="EUR" th:selected="${admin?.currency == 'EUR'}">€ EUR</option>
+                                        <option value="GBP" th:selected="${admin?.currency == 'GBP'}">£ GBP</option>
+                                        <option value="PLN" th:selected="${admin?.currency == 'PLN'}">zł PLN</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-2">
+                                <button type="submit" class="btn btn-primary me-3" id="saveProfileBtn"
+                                    data-i18n="common.saveChanges">
+                                    Сохранить изменения
+                                </button>
+                                <button type="button" class="btn btn-label-secondary" id="cancelBtn"
+                                    data-i18n="common.cancel">
+                                    Отмена
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- /Account -->
+                </div>
+
+                <!-- Change Password Card -->
+                <div class="card mb-6">
+                    <h5 class="card-header" data-i18n="profile.changePassword">Изменить пароль</h5>
+                    <div class="card-body">
+                        <form id="formChangePassword" onsubmit="return false">
+                            <div class="row gy-4 gx-6 mb-6">
+                                <div class="col-md-12 form-control-validation">
+                                    <label for="currentPassword" class="form-label"
+                                        data-i18n="profile.currentPassword">Текущий пароль</label>
+                                    <input class="form-control" type="password" id="currentPassword"
+                                        name="currentPassword" placeholder="Введите текущий пароль"
+                                        data-i18n="[placeholder]profile.enterCurrentPassword" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 form-control-validation">
+                                    <label for="newPassword" class="form-label" data-i18n="profile.newPassword">Новый
+                                        пароль</label>
+                                    <input class="form-control" type="password" id="newPassword" name="password"
+                                        placeholder="Введите новый пароль"
+                                        data-i18n="[placeholder]profile.enterNewPassword" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 form-control-validation">
+                                    <label for="confirmPassword" class="form-label"
+                                        data-i18n="profile.confirmPassword">Подтвердите пароль</label>
+                                    <input class="form-control" type="password" id="confirmPassword"
+                                        placeholder="Повторите новый пароль"
+                                        data-i18n="[placeholder]profile.repeatNewPassword" />
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button type="submit" class="btn btn-primary me-3" id="changePasswordBtn"
+                                    data-i18n="profile.changePassword">
+                                    Изменить пароль
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:src="@{/custom/toast.js}"></script>
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            // Profile management script
+            const API_BASE_URL = window.contextPath + '/profile/api';
+
+            document.addEventListener('DOMContentLoaded', function () {
+                loadProfileData();
+                initEventListeners();
+            });
+
+            // Load profile data from API
+            function loadProfileData() {
+                fetch(`${API_BASE_URL}/current`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Profile data:', data);
+                        populateForm(data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading profile:', error);
+                        showToast('Ошибка при загрузке профиля', 'error');
+                    });
+            }
+
+            // Populate form with profile data
+            function populateForm(data) {
+                const form = document.getElementById('formAccountSettings');
+                if (!form) return;
+
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input && data[key] !== null && data[key] !== undefined) {
+                        input.value = data[key];
+                    }
+                });
+
+                // Update avatar if exists
+                if (data.pathAvatar) {
+                    document.getElementById('uploadedAvatar').src = data.pathAvatar;
+                }
+            }
+
+            // Initialize event listeners
+            function initEventListeners() {
+                // Profile form submit
+                document.getElementById('formAccountSettings').addEventListener('submit', handleProfileSubmit);
+
+                // Password form submit
+                document.getElementById('formChangePassword').addEventListener('submit', handlePasswordSubmit);
+
+                // Avatar upload
+                document.getElementById('upload').addEventListener('change', handleAvatarUpload);
+
+                // Avatar reset
+                document.querySelector('.account-image-reset').addEventListener('click', handleAvatarReset);
+
+                // Cancel button
+                document.getElementById('cancelBtn').addEventListener('click', () => {
+                    loadProfileData();
+                });
+            }
+
+            // Handle profile form submission
+            function handleProfileSubmit(e) {
+                e.preventDefault();
+
+                const form = e.target;
+                const formData = new FormData(form);
+
+                // Clear previous validation errors
+                clearValidationErrors(form);
+
+                const submitBtn = document.getElementById('saveProfileBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Сохранение...';
+
+                fetch(`${API_BASE_URL}/update`, {
+                    method: 'PUT',
+                    body: formData
+                })
+                    .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Ошибка при сохранении');
+                        }
+                        return data;
+                    })
+                    .then(data => {
+                        showToast('Профиль успешно обновлен', 'success');
+                        populateForm(data);
+                    })
+                    .catch(error => {
+                        console.error('Error updating profile:', error);
+                        showToast(error.message || 'Ошибка при обновлении профиля', 'error');
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Сохранить изменения';
+                    });
+            }
+
+            // Handle password form submission
+            function handlePasswordSubmit(e) {
+                e.preventDefault();
+
+                const form = e.target;
+                const currentPasswordInput = form.querySelector('[name="currentPassword"]');
+                const newPasswordInput = form.querySelector('[name="password"]');
+                const confirmPasswordInput = document.getElementById('confirmPassword');
+
+                const currentPassword = currentPasswordInput.value;
+                const newPassword = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                // Clear previous validation errors
+                clearValidationErrors(form);
+
+                // Validation
+                let hasErrors = false;
+
+                if (!currentPassword) {
+                    showFieldError(currentPasswordInput, 'Введите текущий пароль');
+                    hasErrors = true;
+                }
+
+                if (!newPassword) {
+                    showFieldError(newPasswordInput, 'Введите новый пароль');
+                    hasErrors = true;
+                } else if (newPassword.length < 6) {
+                    showFieldError(newPasswordInput, 'Пароль должен содержать минимум 6 символов');
+                    hasErrors = true;
+                }
+
+                if (!confirmPassword) {
+                    showFieldError(confirmPasswordInput, 'Подтвердите новый пароль');
+                    hasErrors = true;
+                } else if (newPassword !== confirmPassword) {
+                    showFieldError(confirmPasswordInput, 'Пароли не совпадают');
+                    hasErrors = true;
+                }
+
+                if (hasErrors) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('currentPassword', currentPassword);
+                formData.append('password', newPassword);
+
+                const submitBtn = document.getElementById('changePasswordBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Изменение...';
+
+                fetch(`${API_BASE_URL}/update`, {
+                    method: 'PUT',
+                    body: formData
+                })
+                    .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Ошибка при изменении пароля');
+                        }
+                        return data;
+                    })
+                    .then(() => {
+                        showToast('Пароль успешно изменен', 'success');
+                        form.reset();
+                        clearValidationErrors(form);
+                    })
+                    .catch(error => {
+                        console.error('Error changing password:', error);
+                        showToast(error.message || 'Ошибка при изменении пароля', 'error');
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Изменить пароль';
+                    });
+            }
+
+            // Handle avatar upload
+            function handleAvatarUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Validate file size (800KB)
+                if (file.size > 800 * 1024) {
+                    showToast('Размер файла не должен превышать 800KB', 'warning');
+                    e.target.value = '';
+                    return;
+                }
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showToast('Допустимы только изображения', 'warning');
+                    e.target.value = '';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                fetch(`${API_BASE_URL}/avatar`, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Ошибка при загрузке аватара');
+                        }
+                        return data;
+                    })
+                    .then(data => {
+                        showToast('Аватар успешно загружен', 'success');
+                        if (data.avatarPath) {
+                            document.getElementById('uploadedAvatar').src = data.avatarPath + '?t=' + Date.now();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error uploading avatar:', error);
+                        showToast(error.message || 'Ошибка при загрузке аватара', 'error');
+                    });
+            }
+
+            // Handle avatar reset
+            function handleAvatarReset() {
+                if (!confirm('Вы уверены, что хотите удалить аватар?')) {
+                    return;
+                }
+
+                fetch(`${API_BASE_URL}/avatar`, {
+                    method: 'DELETE'
+                })
+                    .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Ошибка при удалении аватара');
+                        }
+                        return data;
+                    })
+                    .then(() => {
+                        showToast('Аватар успешно удален', 'success');
+                        document.getElementById('uploadedAvatar').src = (window.contextPath || '') + '/assets/img/avatars/1.png';
+                        document.getElementById('upload').value = '';
+                    })
+                    .catch(error => {
+                        console.error('Error deleting avatar:', error);
+                        showToast(error.message || 'Ошибка при удалении аватара', 'error');
+                    });
+            }
+
+            // Show toast notification
+            function showToast(message, type = 'info') {
+                // Use existing toast functionality if available
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, type);
+                } else {
+                    alert(message);
+                }
+            }
+
+            // Show field validation error
+            function showFieldError(input, message) {
+                const formControl = input.closest('.form-control-validation') || input.parentElement;
+                input.classList.add('is-invalid');
+                const feedback = formControl.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                    feedback.style.display = 'block';
+                }
+            }
+
+            // Clear validation errors
+            function clearValidationErrors(form) {
+                const invalidInputs = form.querySelectorAll('.is-invalid');
+                invalidInputs.forEach(input => {
+                    input.classList.remove('is-invalid');
+                });
+                const feedbacks = form.querySelectorAll('.invalid-feedback');
+                feedbacks.forEach(feedback => {
+                    feedback.textContent = '';
+                    feedback.style.display = 'none';
+                });
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

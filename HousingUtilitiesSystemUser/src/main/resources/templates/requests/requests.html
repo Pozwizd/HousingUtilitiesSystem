@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Заявки</title>
+    <th:block layout:fragment="page_css">
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Отправленные сообщения</h5>
+                <a th:href="@{/requests/new}" class="btn btn-primary">
+                    <i class="icon-base ti tabler-plus me-1"></i>
+                    Написать
+                </a>
+            </div>
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Тема сообщения</th>
+                            <th style="width: 180px;">Дата</th>
+                            <th style="width: 100px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-border-bottom-0" id="requestsTableBody">
+                        <!-- Rows will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex justify-content-center py-3">
+                <nav aria-label="Pagination">
+                    <ul class="pagination mb-0" id="pagination">
+                        <!-- Pagination will be loaded via AJAX -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            let currentPage = 0;
+            const pageSize = 10;
+
+            $(document).ready(function () {
+                loadRequests(0);
+            });
+
+            function loadRequests(page) {
+                currentPage = page;
+                $.ajax({
+                    url: window.contextPath + '/api/requests',
+                    type: 'GET',
+                    data: { page: page, size: pageSize },
+                    success: function (response) {
+                        renderTable(response.content);
+                        renderPagination(response.totalPages, page);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading requests:', error);
+                    }
+                });
+            }
+
+            function renderTable(requests) {
+                const tbody = $('#requestsTableBody');
+                tbody.empty();
+
+                if (!requests || requests.length === 0) {
+                    tbody.append('<tr><td colspan="3" class="text-center py-4"><i class="icon-base ti tabler-mood-empty icon-lg d-block mb-2"></i><span class="text-muted">Нет сообщений</span></td></tr>');
+                    return;
+                }
+
+                requests.forEach(function (request) {
+                    const date = new Date(request.createdAt);
+                    const formattedDate = date.toLocaleDateString('ru-RU') + ' ' +
+                        date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+                    const row = `
+                        <tr>
+                            <td>
+                                <a href="${window.contextPath}/requests/view?id=${request.id}" class="text-body fw-medium">
+                                    ${request.subject}
+                                </a>
+                            </td>
+                            <td class="text-muted">${formattedDate}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                        <i class="icon-base ti tabler-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="${window.contextPath}/requests/view?id=${request.id}">
+                                            <i class="icon-base ti tabler-eye me-1"></i> Просмотреть
+                                        </a>
+                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteRequest('${request.id}')">
+                                            <i class="icon-base ti tabler-trash me-1"></i> Удалить
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+
+            function renderPagination(totalPages, currentPage) {
+                const pagination = $('#pagination');
+                pagination.empty();
+
+                if (totalPages <= 1) return;
+
+                // First button
+                const firstDisabled = currentPage === 0 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${firstDisabled}">
+                        <a class="page-link" href="#" onclick="loadRequests(0); return false;">
+                            <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+
+                // Previous
+                const prevDisabled = currentPage === 0 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${prevDisabled}">
+                        <a class="page-link" href="#" onclick="loadRequests(${currentPage - 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+
+                // Page numbers
+                let startPage = Math.max(0, currentPage - 2);
+                let endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const activeClass = i === currentPage ? 'active' : '';
+                    pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" onclick="loadRequests(${i}); return false;">${i + 1}</a>
+                        </li>
+                    `);
+                }
+
+                // Next
+                const nextDisabled = currentPage >= totalPages - 1 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${nextDisabled}">
+                        <a class="page-link" href="#" onclick="loadRequests(${currentPage + 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+
+                // Last button
+                const lastDisabled = currentPage >= totalPages - 1 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${lastDisabled}">
+                        <a class="page-link" href="#" onclick="loadRequests(${totalPages - 1}); return false;">
+                            <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+            }
+
+            function deleteRequest(id) {
+                showConfirmModal('Удаление сообщения', 'Удалить это сообщение?', function () {
+                    $.ajax({
+                        url: window.contextPath + '/api/requests/' + id,
+                        type: 'DELETE',
+                        success: function (response) {
+                            showAlert('Сообщение удалено', 'success');
+                            loadRequests(currentPage);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error deleting request:', error);
+                            showAlert('Ошибка удаления сообщения', 'error');
+                        }
+                    });
+                }, { confirmClass: 'btn-danger', confirmText: 'Удалить' });
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="main-card mb-3 card" id="card-block">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" data-i18n="chairmen.title">Председатели</h5>
+                <a th:href="@{/chairmen/create}" class="btn btn-primary btn-sm" data-i18n="common.add">Добавить</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table style="width: 100%;" class="table table-hover table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th data-i18n="chairmen.fullName">ФИО</th>
+                                <th data-i18n="chairmen.phone">Телефон</th>
+                                <th data-i18n="chairmen.email">Email</th>
+                                <th data-i18n="chairmen.login">Логин</th>
+                                <th data-i18n="common.status">Статус</th>
+                                <th data-i18n="common.actions">Действия</th>
+                            </tr>
+                            <!-- Filter Row -->
+                            <tr>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="fullName" data-i18n="[placeholder]chairmen.fullName"
+                                        placeholder="ФИО"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="phone" data-i18n="[placeholder]chairmen.phone"
+                                        placeholder="Телефон"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="email" data-i18n="[placeholder]chairmen.email"
+                                        placeholder="Email"></th>
+                                <th><input type="text" class="form-control form-control-sm filter-input"
+                                        data-filter-key="login" data-i18n="[placeholder]chairmen.login"
+                                        placeholder="Логин"></th>
+                                <th>
+                                    <select class="select2 form-control form-control-sm filter-input" id="statusFilter"
+                                        data-filter-key="status" data-allow-clear="true">
+                                        <option value="" data-i18n="chairmen.allStatuses">Все статусы</option>
+                                    </select>
+                                </th>
+                                <th class="text-center">
+                                    <button type="button" id="clearFiltersBtn" class="btn btn-light btn-sm"
+                                        data-i18n="common.clear">Очистить
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="chairmanTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center py-3">
+                <label class="d-flex align-items-center gap-1 mb-0">
+                    <select id="pageSize" class="custom-select custom-select-sm form-control form-control-sm mx-2"
+                        style="width: auto;">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+                <nav aria-label="Навигация по страницам">
+                    <ul class="pagination mb-0" id="pagination">
+
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteConfirmModalLabel" data-i18n="common.confirmDelete">
+                                Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <span data-i18n="chairmen.deleteConfirm">Вы уверены, что хотите удалить этого
+                                председателя?</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal"
+                                data-i18n="common.cancel">Отменить
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirm-delete-btn"
+                                data-i18n="common.delete">Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    <div>
+        <th:block layout:fragment="page_js">
+            <script th:inline="javascript">
+                window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+            </script>
+            <script>
+                // Переводим статические элементы после загрузки i18next
+                function translateElements() {
+                    document.querySelectorAll('[data-i18n]').forEach(element => {
+                        const key = element.getAttribute('data-i18n');
+                        if (key.startsWith('[placeholder]')) {
+                            const placeholderKey = key.replace('[placeholder]', '');
+                            element.placeholder = i18next.t(placeholderKey);
+                        } else if (key.startsWith('[aria-label]')) {
+                            const ariaKey = key.replace('[aria-label]', '');
+                            element.setAttribute('aria-label', i18next.t(ariaKey));
+                        } else {
+                            const translatedText = i18next.t(key);
+                            if (element.tagName.toLowerCase() === 'title') {
+                                document.title = translatedText;
+                            }
+                            element.textContent = translatedText;
+                        }
+                    });
+                }
+
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (typeof i18next !== 'undefined') {
+                        i18next.on('initialized', translateElements);
+                        i18next.on('languageChanged', translateElements);
+                        if (i18next.isInitialized) {
+                            translateElements();
+                        }
+                    }
+                });
+
+                $(document).ready(function () {
+                    let currentPage = 0;
+                    let pageSize = 10;
+                    let currentFilters = {};
+                    let filterTimeout = null;
+
+                    // Загрузка статусов с сервера
+                    function loadStatuses() {
+                        $.ajax({
+                            url: window.contextPath + '/chairmen/getStatuses',
+                            type: 'GET',
+                            success: function (statuses) {
+                                const statusFilter = $('#statusFilter');
+                                statuses.forEach(status => {
+                                    const getStatusLabel = (status) => {
+                                        const statusLabels = {
+                                            'NEW': { key: 'common.statuses.new', default: 'Новый' },
+                                            'ACTIVE': { key: 'common.statuses.active', default: 'Активный' },
+                                            'DEACTIVATED': { key: 'common.statuses.deactivated', default: 'Деактивирован' },
+                                            'BLOCKED': { key: 'common.statuses.blocked', default: 'Заблокирован' }
+                                        };
+                                        const statusInfo = statusLabels[status] || { key: null, default: status };
+                                        return statusInfo.key && typeof i18next !== 'undefined' ? i18next.t(statusInfo.key) : statusInfo.default;
+                                    };
+                                    const displayName = getStatusLabel(status);
+                                    statusFilter.append(new Option(displayName, status, false, false));
+                                });
+
+                                // Инициализация Select2 по стандартам проекта
+                                const placeholderText = typeof i18next !== 'undefined' ? i18next.t('chairmen.allStatuses') : 'Все статусы';
+                                statusFilter.wrap('<div class="position-relative"></div>').select2({
+                                    placeholder: placeholderText,
+                                    dropdownParent: statusFilter.parent()
+                                });
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Ошибка загрузки статусов:', error);
+                                // Инициализация Select2 даже при ошибке
+                                const placeholderText = typeof i18next !== 'undefined' ? i18next.t('chairmen.allStatuses') : 'Все статусы';
+                                $('#statusFilter').wrap('<div class="position-relative"></div>').select2({
+                                    placeholder: placeholderText,
+                                    dropdownParent: $('#statusFilter').parent()
+                                });
+                            }
+                        });
+                    }
+
+                    function loadChairmanTable() {
+                        const requestData = {
+                            page: currentPage,
+                            size: pageSize
+                        };
+
+                        // Добавляем фильтры к запросу
+                        Object.keys(currentFilters).forEach(key => {
+                            if (currentFilters[key] && currentFilters[key].trim() !== '') {
+                                requestData[key] = currentFilters[key].trim();
+                            }
+                        });
+
+                        console.log('Отправка запроса с фильтрами:', requestData);
+
+                        $.ajax({
+                            url: window.contextPath + '/chairmen/getAll',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(requestData),
+                            success: function (response) {
+                                console.log('Получен ответ:', response);
+                                renderTable(response.content);
+                                renderPagination(response);
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Ошибка загрузки данных:', error);
+                                console.error('Детали ошибки:', xhr.responseText);
+                                if (typeof i18next !== 'undefined' && typeof showI18nToast === 'function') {
+                                    showI18nToast('error', 'notifications.titles.error', 'chairmen.errors.loadData');
+                                } else if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Ошибка',
+                                        text: 'Не удалось загрузить данные председателей'
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    function renderTable(chairmen) {
+                        const tbody = $('#chairmanTableBody');
+                        tbody.empty();
+
+                        if (!chairmen || chairmen.length === 0) {
+                            const noDataText = typeof i18next !== 'undefined' ? i18next.t('chairmen.noData') : 'Председатели не найдены';
+                            tbody.append(`
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="icon-base ti tabler-users-off icon-lg mb-2"></i>
+                                    <p class="mb-0">${noDataText}</p>
+                                </td>
+                            </tr>
+                        `);
+                            return;
+                        }
+
+                        chairmen.forEach(chairman => {
+                            // Форматирование статуса
+                            const getStatusBadge = (status) => {
+                                const statusBadges = {
+                                    'NEW': { key: 'common.statuses.new', class: 'bg-info', default: 'Новый' },
+                                    'ACTIVE': { key: 'common.statuses.active', class: 'bg-success', default: 'Активный' },
+                                    'DEACTIVATED': { key: 'common.statuses.deactivated', class: 'bg-warning', default: 'Деактивирован' },
+                                    'BLOCKED': { key: 'common.statuses.blocked', class: 'bg-danger', default: 'Заблокирован' }
+                                };
+                                const statusInfo = statusBadges[status];
+                                if (!statusInfo) return status || '';
+                                const text = typeof i18next !== 'undefined' ? i18next.t(statusInfo.key) : statusInfo.default;
+                                return `<span class="badge ${statusInfo.class}">${text}</span>`;
+                            };
+                            const statusDisplay = getStatusBadge(chairman.status);
+
+                            const row = `
+                    <tr>
+                        <td>${chairman.fullName || '-'}</td>
+                        <td>${chairman.phone || '-'}</td>
+                        <td>${chairman.email || '-'}</td>
+                        <td>${chairman.login || '-'}</td>
+                        <td>${statusDisplay}</td>
+                        <td class="text-center">
+                        <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="icon-base ti tabler-dots-vertical"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                  <a href="${window.contextPath}/chairmen/edit/${chairman.id}" class="dropdown-item"><i
+                                      class="icon-base ti tabler-pencil me-1"></i> <span data-i18n="common.edit">Редактировать</span></a>
+                                  <button class="dropdown-item delete-btn" data-id="${chairman.id}" ><i
+                                      class="icon-base ti tabler-trash me-1"></i> <span data-i18n="common.delete">Удалить</span></button>
+                            </div>
+                        </div>
+                        </td>
+                    </tr>
+                `;
+                            tbody.append(row);
+                        });
+
+                        // Переводим динамически созданные элементы
+                        if (typeof i18next !== 'undefined') {
+                            tbody.find('[data-i18n]').each(function () {
+                                const key = $(this).attr('data-i18n');
+                                $(this).text(i18next.t(key));
+                            });
+                        }
+                    }
+
+                    function renderPagination(pageData) {
+                        const pagination = $('#pagination');
+                        pagination.empty();
+
+                        const totalPages = pageData.totalPages;
+                        const currentPageNum = pageData.number;
+
+                        // Кнопка "В начало"
+                        const firstDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item first ${firstDisabled}">
+                    <a class="page-link" href="#" data-page="0" ${firstDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        // Кнопка "Предыдущая"
+                        const prevDisabled = currentPageNum === 0 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item prev ${prevDisabled}">
+                    <a class="page-link" href="#" data-page="${currentPageNum - 1}" ${prevDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        // Логика отображения номеров страниц
+                        if (totalPages <= 7) {
+                            // Если страниц мало, показываем все
+                            for (let i = 0; i < totalPages; i++) {
+                                const activeClass = i === currentPageNum ? 'active' : '';
+                                pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                        </li>
+                    `);
+                            }
+                        } else {
+                            // Показываем первую страницу
+                            const firstActive = currentPageNum === 0 ? 'active' : '';
+                            pagination.append(`
+                    <li class="page-item ${firstActive}">
+                        <a class="page-link" href="#" data-page="0">1</a>
+                    </li>
+                `);
+
+                            // Определяем диапазон страниц вокруг текущей
+                            let startPage, endPage;
+                            const pagesAround = 2; // Количество страниц слева и справа от текущей
+
+                            if (currentPageNum <= 3) {
+                                // Если в начале
+                                startPage = 1;
+                                endPage = Math.min(5, totalPages - 2);
+                            } else if (currentPageNum >= totalPages - 4) {
+                                // Если в конце
+                                startPage = Math.max(totalPages - 6, 1);
+                                endPage = totalPages - 2;
+                            } else {
+                                // Если в середине
+                                startPage = currentPageNum - pagesAround;
+                                endPage = currentPageNum + pagesAround;
+                            }
+
+                            // Многоточие после первой страницы
+                            if (startPage > 1) {
+                                pagination.append(`
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `);
+                            }
+
+                            // Страницы вокруг текущей
+                            for (let i = startPage; i <= endPage; i++) {
+                                const activeClass = i === currentPageNum ? 'active' : '';
+                                pagination.append(`
+                        <li class="page-item ${activeClass}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                        </li>
+                    `);
+                            }
+
+                            // Многоточие перед последней страницей
+                            if (endPage < totalPages - 2) {
+                                pagination.append(`
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `);
+                            }
+
+                            // Показываем последнюю страницу
+                            const lastActive = currentPageNum === totalPages - 1 ? 'active' : '';
+                            pagination.append(`
+                    <li class="page-item ${lastActive}">
+                        <a class="page-link" href="#" data-page="${totalPages - 1}">${totalPages}</a>
+                    </li>
+                `);
+                        }
+
+                        // Кнопка "Следующая"
+                        const nextDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item next ${nextDisabled}">
+                    <a class="page-link" href="#" data-page="${currentPageNum + 1}" ${nextDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                    </a>
+                </li>
+            `);
+
+                        // Кнопка "В конец"
+                        const lastDisabled = currentPageNum === totalPages - 1 ? 'disabled' : '';
+                        pagination.append(`
+                <li class="page-item last ${lastDisabled}">
+                    <a class="page-link" href="#" data-page="${totalPages - 1}" ${lastDisabled ? 'aria-disabled="true"' : ''}>
+                        <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                    </a>
+                </li>
+            `);
+                    }
+
+                    $(document).on('click', '.page-link', function (e) {
+                        e.preventDefault();
+                        currentPage = parseInt($(this).data('page'));
+                        loadChairmanTable();
+                    });
+
+                    $('#pageSize').change(function () {
+                        pageSize = parseInt($(this).val());
+                        currentPage = 0;
+                        loadChairmanTable();
+                    });
+
+                    // Обработка текстовых фильтров
+                    $('.filter-input:not(#statusFilter)').on('input', function () {
+                        const filterKey = $(this).data('filter-key');
+                        const filterValue = $(this).val();
+
+                        // Очистка предыдущего таймера
+                        if (filterTimeout) {
+                            clearTimeout(filterTimeout);
+                        }
+
+                        // Обновление фильтров
+                        if (filterValue && filterValue.trim() !== '') {
+                            currentFilters[filterKey] = filterValue.trim();
+                        } else {
+                            delete currentFilters[filterKey];
+                        }
+
+                        // Debounce: ждем 500мс после последнего ввода
+                        filterTimeout = setTimeout(function () {
+                            currentPage = 0;
+                            console.log('Применение фильтров:', currentFilters);
+                            loadChairmanTable();
+                        }, 500);
+                    });
+
+                    // Обработка Select2 фильтра статуса
+                    $('#statusFilter').on('change', function () {
+                        const filterValue = $(this).val();
+
+                        if (filterValue && filterValue.trim() !== '') {
+                            currentFilters['status'] = filterValue.trim();
+                        } else {
+                            delete currentFilters['status'];
+                        }
+
+                        currentPage = 0;
+                        console.log('Применение фильтров:', currentFilters);
+                        loadChairmanTable();
+                    });
+
+                    $('#clearFiltersBtn').click(function () {
+                        $('.filter-input:not(#statusFilter)').val('');
+                        $('#statusFilter').val('').trigger('change');
+                        currentFilters = {};
+                        currentPage = 0;
+                        loadChairmanTable();
+                    });
+
+                    $(document).on('click', '.delete-btn', function () {
+                        const chairmanId = $(this).data('id');
+                        $('#confirm-delete-btn').data('id', chairmanId);
+                        $('#deleteConfirmModal').modal('show');
+                    });
+
+                    $('#confirm-delete-btn').click(function () {
+                        const chairmanId = $(this).data('id');
+
+                        $.ajax({
+                            url: window.contextPath + `/chairmen/${chairmanId}`,
+                            type: 'DELETE',
+                            success: function () {
+                                $('#deleteConfirmModal').modal('hide');
+                                if (typeof i18next !== 'undefined' && typeof showI18nToast === 'function') {
+                                    showI18nToast('success', 'notifications.titles.success', 'chairmen.deleteSuccess');
+                                } else {
+                                    showToast('success', 'Успех', 'Председатель успешно удален');
+                                }
+                                loadChairmanTable();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Ошибка удаления:', error);
+                                $('#deleteConfirmModal').modal('hide');
+                                if (typeof i18next !== 'undefined' && typeof showI18nToast === 'function') {
+                                    showI18nToast('error', 'notifications.titles.error', 'chairmen.deleteError');
+                                } else {
+                                    showToast('error', 'Ошибка', 'Не удалось удалить председателя');
+                                }
+                            }
+                        });
+                    });
+
+                    // Инициализация
+                    loadStatuses();
+                    loadChairmanTable();
+                });
+            </script>
+        </th:block>
+    </div>
+
+
+</body>
+
+</html>

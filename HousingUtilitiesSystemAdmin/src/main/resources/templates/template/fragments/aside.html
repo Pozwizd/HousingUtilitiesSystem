@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<!-- Menu -->
+<aside layout:fragment="aside" id="layout-menu" class="layout-menu-horizontal menu-horizontal menu flex-grow-0">
+    <div class="container-xxl d-flex h-100">
+        <ul class="menu-inner">
+            <li class="menu-item" th:classappend="${pageActive == 'users' ? 'active' : ''}">
+                <a th:href="@{/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-app-window"></i>
+                    <div data-i18n="pages.users">Пользователи</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'chairmen' ? 'active' : ''}">
+                <a th:href="@{/chairmen/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-app-window"></i>
+                    <div data-i18n="pages.chairmen">Председатели</div>
+                </a>
+            </li>
+            <li class="menu-item" th:classappend="${pageActive == 'houses' ? 'active' : ''}">
+                <a th:href="@{/houses/}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-app-window"></i>
+                    <div data-i18n="pages.houses">Дома</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+</aside>
+<!-- / Menu -->

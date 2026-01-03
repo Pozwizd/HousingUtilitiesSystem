@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+    layout:decorate="~{template/layout}">
+
+<head>
+    <title>Голосования</title>
+    <th:block layout:fragment="page_css">
+        <style>
+            .badge-active {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-closed {
+                background-color: #6c757d;
+                color: white;
+            }
+
+            .badge-accepted {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .badge-rejected {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .votes-info {
+                font-size: 0.875rem;
+            }
+
+            .votes-info .for {
+                color: #28a745;
+                font-weight: bold;
+            }
+
+            .votes-info .against {
+                color: #dc3545;
+                font-weight: bold;
+            }
+
+            .votes-info .abstain {
+                color: #ff9800;
+                font-weight: bold;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Голосования</h5>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="filterTitle">Тема голосования</label>
+                        <input type="text" id="filterTitle" class="form-control form-control-sm"
+                            placeholder="Поиск по теме...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filterStatus">Статус</label>
+                        <select class="form-select form-select-sm" id="filterStatus">
+                            <option value="">Все</option>
+                            <option value="Активное">Активное</option>
+                            <option value="Закрыто">Закрыто</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filterResult">Результат</label>
+                        <select class="form-select form-select-sm" id="filterResult">
+                            <option value="">Все</option>
+                            <option value="Принято">Принято</option>
+                            <option value="Отклонено">Отклонено</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="button" class="btn btn-label-secondary btn-sm w-100" id="clearFiltersBtn">
+                            Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voting Table -->
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Тема голосования</th>
+                            <th style="width: 150px;">Время завершения</th>
+                            <th style="width: 100px;">Статус</th>
+                            <th style="width: 100px;">Результат</th>
+                            <th style="width: 140px;">Проголосовало, кв. м.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="votesTableBody" class="table-border-bottom-0">
+                        <!-- Rows will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-center">
+                <nav aria-label="Pagination">
+                    <ul class="pagination mb-0" id="pagination">
+                        <!-- Pagination will be loaded via AJAX -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            let currentPage = 0;
+            const pageSize = 10;
+
+            $(document).ready(function () {
+                loadVotes(0);
+
+                // Filter on input/change
+                $('#filterTitle').on('input', function () {
+                    loadVotes(0);
+                });
+
+                $('#filterStatus, #filterResult').on('change', function () {
+                    loadVotes(0);
+                });
+
+                // Clear filters
+                $('#clearFiltersBtn').click(function () {
+                    $('#filterTitle').val('');
+                    $('#filterStatus').val('');
+                    $('#filterResult').val('');
+                    loadVotes(0);
+                });
+            });
+
+            function getFilterParams() {
+                return {
+                    title: $('#filterTitle').val().trim(),
+                    status: $('#filterStatus').val(),
+                    result: $('#filterResult').val()
+                };
+            }
+
+            function loadVotes(page) {
+                currentPage = page;
+
+                const requestData = {
+                    page: page,
+                    size: pageSize,
+                    ...getFilterParams()
+                };
+
+                $.ajax({
+                    url: window.contextPath + '/api/voting/getAll',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function (response) {
+                        renderTable(response.content);
+                        renderPagination(response.totalPages, page);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading votes:', error);
+                        if (xhr.status === 401) {
+                            window.location.href = window.contextPath + '/login';
+                        }
+                    }
+                });
+            }
+
+            function renderTable(votes) {
+                const tbody = $('#votesTableBody');
+                tbody.empty();
+
+                if (!votes || votes.length === 0) {
+                    tbody.append('<tr><td colspan="5" class="text-center py-4 text-muted">Голосования не найдены</td></tr>');
+                    return;
+                }
+
+                votes.forEach(function (vote) {
+                    const endDate = vote.endTime ? formatDate(vote.endTime) : '-';
+
+                    const statusBadge = vote.status === 'Активное'
+                        ? '<span class="badge badge-active">Активное</span>'
+                        : '<span class="badge badge-closed">Закрыто</span>';
+
+                    let resultBadge = '-';
+                    if (vote.result === 'Принято') {
+                        resultBadge = '<span class="badge badge-accepted">Принято</span>';
+                    } else if (vote.result === 'Отклонено') {
+                        resultBadge = '<span class="badge badge-rejected">Отклонено</span>';
+                    }
+
+                    const votesInfo = `<span class="votes-info">
+                        <span class="for">${vote.forVotesCount || 0}</span>/
+                        <span class="against">${vote.againstVotesCount || 0}</span>/
+                        <span class="abstain">${vote.abstentionsCount || 0}</span>
+                    </span>`;
+
+                    const row = `
+                        <tr style="cursor: pointer;" onclick="viewVote('${vote.id}')">
+                            <td>
+                                <a href="${window.contextPath}/voting/${vote.id}" class="text-primary">
+                                    ${vote.title || '-'}
+                                </a>
+                            </td>
+                            <td>${endDate}</td>
+                            <td>${statusBadge}</td>
+                            <td>${resultBadge}</td>
+                            <td>${votesInfo}</td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day}.${month}.${year} ${hours}:${minutes}`;
+            }
+
+            function viewVote(voteId) {
+                window.location.href = window.contextPath + '/voting/' + voteId;
+            }
+
+            function renderPagination(totalPages, currentPage) {
+                const pagination = $('#pagination');
+                pagination.empty();
+
+                if (totalPages <= 1) return;
+
+                // Previous
+                const prevDisabled = currentPage === 0 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${prevDisabled}">
+                        <a class="page-link" href="#" onclick="loadVotes(${currentPage - 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+
+                // Page numbers
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                if (startPage > 0) {
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadVotes(0); return false;">1</a></li>`);
+                    if (startPage > 1) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const active = i === currentPage ? 'active' : '';
+                    pagination.append(`<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadVotes(${i}); return false;">${i + 1}</a></li>`);
+                }
+
+                if (endPage < totalPages - 1) {
+                    if (endPage < totalPages - 2) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadVotes(${totalPages - 1}); return false;">${totalPages}</a></li>`);
+                }
+
+                // Next
+                const nextDisabled = currentPage === totalPages - 1 ? 'disabled' : '';
+                pagination.append(`
+                    <li class="page-item ${nextDisabled}">
+                        <a class="page-link" href="#" onclick="loadVotes(${currentPage + 1}); return false;">
+                            <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                        </a>
+                    </li>
+                `);
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

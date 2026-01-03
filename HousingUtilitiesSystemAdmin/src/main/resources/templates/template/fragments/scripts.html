@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<div layout:fragment="scripts">
+
+
+    <script th:src="@{/assets/vendor/libs/jquery/jquery.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/popper/popper.js}"></script>
+    <script th:src="@{/assets/vendor/js/bootstrap.js}"></script>
+    <script th:src="@{/assets/vendor/libs/node-waves/node-waves.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/algolia/autocomplete-js.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/pickr/pickr.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/hammer/hammer.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/notyf/notyf.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/i18n/i18n.js}"></script>
+
+    <script th:src="@{/assets/vendor/js/menu.js}"></script>
+
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+    <script th:src="@{/assets/vendor/libs/apex-charts/apexcharts.js}"></script>
+    <script th:src="@{/assets/vendor/libs/swiper/swiper.js}"></script>
+    <script th:src="@{/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js}"></script>
+
+    <!-- Main JS -->
+
+    <script th:src="@{/assets/js/main.js}"></script>
+
+    <script th:src="@{/assets/vendor/libs/select2/select2.js}"></script>
+    <script th:src="@{/custom/axios.min.js}"></script>
+    <script th:src="@{/custom/toast.js}"></script>
+
+    <!-- Page JS -->
+    <th:block layout:fragment="page_js"></th:block>
+</div>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header with actions -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-label-secondary me-3" onclick="window.history.back()">
+                            <i class="ti ti-arrow-left me-1"></i> Назад
+                        </button>
+                        <h4 class="mb-0">Профиль пользователя</h4>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="editUserBtn" class="btn btn-primary">
+                            <i class="ti ti-edit me-1"></i> Редактировать
+                        </button>
+                        <button type="button" id="deleteUserBtn" class="btn btn-danger">
+                            <i class="ti ti-trash me-1"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- User Info Card -->
+                    <div class="col-xl-4 col-lg-5 col-md-5">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="user-avatar-section">
+                                    <div class="d-flex align-items-center flex-column">
+                                        <img class="img-fluid rounded mb-3 shadow-sm" id="userAvatar"
+                                            src="/assets/img/avatars/1.png" alt="User avatar" width="120" />
+                                        <div class="user-info text-center">
+                                            <h4 class="mb-2" id="userFullName">Загрузка...</h4>
+                                            <span class="badge" id="userStatus">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-around flex-wrap mt-4 pt-3 pb-4 border-bottom">
+                                    <div class="d-flex align-items-start me-4 mt-3 gap-2">
+                                        <span class="badge bg-label-primary p-2 rounded">
+                                            <i class="ti ti-home ti-sm"></i>
+                                        </span>
+                                        <div>
+                                            <p class="mb-0 fw-medium">Адрес</p>
+                                            <small id="userAddress">-</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start mt-3 gap-2">
+                                        <span class="badge bg-label-primary p-2 rounded">
+                                            <i class="ti ti-receipt ti-sm"></i>
+                                        </span>
+                                        <div>
+                                            <p class="mb-0 fw-medium">Лицевой счет</p>
+                                            <small id="userAccount">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-4 small text-uppercase text-muted">Контактная информация</p>
+                                <div class="info-container">
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2 pt-1">
+                                            <span class="fw-medium me-1">Email:</span>
+                                            <span id="userEmail">-</span>
+                                        </li>
+                                        <li class="mb-2 pt-1">
+                                            <span class="fw-medium me-1">Телефон:</span>
+                                            <span id="userPhone">-</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Info Card -->
+                    <div class="col-xl-8 col-lg-7 col-md-7">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Подробная информация</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Имя</label>
+                                        <p id="userFirstName" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Фамилия</label>
+                                        <p id="userLastName" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Отчество</label>
+                                        <p id="userMiddleName" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Номер квартиры</label>
+                                        <p id="userApartmentNumber" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Площадь квартиры</label>
+                                        <p id="userApartmentArea" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Город</label>
+                                        <p id="userCity" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Улица</label>
+                                        <p id="userStreet" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium">Номер дома</label>
+                                        <p id="userHouseNumber" class="form-control-plaintext">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bills Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Счета пользователя</h5>
+                                <small class="text-muted">История платежей</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Период</th>
+                                                <th>Сумма</th>
+                                                <th>Статус</th>
+                                                <th>Дата</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="billsTableBody">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">
+                                                    <i class="ti ti-receipt ti-sm me-1"></i>
+                                                    Нет данных о счетах
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <!-- User Card JS -->
+        <script th:src="@{/assets/js/user-card.js}"></script>
+    </th:block>
+
+</body>
+
+</html>

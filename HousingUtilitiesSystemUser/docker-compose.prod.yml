@@ -1,0 +1,69 @@
+# ============================================================================
+# Docker Compose - Production Configuration for User Module
+# Connects to shared MongoDB, Elasticsearch, Redis from Admin deployment
+# ============================================================================
+
+services:
+  # ============================================================================
+  # Spring Boot Application - User
+  # ============================================================================
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: housing-utilities-user
+    ports:
+      - "${APP_PORT:-8082}:8082"
+    environment:
+      # MongoDB Connection (shared with Admin)
+      - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_APP_USER:-housingapp}:${MONGO_APP_PASSWORD}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/${MONGO_DATABASE:-HousingUtilitiesSystemDB}?replicaSet=rs0&authSource=admin
+
+      # JWT Configuration
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+
+      # OAuth Google
+      - OAUTH_GOOGLE_CLIENT_ID=${OAUTH_GOOGLE_CLIENT_ID}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${OAUTH_GOOGLE_CLIENT_SECRET}
+
+      # SendGrid Email
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
+
+      # File Upload
+      - FILE_UPLOAD_DIR=/app/uploads
+      - FILE_TEMP_DIR=/app/temp-uploads
+
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=docker
+
+      # Elasticsearch (connects to Admin's Elasticsearch)
+      - ELASTICSEARCH_URIS=${ELASTICSEARCH_URIS:-http://elasticsearch-housing:9200}
+
+      # Redis (connects to Admin's Redis)
+      - REDIS_HOST=${REDIS_HOST:-redis-housing}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    volumes:
+      - app-uploads:/app/uploads
+      - app-temp:/app/temp-uploads
+    networks:
+      - housing-network
+    restart: unless-stopped
+
+# ============================================================================
+# Volumes
+# ============================================================================
+
+volumes:
+  app-uploads:
+  app-temp:
+
+    # ============================================================================
+    # Networks - Uses external network from Admin deployment
+    # ============================================================================
+
+networks:
+  housing-network:
+    external: true
+    name: housing-network

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{template/layout.html}">
+
+<head>
+    <th:block layout:fragment="page_css">
+    </th:block>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header with actions -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-label-secondary me-3" onclick="window.history.back()">
+                            <i class="ti ti-arrow-left me-1"></i> <span data-i18n="common.back">Назад</span>
+                        </button>
+                        <h4 class="mb-0" data-i18n="chairmen.chairmanProfile">Профиль председателя</h4>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="editChairmanBtn" class="btn btn-primary">
+                            <i class="ti ti-edit me-1"></i> <span data-i18n="common.edit">Редактировать</span>
+                        </button>
+                        <button type="button" id="deleteChairmanBtn" class="btn btn-danger">
+                            <i class="ti ti-trash me-1"></i> <span data-i18n="common.delete">Удалить</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Chairman Info Card -->
+                    <div class="col-xl-4 col-lg-5 col-md-5">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="user-avatar-section">
+                                    <div class="d-flex align-items-center flex-column">
+                                        <img class="img-fluid rounded mb-3 shadow-sm" id="chairmanAvatar"
+                                            src="/assets/img/avatars/1.png" alt="Chairman avatar" width="120" />
+                                        <div class="user-info text-center">
+                                            <h4 class="mb-2" id="chairmanFullName" data-i18n="common.loading">
+                                                Загрузка...</h4>
+                                            <span class="badge" id="chairmanStatus">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-around flex-wrap mt-4 pt-3 pb-4 border-bottom">
+                                    <div class="d-flex align-items-start me-4 mt-3 gap-2">
+                                        <span class="badge bg-label-primary p-2 rounded">
+                                            <i class="ti ti-user ti-sm"></i>
+                                        </span>
+                                        <div>
+                                            <p class="mb-0 fw-medium" data-i18n="chairmen.login">Логин</p>
+                                            <small id="chairmanLogin">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-4 small text-uppercase text-muted" data-i18n="chairmen.contactInfo">
+                                    Контактная информация</p>
+                                <div class="info-container">
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2 pt-1">
+                                            <span class="fw-medium me-1" data-i18n="chairmen.emailLabel">Email:</span>
+                                            <span id="chairmanEmail">-</span>
+                                        </li>
+                                        <li class="mb-2 pt-1">
+                                            <span class="fw-medium me-1" data-i18n="chairmen.phoneLabel">Телефон:</span>
+                                            <span id="chairmanPhone">-</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Info Card -->
+                    <div class="col-xl-8 col-lg-7 col-md-7">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0" data-i18n="chairmen.detailedInfo">Подробная информация</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="users.firstName">Имя</label>
+                                        <p id="chairmanFirstName" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium" data-i18n="users.lastName">Фамилия</label>
+                                        <p id="chairmanLastName" class="form-control-plaintext">-</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-medium"
+                                            data-i18n="users.middleName">Отчество</label>
+                                        <p id="chairmanMiddleName" class="form-control-plaintext">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" data-i18n="common.confirmDelete">Подтверждение удаления</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            data-i18n="[aria-label]common.close" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        <span data-i18n="chairmen.deleteConfirm">Вы уверены, что хотите удалить этого
+                            председателя?</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal"
+                            data-i18n="common.cancel">Отменить</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
+                            data-i18n="common.delete">Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="page_js">
+        <script th:inline="javascript">
+            window.contextPath = '[[@{/}]]'.replaceAll('"', '').replace(/\/$/, '');
+        </script>
+        <script>
+            // Переводим статические элементы после загрузки i18next
+            function translateElements() {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (key.startsWith('[placeholder]')) {
+                        const placeholderKey = key.replace('[placeholder]', '');
+                        element.placeholder = i18next.t(placeholderKey);
+                    } else if (key.startsWith('[aria-label]')) {
+                        const ariaKey = key.replace('[aria-label]', '');
+                        element.setAttribute('aria-label', i18next.t(ariaKey));
+                    } else {
+                        const translatedText = i18next.t(key);
+                        if (element.tagName.toLowerCase() === 'title') {
+                            document.title = translatedText;
+                        }
+                        element.textContent = translatedText;
+                    }
+                });
+            }
+
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof i18next !== 'undefined') {
+                    i18next.on('initialized', translateElements);
+                    i18next.on('languageChanged', translateElements);
+                    if (i18next.isInitialized) {
+                        translateElements();
+                    }
+                }
+
+                let chairmanId = null;
+                let currentChairman = null;
+
+                // Get chairman ID from URL
+                const pathParts = window.location.pathname.split('/');
+                chairmanId = pathParts[pathParts.length - 1];
+
+                // DOM elements
+                const elements = {
+                    avatar: document.getElementById('chairmanAvatar'),
+                    fullName: document.getElementById('chairmanFullName'),
+                    status: document.getElementById('chairmanStatus'),
+                    login: document.getElementById('chairmanLogin'),
+                    email: document.getElementById('chairmanEmail'),
+                    phone: document.getElementById('chairmanPhone'),
+                    firstName: document.getElementById('chairmanFirstName'),
+                    lastName: document.getElementById('chairmanLastName'),
+                    middleName: document.getElementById('chairmanMiddleName'),
+                    editBtn: document.getElementById('editChairmanBtn'),
+                    deleteBtn: document.getElementById('deleteChairmanBtn'),
+                    confirmDeleteBtn: document.getElementById('confirmDeleteBtn')
+                };
+
+                // Load chairman data
+                loadChairmanData();
+
+                // Event listeners
+                if (elements.editBtn) {
+                    elements.editBtn.addEventListener('click', function () {
+                        window.location.href = window.contextPath + `/chairmen/edit/${chairmanId}`;
+                    });
+                }
+
+                if (elements.deleteBtn) {
+                    elements.deleteBtn.addEventListener('click', function () {
+                        $('#deleteConfirmModal').modal('show');
+                    });
+                }
+
+                if (elements.confirmDeleteBtn) {
+                    elements.confirmDeleteBtn.addEventListener('click', deleteChairman);
+                }
+
+                async function loadChairmanData() {
+                    try {
+                        const response = await fetch(window.contextPath + `/chairmen/getChairman/${chairmanId}`);
+                        if (response.ok) {
+                            currentChairman = await response.json();
+                            displayChairmanData(currentChairman);
+                        } else {
+                            const notFoundMsg = typeof i18next !== 'undefined' ? i18next.t('chairmen.errors.notFound') : 'Председатель не найден';
+                            throw new Error(notFoundMsg);
+                        }
+                    } catch (error) {
+                        console.error('Error loading chairman:', error);
+                        const errorMsg = typeof i18next !== 'undefined' ? i18next.t('chairmen.errors.loadData') : 'Ошибка при загрузке данных председателя';
+                        showNotification(errorMsg, 'error');
+                    }
+                }
+
+                function displayChairmanData(chairman) {
+                    // Full name
+                    if (elements.fullName) {
+                        elements.fullName.textContent = chairman.fullName ||
+                            `${chairman.lastName || ''} ${chairman.firstName || ''} ${chairman.middleName || ''}`.trim();
+                    }
+
+                    // Status badge
+                    if (elements.status) {
+                        const getStatusInfo = (status) => {
+                            const statusLabels = {
+                                'NEW': { key: 'common.statuses.new', class: 'bg-label-info', default: 'Новый' },
+                                'ACTIVE': { key: 'common.statuses.active', class: 'bg-label-success', default: 'Активный' },
+                                'DEACTIVATED': { key: 'common.statuses.deactivated', class: 'bg-label-warning', default: 'Деактивирован' },
+                                'BLOCKED': { key: 'common.statuses.blocked', class: 'bg-label-danger', default: 'Заблокирован' }
+                            };
+                            const statusInfo = statusLabels[status] || { key: null, class: 'bg-label-secondary', default: status || '-' };
+                            const text = statusInfo.key && typeof i18next !== 'undefined' ? i18next.t(statusInfo.key) : statusInfo.default;
+                            return { text, class: statusInfo.class };
+                        };
+                        const statusInfo = getStatusInfo(chairman.status);
+                        elements.status.textContent = statusInfo.text;
+                        elements.status.className = `badge ${statusInfo.class}`;
+                    }
+
+                    // Contact info
+                    if (elements.login) elements.login.textContent = chairman.login || '-';
+                    if (elements.email) elements.email.textContent = chairman.email || '-';
+                    if (elements.phone) elements.phone.textContent = chairman.phone || '-';
+
+                    // Detailed info
+                    if (elements.firstName) elements.firstName.textContent = chairman.firstName || '-';
+                    if (elements.lastName) elements.lastName.textContent = chairman.lastName || '-';
+                    if (elements.middleName) elements.middleName.textContent = chairman.middleName || '-';
+
+                    // Avatar
+                    if (elements.avatar) {
+                        if (chairman.photo && chairman.photo.trim() !== '' && chairman.photo !== 'default_photo.jpg') {
+                            if (chairman.photo.startsWith('http')) {
+                                elements.avatar.src = chairman.photo;
+                            } else {
+                                elements.avatar.src = (window.contextPath || '') + '/' + chairman.photo;
+                            }
+                        } else {
+                            elements.avatar.src = (window.contextPath || '') + '/assets/img/avatars/1.png';
+                        }
+                    }
+                }
+
+                async function deleteChairman() {
+                    try {
+                        const response = await fetch((window.contextPath || '') + `/chairmen/${chairmanId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (response.ok) {
+                            $('#deleteConfirmModal').modal('hide');
+                            const successMsg = typeof i18next !== 'undefined' ? i18next.t('chairmen.deleteSuccess') : 'Председатель успешно удален';
+                            showNotification(successMsg, 'success');
+                            setTimeout(() => {
+                                window.location.href = (window.contextPath || '') + '/chairmen';
+                            }, 1500);
+                        } else {
+                            const deleteErrorMsg = typeof i18next !== 'undefined' ? i18next.t('chairmen.deleteError') : 'Ошибка при удалении';
+                            throw new Error(deleteErrorMsg);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting chairman:', error);
+                        const deleteErrorMsg = typeof i18next !== 'undefined' ? i18next.t('chairmen.deleteError') : 'Ошибка при удалении председателя';
+                        showNotification(deleteErrorMsg, 'error');
+                    }
+                }
+
+                function showNotification(message, type = 'info') {
+                    if (typeof Swal !== 'undefined') {
+                        const icon = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+                        const getTitle = () => {
+                            if (typeof i18next !== 'undefined') {
+                                if (type === 'error') return i18next.t('notifications.titles.error');
+                                if (type === 'success') return i18next.t('notifications.titles.success');
+                                return i18next.t('notifications.titles.info');
+                            }
+                            return type === 'error' ? 'Ошибка' : type === 'success' ? 'Успех' : 'Информация';
+                        };
+                        Swal.fire({
+                            title: getTitle(),
+                            text: message,
+                            icon: icon,
+                            customClass: {
+                                confirmButton: 'btn btn-primary waves-effect waves-light'
+                            },
+                            buttonsStyling: false
+                        });
+                    } else {
+                        alert(message);
+                    }
+                }
+            });
+        </script>
+    </th:block>
+
+</body>
+
+</html>
