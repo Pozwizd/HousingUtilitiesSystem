@@ -18,11 +18,135 @@ env:
 
 jobs:
   # ============================================================================
+  # Infrastructure Setup (MongoDB, Redis, Elasticsearch)
+  # ============================================================================
+  infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy MongoDB, Redis, Elasticsearch
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            
+            # Create network
+            docker network create ${{ env.NETWORK_NAME }} 2>/dev/null || true
+            
+            # ==================== MongoDB Replica Set ====================
+            echo "Starting MongoDB Replica Set..."
+            
+            # MongoDB Node 1
+            if ! docker ps --format '{{.Names}}' | grep -q '^mongo1-housing$'; then
+              docker rm -f mongo1-housing 2>/dev/null || true
+              docker run -d \
+                --name mongo1-housing \
+                --network ${{ env.NETWORK_NAME }} \
+                --restart unless-stopped \
+                -v mongo1-housing-data:/data/db \
+                mongo:latest mongod --replSet rs0 --bind_ip_all
+            fi
+            
+            # MongoDB Node 2
+            if ! docker ps --format '{{.Names}}' | grep -q '^mongo2-housing$'; then
+              docker rm -f mongo2-housing 2>/dev/null || true
+              docker run -d \
+                --name mongo2-housing \
+                --network ${{ env.NETWORK_NAME }} \
+                --restart unless-stopped \
+                -v mongo2-housing-data:/data/db \
+                mongo:latest mongod --replSet rs0 --bind_ip_all
+            fi
+            
+            # MongoDB Node 3
+            if ! docker ps --format '{{.Names}}' | grep -q '^mongo3-housing$'; then
+              docker rm -f mongo3-housing 2>/dev/null || true
+              docker run -d \
+                --name mongo3-housing \
+                --network ${{ env.NETWORK_NAME }} \
+                --restart unless-stopped \
+                -v mongo3-housing-data:/data/db \
+                mongo:latest mongod --replSet rs0 --bind_ip_all
+            fi
+            
+            # Wait for MongoDB to start
+            sleep 10
+            
+            # Initialize Replica Set (only if not already initialized)
+            docker exec mongo1-housing mongosh --eval "
+              try {
+                rs.status();
+                print('Replica set already initialized');
+              } catch (e) {
+                rs.initiate({
+                  _id: 'rs0',
+                  members: [
+                    { _id: 0, host: 'mongo1-housing:27017', priority: 2 },
+                    { _id: 1, host: 'mongo2-housing:27017', priority: 1 },
+                    { _id: 2, host: 'mongo3-housing:27017', priority: 1 }
+                  ]
+                });
+                print('Replica set initialized');
+              }
+            " || true
+            
+            # Wait for primary election
+            sleep 5
+            
+            # Create admin user (if not exists)
+            docker exec mongo1-housing mongosh --eval "
+              try {
+                db.getSiblingDB('admin').createUser({
+                  user: '${{ secrets.MONGO_ROOT_USERNAME }}',
+                  pwd: '${{ secrets.MONGO_ROOT_PASSWORD }}',
+                  roles: ['root']
+                });
+                print('Admin user created');
+              } catch (e) {
+                print('Admin user already exists or error: ' + e.message);
+              }
+            " || true
+            
+            # ==================== Elasticsearch ====================
+            echo "Starting Elasticsearch..."
+            if ! docker ps --format '{{.Names}}' | grep -q '^elasticsearch-housing$'; then
+              docker rm -f elasticsearch-housing 2>/dev/null || true
+              docker run -d \
+                --name elasticsearch-housing \
+                --network ${{ env.NETWORK_NAME }} \
+                --restart unless-stopped \
+                -e discovery.type=single-node \
+                -e xpack.security.enabled=false \
+                -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+                -v elasticsearch-housing-data:/usr/share/elasticsearch/data \
+                docker.elastic.co/elasticsearch/elasticsearch:8.16.1
+            fi
+            
+            # ==================== Redis ====================
+            echo "Starting Redis..."
+            if ! docker ps --format '{{.Names}}' | grep -q '^redis-housing$'; then
+              docker rm -f redis-housing 2>/dev/null || true
+              docker run -d \
+                --name redis-housing \
+                --network ${{ env.NETWORK_NAME }} \
+                --restart unless-stopped \
+                -v redis-housing-data:/data \
+                redis:alpine redis-server --appendonly yes
+            fi
+            
+            echo "Infrastructure ready!"
+
+  # ============================================================================
   # Admin Module Deployment
   # ============================================================================
   admin:
     name: Deploy Admin
     runs-on: ubuntu-latest
+    needs: infrastructure
     
     steps:
       - name: Checkout repository
@@ -100,6 +224,7 @@ jobs:
   chairman:
     name: Deploy Chairman
     runs-on: ubuntu-latest
+    needs: infrastructure
     
     steps:
       - name: Checkout repository
@@ -170,6 +295,7 @@ jobs:
   user:
     name: Deploy User
     runs-on: ubuntu-latest
+    needs: infrastructure
     
     steps:
       - name: Checkout repository
