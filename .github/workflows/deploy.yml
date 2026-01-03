@@ -2,7 +2,7 @@ name: Unified Monorepo Deployment
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'HousingUtilitiesSystemAdmin/**'
       - 'HousingUtilitiesSystemChairman/**'
