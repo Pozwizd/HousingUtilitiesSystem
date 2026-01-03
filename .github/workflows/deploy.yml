@@ -1,26 +1,33 @@
-name: Deploy Admin to Production
+name: Unified Monorepo Deployment
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'HousingUtilitiesSystemAdmin/**'
+      - 'HousingUtilitiesSystemChairman/**'
+      - 'HousingUtilitiesSystemUser/**'
+      - 'pom.xml'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/housing-utilities-admin
+  NETWORK_NAME: housing-network
+  MONGO_KEYFILE: /opt/mongo/keyfile
 
 jobs:
   # ============================================================================
-  # Job 1: Build and Test
+  # Admin Module Deployment
   # ============================================================================
-  build:
+  admin:
+    name: Deploy Admin
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./HousingUtilitiesSystemAdmin
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[all]') ||
+      contains(github.event.head_commit.modified, 'HousingUtilitiesSystemAdmin/') ||
+      contains(github.event.head_commit.modified, 'pom.xml')
     
     steps:
       - name: Checkout repository
@@ -33,154 +40,211 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Build and test with Maven
-        run: mvn clean verify -B
-
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-jar
-          path: HousingUtilitiesSystemAdmin/target/*.jar
-          retention-days: 1
-
-  # ============================================================================
-  # Job 2: Build and Push Docker Image
-  # ============================================================================
-  docker:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: read
-      packages: write
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download JAR artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-jar
-          path: HousingUtilitiesSystemAdmin/target/
+      - name: Build Admin
+        run: mvn clean verify -B -pl HousingUtilitiesSystemAdmin -am
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
+      - name: Log in to Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-            type=raw,value=latest
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./HousingUtilitiesSystemAdmin
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-admin:latest
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            CONTAINER="housing-utilities-admin"
+            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-admin:latest"
+            
+            # Shared Infra Check
+            docker network create ${{ env.NETWORK_NAME }} 2>/dev/null || true
+            
+            # Pull and Restart App
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE
+            docker stop $CONTAINER 2>/dev/null || true
+            docker rm $CONTAINER 2>/dev/null || true
+            
+            docker run -d \
+              --name $CONTAINER \
+              --network ${{ env.NETWORK_NAME }} \
+              --restart unless-stopped \
+              -p 8081:8080 \
+              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
+              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
+              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
+              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
+              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
+              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
+              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
+              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
+              -e SPRING_DATA_REDIS_HOST="redis-housing" \
+              -e SPRING_PROFILES_ACTIVE="docker" \
+              -v /opt/housing-uploads:/app/uploads \
+              $IMAGE
 
   # ============================================================================
-  # Job 3: Deploy to Server
+  # Chairman Module Deployment
   # ============================================================================
-  deploy:
+  chairman:
+    name: Deploy Chairman
     runs-on: ubuntu-latest
-    needs: docker
-    environment: production
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[all]') ||
+      contains(github.event.head_commit.modified, 'HousingUtilitiesSystemChairman/') ||
+      contains(github.event.head_commit.modified, 'pom.xml')
     
     steps:
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/housing-utilities
-            
-            # Create .env file from GitHub Secrets
-            cat > .env <<EOF
-            # MongoDB
-            MONGO_ADMIN_USER=${{ secrets.MONGO_ADMIN_USER }}
-            MONGO_ADMIN_PASSWORD=${{ secrets.MONGO_ADMIN_PASSWORD }}
-            MONGO_APP_USER=${{ secrets.MONGO_APP_USER }}
-            MONGO_APP_PASSWORD=${{ secrets.MONGO_APP_PASSWORD }}
-            MONGO_DATABASE=${{ secrets.MONGO_DATABASE }}
-            
-            # JWT
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            
-            # OAuth
-            OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
-            OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
-            
-            # SendGrid
-            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
-            SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }}
-            
-            # App
-            APP_PORT=8080
-            EOF
-            
-            # Login to GitHub Container Registry
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Pull latest image and restart
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
-            
-            # Wait for container to start
-            sleep 30
-            
-            # Cleanup old images
-            docker image prune -f
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Health Check
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build Chairman
+        run: mvn clean verify -B -pl HousingUtilitiesSystemChairman -am
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./HousingUtilitiesSystemChairman
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-chairman:latest
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # Check if container is running
-            if docker ps | grep -q housing-utilities-app; then
-              echo "✅ Container is running"
-            else
-              echo "❌ Container is not running"
-              docker logs housing-utilities-app --tail 50
-              exit 1
-            fi
+            set -e
+            CONTAINER="housing-utilities-chairman"
+            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-chairman:latest"
             
-            # Check application health (with retry)
-            for i in {1..5}; do
-              if curl -sf http://localhost:8080/admin/login > /dev/null 2>&1; then
-                echo "✅ Application is healthy"
-                exit 0
-              fi
-              echo "Attempt $i: Waiting for application..."
-              sleep 10
-            done
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE
+            docker stop $CONTAINER 2>/dev/null || true
+            docker rm $CONTAINER 2>/dev/null || true
             
-            echo "❌ Application health check failed"
-            docker logs housing-utilities-app --tail 100
-            exit 1
+            docker run -d \
+              --name $CONTAINER \
+              --network ${{ env.NETWORK_NAME }} \
+              --restart unless-stopped \
+              -p 8083:8082 \
+              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
+              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
+              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
+              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
+              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
+              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
+              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
+              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
+              -e SPRING_DATA_REDIS_HOST="redis-housing" \
+              -e SPRING_PROFILES_ACTIVE="docker" \
+              -v /opt/housing-uploads:/app/uploads \
+              $IMAGE
+
+  # ============================================================================
+  # User Module Deployment
+  # ============================================================================
+  user:
+    name: Deploy User
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[all]') ||
+      contains(github.event.head_commit.modified, 'HousingUtilitiesSystemUser/') ||
+      contains(github.event.head_commit.modified, 'pom.xml')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build User
+        run: mvn clean verify -B -pl HousingUtilitiesSystemUser -am
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./HousingUtilitiesSystemUser
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-user:latest
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            CONTAINER="housing-utilities-user"
+            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-user:latest"
+            
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE
+            docker stop $CONTAINER 2>/dev/null || true
+            docker rm $CONTAINER 2>/dev/null || true
+            
+            docker run -d \
+              --name $CONTAINER \
+              --network ${{ env.NETWORK_NAME }} \
+              --restart unless-stopped \
+              -p 8082:8081 \
+              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
+              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
+              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
+              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
+              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
+              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
+              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
+              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
+              -e SPRING_DATA_REDIS_HOST="redis-housing" \
+              -e SPRING_PROFILES_ACTIVE="docker" \
+              -v /opt/housing-uploads:/app/uploads \
+              $IMAGE
