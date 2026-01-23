@@ -40,8 +40,8 @@ public class LoginController {
 
     @GetMapping("/login")
     public ModelAndView login(Model model) {
-        model.addAttribute("title", "Вход в систему");
-        model.addAttribute("appName", "ЖКХ Система");
+        model.addAttribute("title", "auth.login");
+        model.addAttribute("appName", "Housing Utilities System");
         return new ModelAndView("auth/auth-login-cover");
     }
 
@@ -62,7 +62,7 @@ public class LoginController {
         log.debug("register() - Registration attempt for email: {}", email);
 
         try {
-            
+
             Optional<User> existingUser = userService.findByEmail(email);
             if (existingUser.isPresent()) {
                 log.warn("register() - Email already exists: {}", email);
@@ -70,11 +70,9 @@ public class LoginController {
                 return "auth/auth-register-cover";
             }
 
-            
             User user = userService.createUser(email, password, firstName, lastName);
             log.info("register() - Successfully registered new user: {}", email);
 
-            
             try {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email,
                         password);

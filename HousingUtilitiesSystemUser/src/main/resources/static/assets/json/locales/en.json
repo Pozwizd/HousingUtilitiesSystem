@@ -48,7 +48,17 @@
     "areYouSure": "Are you sure?",
     "noDataFound": "No data found",
     "pagination": "Page navigation",
-    "validationFailed": "Validation failed"
+    "validationFailed": "Validation failed",
+    "statuses": {
+      "new": "New",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "deactivated": "Deactivated",
+      "blocked": "Blocked",
+      "deleted": "Deleted",
+      "archived": "Archived"
+    }
   },
   "chat": {
     "subtitle": "Chat with residents and manage inquiries",
@@ -213,6 +223,10 @@
       "inactive": "Inactive",
       "blocked": "Blocked"
     }
+  },
+  "requests": {
+    "newRequest": "New Request",
+    "viewRequest": "View Request"
   },
   "accounts": {
     "title": "Accounts",

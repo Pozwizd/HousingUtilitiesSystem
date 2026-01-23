@@ -40,14 +40,14 @@ echo ""
 echo "Step 3: Removing MongoDB data volumes..."
 
 # Удаляем volumes для данных
-docker volume rm housingutilitiessystemadmin_mongo1-data 2>/dev/null && echo "  ✓ mongo1-data removed" || echo "  - mongo1-data not found"
-docker volume rm housingutilitiessystemadmin_mongo2-data 2>/dev/null && echo "  ✓ mongo2-data removed" || echo "  - mongo2-data not found"
-docker volume rm housingutilitiessystemadmin_mongo3-data 2>/dev/null && echo "  ✓ mongo3-data removed" || echo "  - mongo3-data not found"
+docker volume rm housingutilitiessystem_mongo1-data 2>/dev/null && echo "  ✓ mongo1-data removed" || echo "  - mongo1-data not found"
+docker volume rm housingutilitiessystem_mongo2-data 2>/dev/null && echo "  ✓ mongo2-data removed" || echo "  - mongo2-data not found"
+docker volume rm housingutilitiessystem_mongo3-data 2>/dev/null && echo "  ✓ mongo3-data removed" || echo "  - mongo3-data not found"
 
 # Удаляем volumes для конфигурации
-docker volume rm housingutilitiessystemadmin_mongo1-config 2>/dev/null && echo "  ✓ mongo1-config removed" || echo "  - mongo1-config not found"
-docker volume rm housingutilitiessystemadmin_mongo2-config 2>/dev/null && echo "  ✓ mongo2-config removed" || echo "  - mongo2-config not found"
-docker volume rm housingutilitiessystemadmin_mongo3-config 2>/dev/null && echo "  ✓ mongo3-config removed" || echo "  - mongo3-config not found"
+docker volume rm housingutilitiessystem_mongo1-config 2>/dev/null && echo "  ✓ mongo1-config removed" || echo "  - mongo1-config not found"
+docker volume rm housingutilitiessystem_mongo2-config 2>/dev/null && echo "  ✓ mongo2-config removed" || echo "  - mongo2-config not found"
+docker volume rm housingutilitiessystem_mongo3-config 2>/dev/null && echo "  ✓ mongo3-config removed" || echo "  - mongo3-config not found"
 
 echo ""
 echo "====================================="

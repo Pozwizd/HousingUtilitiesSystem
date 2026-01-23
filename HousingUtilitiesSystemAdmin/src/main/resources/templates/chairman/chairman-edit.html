@@ -364,8 +364,8 @@
 
                             // Обработка аватара
                             if (chairman.photo && chairman.photo.trim() !== '' && chairman.photo !== 'default_photo.jpg') {
-                                if (chairman.photo.startsWith('http') || chairman.photo.startsWith('/')) {
-                                    avatarImg.src = (window.contextPath || '') + '/' + chairman.photo;
+                                if (chairman.photo.startsWith('http://') || chairman.photo.startsWith('https://')) {
+                                    avatarImg.src = chairman.photo;
                                 } else {
                                     avatarImg.src = (window.contextPath || '') + '/' + chairman.photo;
                                 }

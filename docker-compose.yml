@@ -1,0 +1,139 @@
+services:
+  # ============================================================================
+  # MongoDB Replica Set - 3 Node Configuration for Local Development
+  # ============================================================================
+  
+  mongo1:
+    image: mongo:7.0
+    container_name: mongo1
+    hostname: mongo1
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=housing_utilities
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo1-data:/data/db
+      - mongo1-config:/data/configdb
+    networks:
+      - mongo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mongo2:
+    image: mongo:7.0
+    container_name: mongo2
+    hostname: mongo2
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=housing_utilities
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo2-data:/data/db
+      - mongo2-config:/data/configdb
+    networks:
+      - mongo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - mongo1
+
+  mongo3:
+    image: mongo:7.0
+    container_name: mongo3
+    hostname: mongo3
+    ports:
+      - "27019:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=housing_utilities
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    volumes:
+      - mongo3-data:/data/db
+      - mongo3-config:/data/configdb
+    networks:
+      - mongo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - mongo1
+
+  # ============================================================================
+  # MongoDB Replica Set Initializer
+  # ============================================================================
+  mongo-init:
+    image: mongo:7.0
+    container_name: mongo-init
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
+    networks:
+      - mongo-network
+    restart: "no"
+    command: >
+      mongosh --host mongo1:27017 --eval '
+        var cfg = {
+          "_id": "rs0",
+          "members": [
+            { "_id": 0, "host": "mongo1:27017", "priority": 2 },
+            { "_id": 1, "host": "mongo2:27017", "priority": 1 },
+            { "_id": 2, "host": "mongo3:27017", "priority": 1 }
+          ]
+        };
+        
+        try {
+          var status = rs.status();
+          print("Replica Set already initialized");
+          printjson(status);
+        } catch (e) {
+          print("Initializing Replica Set...");
+          rs.initiate(cfg);
+          print("Replica Set initialized successfully!");
+          sleep(5000);
+          printjson(rs.status());
+        }
+      '
+
+# ==============================================================================
+# Persistent Data Volumes
+# ==============================================================================
+volumes:
+  mongo1-data:
+    driver: local
+  mongo1-config:
+    driver: local
+  mongo2-data:
+    driver: local
+  mongo2-config:
+    driver: local
+  mongo3-data:
+    driver: local
+  mongo3-config:
+    driver: local
+
+# ==============================================================================
+# Network Configuration
+# ==============================================================================
+networks:
+  mongo-network:
+    driver: bridge
+    name: mongo-network

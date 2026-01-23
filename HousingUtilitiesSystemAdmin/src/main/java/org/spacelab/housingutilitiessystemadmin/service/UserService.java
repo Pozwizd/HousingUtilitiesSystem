@@ -22,6 +22,7 @@ import org.spacelab.housingutilitiessystemadmin.models.user.UserResponseTable;
 import org.spacelab.housingutilitiessystemadmin.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final FileService fileService;
+    private final PasswordEncoder passwordEncoder;
 
     private final CityService cityService;
     private final StreetService streetService;
@@ -43,10 +45,10 @@ public class UserService {
     public PageResponse<UserResponseTable> getUsersTable(UserRequestTable userRequestTable) {
         Page<User> users = getUser(userRequestTable);
         PageResponse<UserResponseTable> userResponses = userMapper.toPageResponse(users);
-        log.info("Получена страница пользователей: страница {}, размер {}", userRequestTable.getPage(), userRequestTable.getSize());
+        log.info("Получена страница пользователей: страница {}, размер {}", userRequestTable.getPage(),
+                userRequestTable.getSize());
         return userResponses;
     }
-
 
     public Page<User> getUser(UserRequestTable userRequestTable) {
         return userRepository.findUsersWithFilters(userRequestTable);
@@ -55,22 +57,26 @@ public class UserService {
     public Optional<User> findById(ObjectId id) {
         return userRepository.findById(id);
     }
+
     public User save(User user) {
         return userRepository.save(user);
     }
+
     public List<User> findAll() {
         return userRepository.findAll();
     }
+
     public void deleteById(ObjectId id) {
         userRepository.deleteById(id);
     }
+
     public List<User> saveAll(List<User> users) {
         return userRepository.saveAll(users);
     }
+
     public void deleteAll() {
         userRepository.deleteAll();
     }
-
 
     @Cacheable(value = "users", key = "#id.toHexString()")
     public UserResponse getUserById(ObjectId id) {
@@ -90,21 +96,21 @@ public class UserService {
         }
 
         User user = userMapper.toEntity(userRequest);
-        
+
         if (userRequest.getCityId() != null) {
             City city = cityService.findById(userRequest.getCityId())
                     .orElseThrow(() -> new OperationException("получении города",
                             "Город с ID " + userRequest.getCityId() + " не найден", HttpStatus.NOT_FOUND));
             user.setCity(city);
         }
-        
+
         if (userRequest.getAddressId() != null) {
             Street street = streetService.findById(userRequest.getAddressId())
                     .orElseThrow(() -> new OperationException("получении улицы",
                             "Улица с ID " + userRequest.getAddressId() + " не найдена", HttpStatus.NOT_FOUND));
             user.setStreet(street);
         }
-        
+
         if (userRequest.getHouseId() != null) {
             var house = houseService.findById(userRequest.getHouseId().toHexString())
                     .orElseThrow(() -> new OperationException("получении дома",
@@ -112,7 +118,7 @@ public class UserService {
             user.setHouse(house);
             user.setHouseNumber(house.getHouseNumber());
         }
-        
+
         if (userRequest.getStatus() != null) {
             try {
                 user.setStatus(Status.valueOf(userRequest.getStatus()));
@@ -121,7 +127,12 @@ public class UserService {
                         "Неверный статус: " + userRequest.getStatus(), HttpStatus.BAD_REQUEST);
             }
         }
-        
+
+        // Обработка пароля
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        }
+
         if (userRequest.getPhotoFile() != null && !userRequest.getPhotoFile().isEmpty()) {
             try {
                 String photoPath = fileService.uploadFile(userRequest.getPhotoFile());
@@ -133,7 +144,7 @@ public class UserService {
                         "Ошибка при загрузке фото: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        
+
         User savedUser = userRepository.save(user);
         log.info("Пользователь с ID {} успешно создан", savedUser.getId());
         return userMapper.mapUserToResponse(savedUser);
@@ -146,21 +157,21 @@ public class UserService {
                         "Пользователь с ID " + id + " не найден"));
 
         userMapper.partialUpdate(userRequest, user);
-        
+
         if (userRequest.getCityId() != null) {
             City city = cityService.findById(userRequest.getCityId())
                     .orElseThrow(() -> new OperationException("получении города",
                             "Город с ID " + userRequest.getCityId() + " не найден", HttpStatus.NOT_FOUND));
             user.setCity(city);
         }
-        
+
         if (userRequest.getAddressId() != null) {
             Street street = streetService.findById(userRequest.getAddressId())
                     .orElseThrow(() -> new OperationException("получении улицы",
                             "Улица с ID " + userRequest.getAddressId() + " не найдена", HttpStatus.NOT_FOUND));
             user.setStreet(street);
         }
-        
+
         if (userRequest.getHouseId() != null) {
             var house = houseService.findById(userRequest.getHouseId().toHexString())
                     .orElseThrow(() -> new OperationException("получении дома",
@@ -169,7 +180,7 @@ public class UserService {
             // Автоматически устанавливаем номер дома из объекта House
             user.setHouseNumber(house.getHouseNumber());
         }
-        
+
         if (userRequest.getStatus() != null) {
             try {
                 user.setStatus(Status.valueOf(userRequest.getStatus()));
@@ -178,13 +189,18 @@ public class UserService {
                         "Неверный статус: " + userRequest.getStatus(), HttpStatus.BAD_REQUEST);
             }
         }
-        
+
+        // Обработка пароля
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        }
+
         if (userRequest.getPhotoFile() != null && !userRequest.getPhotoFile().isEmpty()) {
             try {
                 if (user.getPhoto() != null && !user.getPhoto().isEmpty()) {
                     fileService.deleteFile(user.getPhoto());
                 }
-                
+
                 String photoPath = fileService.uploadFile(userRequest.getPhotoFile());
                 user.setPhoto(photoPath);
                 log.info("Фото для пользователя с ID {} успешно обновлено: {}", id, photoPath);
@@ -194,7 +210,7 @@ public class UserService {
                         "Ошибка при загрузке фото: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        
+
         User updatedUser = userRepository.save(user);
         log.info("Пользователь с ID {} успешно обновлен", updatedUser.getId());
         return userMapper.mapUserToResponse(updatedUser);
@@ -215,7 +231,7 @@ public class UserService {
         House house = houseService.findById(houseId)
                 .orElseThrow(() -> new OperationException("получении пользователей",
                         "Дом с ID " + houseId + " не найден", HttpStatus.NOT_FOUND));
-        
+
         List<User> users = userRepository.findByHouse(house);
         log.info("Найдено {} пользователей для дома с ID {}", users.size(), houseId);
         return users.stream()
@@ -227,11 +243,10 @@ public class UserService {
         House house = houseService.findById(houseId)
                 .orElseThrow(() -> new OperationException("получении пользователей",
                         "Дом с ID " + houseId + " не найден", HttpStatus.NOT_FOUND));
-        
-        org.springframework.data.domain.Pageable pageable = 
-                org.springframework.data.domain.PageRequest.of(page, size);
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         Page<User> users = userRepository.findByHouse(house, pageable);
-        log.info("Найдено {} пользователей для дома с ID {} (страница {}, размер {})", 
+        log.info("Найдено {} пользователей для дома с ID {} (страница {}, размер {})",
                 users.getNumberOfElements(), houseId, page, size);
         return users.map(userMapper::mapUserToResponse);
     }

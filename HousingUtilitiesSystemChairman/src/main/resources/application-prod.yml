@@ -1,10 +1,8 @@
-
-
 spring:
   data:
     mongodb:
       # Нужно изменить пароль
-      uri: mongodb://housingapp:CHANGE_PASSWORD_IN_PRODUCTION@mongo1:27017,mongo2:27017,mongo3:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=HousingUtilitiesSystemDB&ssl=false
+      uri: ${MONGODB_URI}
       
   security:
     oauth2:

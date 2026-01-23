@@ -3,7 +3,6 @@
     layout:decorate="~{template/layout}">
 
 <head>
-    <title>Заявки</title>
     <th:block layout:fragment="page_css">
     </th:block>
 </head>
@@ -12,7 +11,7 @@
     <div layout:fragment="content" class="container-xxl flex-grow-1 container-p-y">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Отправленные сообщения</h5>
+                <h5 class="mb-0" data-i18n="pages.requests">Отправленные сообщения</h5>
                 <a th:href="@{/requests/new}" class="btn btn-primary">
                     <i class="icon-base ti tabler-plus me-1"></i>
                     Написать

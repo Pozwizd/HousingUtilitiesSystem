@@ -53,8 +53,12 @@
     "statuses": {
       "new": "Новый",
       "active": "Активный",
+      "inactive": "Неактивный",
+      "pending": "В ожидании",
       "deactivated": "Деактивирован",
-      "blocked": "Заблокирован"
+      "blocked": "Заблокирован",
+      "deleted": "Удален",
+      "archived": "Архивирован"
     }
   },
   "feedback": {
@@ -475,6 +479,27 @@
     "fieldCannotBeEmpty": "Поле не может быть пустым",
     "wrongPassword": "Неверный пароль",
     "passwordsDoNotMatch": "Пароли не совпадают"
+  },
+  "contactsPage": {
+    "title": "Редактирование страницы \"Контакты\"",
+    "addSection": "Добавить секцию",
+    "save": "Сохранить",
+    "sectionTitle": "Заголовок",
+    "sectionTitlePlaceholder": "Название секции",
+    "content": "Содержание",
+    "bold": "Полужирный",
+    "italic": "Курсив",
+    "underline": "Подчёркнутый",
+    "addContact": "Добавить контакт",
+    "image": "Image",
+    "fullName": "ФИО",
+    "contactTypes": {
+      "chairman": "Председатель",
+      "employee": "Сотрудник"
+    },
+    "position": "Должность",
+    "description": "Описание",
+    "uploadPhoto": "Загрузить фото"
   },
   "errors": {
     "asyncOperationFailed": "Ошибка асинхронной операции",

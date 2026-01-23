@@ -209,9 +209,13 @@
                 // Photo
                 let photoHtml = '';
                 if (contact.photoPath) {
+                    let photoUrl = contact.photoPath;
+                    if (!photoUrl.startsWith('http://') && !photoUrl.startsWith('https://')) {
+                        photoUrl = window.contextPath + '/' + photoUrl;
+                    }
                     photoHtml = `
                         <div class="contact-photo">
-                            <img src="${window.contextPath}/${contact.photoPath}" alt="${escapeHtml(contact.fullName || '')}">
+                            <img src="${photoUrl}" alt="${escapeHtml(contact.fullName || '')}">
                         </div>
                     `;
                 } else {

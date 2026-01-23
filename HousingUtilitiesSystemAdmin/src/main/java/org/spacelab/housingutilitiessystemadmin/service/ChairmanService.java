@@ -14,6 +14,7 @@ import org.spacelab.housingutilitiessystemadmin.repository.ChairmanRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ChairmanService {
     private final ChairmanRepository chairmanRepository;
     private final ChairmanMapper chairmanMapper;
     private final FileService fileService;
+    private final PasswordEncoder passwordEncoder;
 
     public Optional<Chairman> findById(String id) {
         return chairmanRepository.findById(id);
@@ -75,11 +77,11 @@ public class ChairmanService {
         }
 
         Chairman chairman = chairmanMapper.toEntity(chairmanRequest);
-        
+
         if (chairmanRequest.getPassword() != null && !chairmanRequest.getPassword().isEmpty()) {
-            chairman.setPassword(chairmanRequest.getPassword());
+            chairman.setPassword(passwordEncoder.encode(chairmanRequest.getPassword()));
         }
-        
+
         if (chairmanRequest.getPhotoFile() != null && !chairmanRequest.getPhotoFile().isEmpty()) {
             try {
                 String photoPath = fileService.uploadFile(chairmanRequest.getPhotoFile());
@@ -91,7 +93,7 @@ public class ChairmanService {
                         "Ошибка при загрузке фото: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        
+
         Chairman savedChairman = chairmanRepository.save(chairman);
         log.info("Председатель с ID {} успешно создан", savedChairman.getId());
         return chairmanMapper.mapChairmanToResponse(savedChairman);
@@ -103,17 +105,17 @@ public class ChairmanService {
                         "Председатель с ID " + id + " не найден"));
 
         chairmanMapper.partialUpdate(chairmanRequest, chairman);
-        
+
         if (chairmanRequest.getPassword() != null && !chairmanRequest.getPassword().isEmpty()) {
-            chairman.setPassword(chairmanRequest.getPassword());
+            chairman.setPassword(passwordEncoder.encode(chairmanRequest.getPassword()));
         }
-        
+
         if (chairmanRequest.getPhotoFile() != null && !chairmanRequest.getPhotoFile().isEmpty()) {
             try {
                 if (chairman.getPhoto() != null && !chairman.getPhoto().isEmpty()) {
                     fileService.deleteFile(chairman.getPhoto());
                 }
-                
+
                 String photoPath = fileService.uploadFile(chairmanRequest.getPhotoFile());
                 chairman.setPhoto(photoPath);
                 log.info("Фото для председателя с ID {} успешно обновлено: {}", id, photoPath);
@@ -123,7 +125,7 @@ public class ChairmanService {
                         "Ошибка при загрузке фото: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        
+
         Chairman updatedChairman = chairmanRepository.save(chairman);
         log.info("Председатель с ID {} успешно обновлен", updatedChairman.getId());
         return chairmanMapper.mapChairmanToResponse(updatedChairman);
@@ -142,7 +144,7 @@ public class ChairmanService {
     public Page<ChairmanResponseTable> getChairmenTable(ChairmanRequestTable chairmanRequestTable) {
         Page<Chairman> chairmen = getChairman(chairmanRequestTable);
         Page<ChairmanResponseTable> chairmanResponses = chairmanMapper.toResponseTablePage(chairmen);
-        log.info("Получена страница председателей: страница {}, размер {}", 
+        log.info("Получена страница председателей: страница {}, размер {}",
                 chairmanRequestTable.getPage(), chairmanRequestTable.getSize());
         return chairmanResponses;
     }

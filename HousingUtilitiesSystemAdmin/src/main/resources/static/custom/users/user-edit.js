@@ -11,7 +11,7 @@
  * ============================================
  */
 
-const UserEditPage = (function() {
+const UserEditPage = (function () {
     'use strict';
 
     // ============================================
@@ -58,7 +58,7 @@ const UserEditPage = (function() {
 
             // Слушатель смены языка для обновления placeholder'ов
             if (typeof i18next !== 'undefined') {
-                i18next.on('languageChanged', function() {
+                i18next.on('languageChanged', function () {
                     updateSelect2Placeholders();
                     updateStatusLabels();
                 });
@@ -113,7 +113,7 @@ const UserEditPage = (function() {
      */
     function initSelect2() {
         return new Promise((resolve) => {
-            $(document).ready(function() {
+            $(document).ready(function () {
                 // Функция для получения переведенного placeholder
                 const getPlaceholder = (key) => {
                     return typeof i18next !== 'undefined' ? i18next.t(key) : key;
@@ -353,18 +353,18 @@ const UserEditPage = (function() {
             const response = await fetch((window.contextPath || '') + `/streets/getByCity/${cityId}`);
             if (response.ok) {
                 const streets = await response.json();
-                
+
                 $(elements.fields.addressId).empty();
                 $(elements.fields.addressId).append('<option value="">Выберите улицу</option>');
-                
+
                 streets.forEach(street => {
                     const option = new Option(street.name, street.id, false, false);
                     $(elements.fields.addressId).append(option);
                 });
-                
+
                 $(elements.fields.addressId).trigger('change');
                 $(elements.fields.addressId).prop('disabled', false);
-                
+
                 return streets;
             } else {
                 throw new Error('Failed to load streets');
@@ -388,19 +388,19 @@ const UserEditPage = (function() {
             const response = await fetch((window.contextPath || '') + `/houses/getByStreet/${streetId}`);
             if (response.ok) {
                 const houses = await response.json();
-                
+
                 $(elements.fields.houseNumber).empty();
                 $(elements.fields.houseNumber).append('<option value="">Выберите дом</option>');
-                
+
                 houses.forEach(house => {
                     const houseText = house.number || house.houseNumber || 'Номер не указан';
                     const option = new Option(houseText, house.id, false, false);
                     $(elements.fields.houseNumber).append(option);
                 });
-                
+
                 $(elements.fields.houseNumber).trigger('change');
                 $(elements.fields.houseNumber).prop('disabled', false);
-                
+
                 return houses;
             } else {
                 throw new Error('Failed to load houses');
@@ -431,9 +431,9 @@ const UserEditPage = (function() {
      */
     function populateStatusSelect(statuses) {
         const statusSelect = elements.fields.status;
-        
+
         // Получаем placeholder с учетом i18n
-        const placeholderText = typeof i18next !== 'undefined' 
+        const placeholderText = typeof i18next !== 'undefined'
             ? i18next.t('users.placeholders.selectStatus')
             : 'Выберите статус';
         statusSelect.innerHTML = `<option value="">${placeholderText}</option>`;
@@ -455,7 +455,7 @@ const UserEditPage = (function() {
         statuses.forEach(status => {
             const option = document.createElement('option');
             option.value = status;
-            
+
             // Используем i18n если доступен, иначе fallback
             if (typeof i18next !== 'undefined' && statusI18nKeys[status]) {
                 option.textContent = i18next.t(statusI18nKeys[status]);
@@ -463,7 +463,7 @@ const UserEditPage = (function() {
             } else {
                 option.textContent = statusFallbacks[status] || status;
             }
-            
+
             statusSelect.appendChild(option);
         });
     }
@@ -543,7 +543,12 @@ const UserEditPage = (function() {
 
             // Аватар
             if (user.photo && user.photo.trim() !== '' && user.photo !== 'default_photo.jpg') {
-                elements.avatarImg.src = (window.contextPath || '') + '/' + user.photo;
+                // Если URL абсолютный (GCS), используем как есть, иначе добавляем contextPath
+                if (user.photo.startsWith('http://') || user.photo.startsWith('https://')) {
+                    elements.avatarImg.src = user.photo;
+                } else {
+                    elements.avatarImg.src = (window.contextPath || '') + '/' + user.photo;
+                }
             } else {
                 elements.avatarImg.src = config.defaultAvatar;
             }
@@ -589,7 +594,7 @@ const UserEditPage = (function() {
         // Кнопка отмены
         const cancelBtn = document.querySelector('button[type="reset"]');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', function(e) {
+            cancelBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 window.history.back();
             });
@@ -674,7 +679,7 @@ const UserEditPage = (function() {
 
         // Предпросмотр изображения
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             elements.avatarImg.src = e.target.result;
         };
         reader.readAsDataURL(file);
@@ -738,7 +743,7 @@ const UserEditPage = (function() {
             if (response.ok) {
                 const result = await response.json();
                 const userName = result.firstName || elements.fields.firstName.value || '';
-                
+
                 NotificationModule.show(
                     state.isEditMode ? 'users.success.updated' : 'users.success.created',
                     'success',
@@ -774,7 +779,7 @@ const UserEditPage = (function() {
 // ============================================
 // 5. МОДУЛЬ ВАЛИДАЦИИ
 // ============================================
-const ValidationModule = (function() {
+const ValidationModule = (function () {
     'use strict';
 
     /**
@@ -806,7 +811,7 @@ const ValidationModule = (function() {
                     const errorContainer = field.parentElement.querySelector('.invalid-feedback');
                     if (errorContainer) {
                         field.classList.add('is-invalid');
-                        
+
                         // Проверяем, является ли ошибка ключом i18n
                         const errorMessage = errors[fieldName];
                         if (errorMessage.includes('.')) {
@@ -862,7 +867,7 @@ const ValidationModule = (function() {
 // ============================================
 // МОДУЛЬ УВЕДОМЛЕНИЙ
 // ============================================
-const NotificationModule = (function() {
+const NotificationModule = (function () {
     'use strict';
 
     /**
@@ -909,6 +914,6 @@ const NotificationModule = (function() {
 // ============================================
 // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     UserEditPage.init();
 });

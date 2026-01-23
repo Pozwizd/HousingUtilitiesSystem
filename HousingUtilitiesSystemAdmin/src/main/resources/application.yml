@@ -81,7 +81,7 @@ sendgrid:
   from-email: ${SENDGRID_FROM_EMAIL}
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /admin
     encoding:
@@ -106,6 +106,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 900000 # 15 минут в миллисекундах
   refresh-expiration: 604800000 # 7 дней в миллисекундах
+
+# Google Cloud Storage
+gcs:
+  bucket-name: ${GCS_BUCKET:housing-system-uploads}
+  public-url: https://storage.googleapis.com
 
 
 

@@ -46,8 +46,12 @@
     "statuses": {
       "new": "New",
       "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
       "deactivated": "Deactivated",
-      "blocked": "Blocked"
+      "blocked": "Blocked",
+      "deleted": "Deleted",
+      "archived": "Archived"
     }
   },
   "users": {

@@ -305,7 +305,11 @@
 
                 // Update avatar if exists
                 if (data.pathAvatar) {
-                    document.getElementById('uploadedAvatar').src = data.pathAvatar;
+                    if (data.pathAvatar.startsWith('http://') || data.pathAvatar.startsWith('https://')) {
+                        document.getElementById('uploadedAvatar').src = data.pathAvatar;
+                    } else {
+                        document.getElementById('uploadedAvatar').src = (window.contextPath || '') + '/' + data.pathAvatar;
+                    }
                 }
             }
 

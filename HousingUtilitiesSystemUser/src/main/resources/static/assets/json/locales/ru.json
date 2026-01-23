@@ -48,7 +48,17 @@
     "areYouSure": "Вы уверены?",
     "noDataFound": "Данные не найдены",
     "pagination": "Навигация по страницам",
-    "validationFailed": "Ошибка валидации"
+    "validationFailed": "Ошибка валидации",
+    "statuses": {
+      "new": "Новый",
+      "active": "Активный",
+      "inactive": "Неактивный",
+      "pending": "В ожидании",
+      "deactivated": "Деактивирован",
+      "blocked": "Заблокирован",
+      "deleted": "Удален",
+      "archived": "Архивирован"
+    }
   },
   "chat": {
     "subtitle": "Общайтесь с жителями и управляйте обращениями",
@@ -213,6 +223,10 @@
       "inactive": "Неактивный",
       "blocked": "Заблокирован"
     }
+  },
+  "requests": {
+    "newRequest": "Новая заявка",
+    "viewRequest": "Просмотр заявки"
   },
   "accounts": {
     "title": "Счета",

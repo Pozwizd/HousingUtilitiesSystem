@@ -53,8 +53,12 @@
     "statuses": {
       "new": "Новий",
       "active": "Активний",
+      "inactive": "Неактивний",
+      "pending": "В очікуванні",
       "deactivated": "Деактивований",
-      "blocked": "Заблокований"
+      "blocked": "Заблокований",
+      "deleted": "Видалений",
+      "archived": "Архівований"
     }
   },
   "feedback": {
@@ -475,6 +479,27 @@
     "fieldCannotBeEmpty": "Поле не може бути порожнім",
     "wrongPassword": "Невірний пароль",
     "passwordsDoNotMatch": "Паролі не співпадають"
+  },
+  "contactsPage": {
+    "title": "Редагування сторінки \"Контакти\"",
+    "addSection": "Додати секцію",
+    "save": "Зберегти",
+    "sectionTitle": "Заголовок",
+    "sectionTitlePlaceholder": "Назва секції",
+    "content": "Зміст",
+    "bold": "Напівжирний",
+    "italic": "Курсив",
+    "underline": "Підкреслений",
+    "addContact": "Додати контакт",
+    "image": "Image",
+    "fullName": "ПІБ",
+    "contactTypes": {
+      "chairman": "Голова",
+      "employee": "Співробітник"
+    },
+    "position": "Посада",
+    "description": "Опис",
+    "uploadPhoto": "Завантажити фото"
   },
   "errors": {
     "asyncOperationFailed": "Помилка асинхронної операції",

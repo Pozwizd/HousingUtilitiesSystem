@@ -1,4 +1,5 @@
 package org.spacelab.housingutilitiessystemchairman.service;
+
 import lombok.RequiredArgsConstructor;
 import org.spacelab.housingutilitiessystemchairman.entity.Contact;
 import org.spacelab.housingutilitiessystemchairman.entity.ContactSection;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ContactService {
@@ -24,32 +26,41 @@ public class ContactService {
     private final ContactSectionRepository contactSectionRepository;
     private final ContactMapper contactMapper;
     private final FileService fileService;
+
     public Contact save(Contact contact) {
         return contactRepository.save(contact);
     }
+
     public Optional<Contact> findById(String id) {
         return contactRepository.findById(id);
     }
+
     public List<Contact> findAll() {
         return contactRepository.findAll();
     }
+
     public void deleteById(String id) {
         contactRepository.deleteById(id);
     }
+
     public Contact update(Contact contact) {
         return contactRepository.save(contact);
     }
+
     public List<Contact> saveAll(List<Contact> contacts) {
         return contactRepository.saveAll(contacts);
     }
+
     public void deleteAll() {
         contactRepository.deleteAll();
     }
+
     public ContactResponse getContactById(String id) {
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contact not found: " + id));
         return contactMapper.toResponse(contact);
     }
+
     public List<ContactResponse> getAllContacts() {
         return contactMapper.toResponseList(contactRepository.findAll());
     }
@@ -78,10 +89,12 @@ public class ContactService {
         Contact saved = contactRepository.save(contact);
         return contactMapper.toResponse(saved);
     }
+
     public List<ContactSectionResponse> getAllSections() {
         List<ContactSection> sections = contactSectionRepository.findAll();
         return contactMapper.toSectionResponseList(sections);
     }
+
     public ContactSectionResponse getSectionById(String id) {
         ContactSection section = contactSectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ContactSection not found: " + id));
@@ -182,29 +195,25 @@ public class ContactService {
             }
         }
     }
+
     public void deleteSection(String id) {
         ContactSection section = contactSectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ContactSection not found: " + id));
         if (section.getContacts() != null) {
             for (Contact c : section.getContacts()) {
                 if (c.getPhotoPath() != null) {
-                    try {
-                        fileService.deleteFile(c.getPhotoPath());
-                    } catch (IOException e) {
-                    }
+                    fileService.deleteFile(c.getPhotoPath());
                 }
                 contactRepository.deleteById(c.getId());
             }
         }
         contactSectionRepository.deleteById(id);
     }
+
     public void deleteContact(String id) {
         Contact contact = contactRepository.findById(id).orElse(null);
         if (contact != null && contact.getPhotoPath() != null) {
-            try {
-                fileService.deleteFile(contact.getPhotoPath());
-            } catch (IOException e) {
-            }
+            fileService.deleteFile(contact.getPhotoPath());
         }
         contactRepository.deleteById(id);
     }

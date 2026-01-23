@@ -27,7 +27,7 @@ public class BillController {
             model.addAttribute("user", user);
         }
         model.addAttribute("pageActive", "bills");
-        model.addAttribute("pageTitle", "Счета");
+        model.addAttribute("pageTitle", "pages.bills");
         return "bills/bills";
     }
 

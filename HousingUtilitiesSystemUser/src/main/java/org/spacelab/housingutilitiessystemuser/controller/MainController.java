@@ -27,7 +27,7 @@ public class MainController {
         }
 
         model.addAttribute("pageActive", "profile");
-        model.addAttribute("pageTitle", "Профиль");
+        model.addAttribute("pageTitle", "pages.profile");
         return "profile";
     }
 

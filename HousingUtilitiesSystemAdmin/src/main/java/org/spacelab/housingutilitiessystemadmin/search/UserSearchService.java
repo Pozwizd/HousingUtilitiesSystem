@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class UserSearchService {
-    
+
     private final UserSearchRepository userSearchRepository;
     private final UserRepository userRepository;
     private final ElasticsearchOperations elasticsearchOperations;
-    
+
     /**
      * Индексирует пользователя в Elasticsearch
      */
@@ -33,7 +33,7 @@ public class UserSearchService {
         log.info("Indexed user with id: {}", user.getId());
         return saved;
     }
-    
+
     /**
      * Индексирует всех пользователей из MongoDB в Elasticsearch
      */
@@ -43,11 +43,11 @@ public class UserSearchService {
         List<UserSearchDocument> documents = users.stream()
                 .map(this::convertToSearchDocument)
                 .collect(Collectors.toList());
-        
+
         userSearchRepository.saveAll(documents);
         log.info("Indexed {} users", documents.size());
     }
-    
+
     /**
      * Удаляет пользователя из индекса
      */
@@ -55,7 +55,7 @@ public class UserSearchService {
         userSearchRepository.deleteById(userId);
         log.info("Deleted user from index: {}", userId);
     }
-    
+
     /**
      * Поиск по имени, фамилии или отчеству
      */
@@ -63,42 +63,42 @@ public class UserSearchService {
         return userSearchRepository.findByFirstNameContainingOrLastNameContainingOrMiddleNameContaining(
                 name, name, name);
     }
-    
+
     /**
      * Поиск по email
      */
     public List<UserSearchDocument> searchByEmail(String email) {
         return userSearchRepository.findByEmail(email);
     }
-    
+
     /**
      * Поиск по телефону
      */
     public List<UserSearchDocument> searchByPhone(String phone) {
         return userSearchRepository.findByPhone(phone);
     }
-    
+
     /**
      * Поиск по номеру счета
      */
     public List<UserSearchDocument> searchByAccountNumber(String accountNumber) {
         return userSearchRepository.findByAccountNumber(accountNumber);
     }
-    
+
     /**
      * Поиск по городу
      */
     public List<UserSearchDocument> searchByCity(String cityName) {
         return userSearchRepository.findByCityName(cityName);
     }
-    
+
     /**
      * Поиск по статусу
      */
     public List<UserSearchDocument> searchByStatus(String status) {
         return userSearchRepository.findByStatus(status);
     }
-    
+
     /**
      * Комплексный поиск с использованием Criteria API
      */
@@ -109,15 +109,15 @@ public class UserSearchService {
                 .or("templates/email").is(searchTerm)
                 .or("phone").is(searchTerm)
                 .or("accountNumber").is(searchTerm);
-        
+
         Query query = new CriteriaQuery(criteria);
         SearchHits<UserSearchDocument> searchHits = elasticsearchOperations.search(query, UserSearchDocument.class);
-        
+
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * Конвертирует User в UserSearchDocument
      */
@@ -140,6 +140,3 @@ public class UserSearchService {
                 .build();
     }
 }
-
-
-

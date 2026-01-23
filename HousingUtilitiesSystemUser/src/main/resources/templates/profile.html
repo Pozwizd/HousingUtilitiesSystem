@@ -3,7 +3,6 @@
     layout:decorate="~{template/layout}">
 
 <head>
-    <title>Профиль</title>
     <th:block layout:fragment="page_css">
         <style>
             .profile-header {
@@ -179,7 +178,11 @@
 
                 // Set user photo on page load
                 if (window.userPhoto && window.userPhoto.trim() !== '' && window.userPhoto !== 'default_photo.jpg') {
-                    avatarImg.src = window.contextPath + '/' + window.userPhoto;
+                    if (window.userPhoto.startsWith('http://') || window.userPhoto.startsWith('https://')) {
+                        avatarImg.src = window.userPhoto;
+                    } else {
+                        avatarImg.src = window.contextPath + '/' + window.userPhoto;
+                    }
                 } else {
                     avatarImg.src = window.defaultAvatarPath;
                 }

@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: ${PORT:8083}
   servlet:
     context-path: /user
     encoding:
@@ -111,7 +111,10 @@ jwt:
   expiration: 900000 # 15 минут
   refresh-expiration: 604800000 # 7 дней
 
-# Профили:
+# Google Cloud Storage
+gcs:
+  bucket-name: ${GCS_BUCKET:housing-system-uploads}
+  public-url: https://storage.googleapis.com
 # - dev: Локальная разработка (application-dev.yml)
 # - prod: Продакшен (application-prod.yml)  
 # - docker: Docker окружение (application-docker.yml)

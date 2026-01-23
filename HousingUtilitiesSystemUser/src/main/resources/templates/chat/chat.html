@@ -167,6 +167,15 @@
             let currentUserId = /*[[${currentUserId}]]*/ null;
             console.log('Current user ID:', currentUserId);
 
+            // === Helper function to get avatar URL (supports GCS absolute URLs) ===
+            function getAvatarUrl(avatarPath) {
+                if (!avatarPath) return null;
+                if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+                    return avatarPath;
+                }
+                return contextPath + avatarPath;
+            }
+
             // === Chat State ===
             let stompClient = null;
             let currentConversationId = null;
@@ -268,7 +277,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
                             ${conv.avatar
-                        ? `<img src="${contextPath}${conv.avatar}" class="rounded-circle" alt="${conv.name}">`
+                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
                         : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`
                     }
                         </div>
@@ -299,7 +308,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
                             ${chairman.avatar
-                        ? `<img src="${contextPath}${chairman.avatar}" class="rounded-circle" alt="${chairman.name}">`
+                        ? `<img src="${getAvatarUrl(chairman.avatar)}" class="rounded-circle" alt="${chairman.name}">`
                         : `<span class="avatar-initial bg-label-warning rounded-circle">${initial}</span>`
                     }
                         </div>
@@ -327,7 +336,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
                             ${contact.avatar
-                        ? `<img src="${contextPath}${contact.avatar}" class="rounded-circle" alt="${contact.name}">`
+                        ? `<img src="${getAvatarUrl(contact.avatar)}" class="rounded-circle" alt="${contact.name}">`
                         : `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`
                     }
                         </div>
@@ -693,7 +702,7 @@
 
                             // Set avatar content
                             if (info.avatar) {
-                                avatarContainer.innerHTML = `<img src="${contextPath}${info.avatar}" class="rounded-circle" alt="${info.name}">`;
+                                avatarContainer.innerHTML = `<img src="${getAvatarUrl(info.avatar)}" class="rounded-circle" alt="${info.name}">`;
                             } else {
                                 const initial = (info.name || '?').charAt(0).toUpperCase();
                                 avatarContainer.innerHTML = `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`;

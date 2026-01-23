@@ -27,7 +27,7 @@ public class RequestsController {
             model.addAttribute("user", user);
         }
         model.addAttribute("pageActive", "requests");
-        model.addAttribute("pageTitle", "Заявки");
+        model.addAttribute("pageTitle", "pages.requests");
         return "requests/requests";
     }
 
@@ -38,7 +38,7 @@ public class RequestsController {
             model.addAttribute("user", user);
         }
         model.addAttribute("pageActive", "requests");
-        model.addAttribute("pageTitle", "Новое сообщение");
+        model.addAttribute("pageTitle", "requests.newRequest");
         return "requests/request-new";
     }
 
@@ -49,7 +49,7 @@ public class RequestsController {
             model.addAttribute("user", user);
         }
         model.addAttribute("pageActive", "requests");
-        model.addAttribute("pageTitle", "Просмотр сообщения");
+        model.addAttribute("pageTitle", "requests.viewRequest");
         return "requests/request-view";
     }
 

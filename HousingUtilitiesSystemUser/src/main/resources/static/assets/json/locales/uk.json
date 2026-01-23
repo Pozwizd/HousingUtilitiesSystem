@@ -48,7 +48,17 @@
     "areYouSure": "Ви впевнені?",
     "noDataFound": "Дані не знайдено",
     "pagination": "Навігація по сторінках",
-    "validationFailed": "Помилка валідації"
+    "validationFailed": "Помилка валідації",
+    "statuses": {
+      "new": "Новий",
+      "active": "Активний",
+      "inactive": "Неактивний",
+      "pending": "В очікуванні",
+      "deactivated": "Деактивований",
+      "blocked": "Заблокований",
+      "deleted": "Видалений",
+      "archived": "Архівований"
+    }
   },
   "chat": {
     "subtitle": "Спілкуйтеся з мешканцями та керуйте зверненнями",
@@ -213,6 +223,10 @@
       "inactive": "Неактивний",
       "blocked": "Заблокований"
     }
+  },
+  "requests": {
+    "newRequest": "Нова заявка",
+    "viewRequest": "Перегляд заявки"
   },
   "accounts": {
     "title": "Рахунки",

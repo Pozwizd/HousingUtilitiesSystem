@@ -40,6 +40,7 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <poi.version>5.2.5</poi.version>
         <sendgrid.version>4.10.3</sendgrid.version>
+        <spring-cloud-gcp.version>5.9.0</spring-cloud-gcp.version>
     </properties>
 
     <dependencyManagement>
@@ -99,6 +100,12 @@
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi.version}</version>
+            </dependency>
+            <!-- Google Cloud Storage -->
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>spring-cloud-gcp-starter-storage</artifactId>
+                <version>${spring-cloud-gcp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

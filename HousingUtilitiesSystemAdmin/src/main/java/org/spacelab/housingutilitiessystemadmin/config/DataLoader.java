@@ -21,10 +21,12 @@ import java.util.*;
  * Chairman, Users.
  *
  * Логика проверок:
- * - Точные данные (Admin, Chairman): проверка по email, если существует - пропускаем
+ * - Точные данные (Admin, Chairman): проверка по email, если существует -
+ * пропускаем
  * - Случайные данные (Users): если count > 20 - пропускаем
  */
-// DISABLED: Компонент отключен чтобы база данных не очищалась при запуске приложения
+// DISABLED: Компонент отключен чтобы база данных не очищалась при запуске
+// приложения
 @Component
 @RequiredArgsConstructor
 public class DataLoader {
@@ -64,14 +66,15 @@ public class DataLoader {
         // 5. Обновляем дом с жителями и председателем
         if (house != null) {
             // Добавляем новых пользователей к существующим (не перезаписываем)
-            List<User> currentResidents = house.getResidents() != null ? new ArrayList<>(house.getResidents()) : new ArrayList<>();
+            List<User> currentResidents = house.getResidents() != null ? new ArrayList<>(house.getResidents())
+                    : new ArrayList<>();
             for (User newUser : newUsers) {
                 if (newUser != null && currentResidents.stream().noneMatch(u -> u.getId().equals(newUser.getId()))) {
                     currentResidents.add(newUser);
                 }
             }
             house.setResidents(currentResidents);
-            
+
             if (chairman != null) {
                 house.setChairman(chairman);
             }
@@ -219,7 +222,7 @@ public class DataLoader {
                 .email(chairmanEmail)
                 .password(passwordEncoder.encode(chairmanEmail))
                 .status(Status.ACTIVE)
-                .photo("uploads/avatar.jpg")
+                .photo(null)
                 .house(house)
                 .enabled(true)
                 .role(Role.USER)
@@ -237,7 +240,8 @@ public class DataLoader {
 
         // Если пользователей больше MAX_RANDOM_RECORDS - не добавляем новых
         if (existingUsers.size() >= MAX_RANDOM_RECORDS) {
-            System.out.println("Users: количество записей (" + existingUsers.size() + ") >= " + MAX_RANDOM_RECORDS + " - пропускаем");
+            System.out.println("Users: количество записей (" + existingUsers.size() + ") >= " + MAX_RANDOM_RECORDS
+                    + " - пропускаем");
             return existingUsers;
         }
 
@@ -269,7 +273,7 @@ public class DataLoader {
     }
 
     private User createUserIfNotExists(String email, String firstName, String lastName, String middleName,
-                                        String phone, String apartment, Double area, House house) {
+            String phone, String apartment, Double area, House house) {
         // Проверяем существование по email (используем repository)
         Optional<User> existing = userRepository.findByEmail(email);
         if (existing.isPresent()) {
@@ -289,7 +293,7 @@ public class DataLoader {
         user.setAccountNumber(generateAccountNumber());
         user.setStatus(Status.ACTIVE);
         user.setPassword(passwordEncoder.encode(email));
-        user.setPhoto("uploads/avatar.jpg");
+        user.setPhoto(null);
         user.setHouse(house);
         user.setStreet(house.getStreet());
         user.setCity(house.getStreet().getCity());

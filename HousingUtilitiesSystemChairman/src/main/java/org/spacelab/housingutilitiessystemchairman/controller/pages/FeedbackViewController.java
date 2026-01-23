@@ -14,7 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 @AllArgsConstructor
 @Slf4j
 public class FeedbackViewController {
-    @GetMapping({"", "/"})
+    @GetMapping({ "", "/" })
     public ModelAndView getFeedbackPage(Model model) {
         return new ModelAndView("feedback/feedback")
                 .addObject("pageTitle", "feedback.title")
@@ -24,7 +24,7 @@ public class FeedbackViewController {
     @GetMapping("/{id}/view")
     public ModelAndView getFeedbackDetailPage(@PathVariable String id, Model model) {
         return new ModelAndView("feedback/feedback-detail")
-                .addObject("pageTitle", "feedback.feedbackDetail")
+                .addObject("pageTitle", "feedback.detail")
                 .addObject("pageActive", "feedback")
                 .addObject("feedbackId", id);
     }

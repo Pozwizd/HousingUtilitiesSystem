@@ -53,8 +53,12 @@
     "statuses": {
       "new": "New",
       "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
       "deactivated": "Deactivated",
-      "blocked": "Blocked"
+      "blocked": "Blocked",
+      "deleted": "Deleted",
+      "archived": "Archived"
     }
   },
   "feedback": {
@@ -475,6 +479,27 @@
     "fieldCannotBeEmpty": "Field cannot be empty",
     "wrongPassword": "Invalid password",
     "passwordsDoNotMatch": "Passwords do not match"
+  },
+  "contactsPage": {
+    "title": "Edit \"Contacts\" Page",
+    "addSection": "Add Section",
+    "save": "Save",
+    "sectionTitle": "Title",
+    "sectionTitlePlaceholder": "Section name",
+    "content": "Content",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "addContact": "Add Contact",
+    "image": "Image",
+    "fullName": "Full Name",
+    "contactTypes": {
+      "chairman": "Chairman",
+      "employee": "Employee"
+    },
+    "position": "Position",
+    "description": "Description",
+    "uploadPhoto": "Upload photo"
   },
   "errors": {
     "asyncOperationFailed": "Async operation failed",

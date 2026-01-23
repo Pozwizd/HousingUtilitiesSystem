@@ -150,10 +150,12 @@
                 <h5 class="mb-0" data-i18n="contactsPage.title">Редактирование страницы "Контакты"</h5>
                 <div>
                     <button type="button" class="btn btn-outline-primary btn-sm me-2" id="addSectionBtn">
-                        <i class="icon-base ti tabler-plus me-1"></i><span data-i18n="contactsPage.addSection">Добавить секцию</span>
+                        <i class="icon-base ti tabler-plus me-1"></i><span data-i18n="contactsPage.addSection">Добавить
+                            секцию</span>
                     </button>
                     <button type="button" class="btn btn-success btn-sm" id="saveAllBtn">
-                        <i class="icon-base ti tabler-device-floppy me-1"></i><span data-i18n="contactsPage.save">Сохранить</span>
+                        <i class="icon-base ti tabler-device-floppy me-1"></i><span
+                            data-i18n="contactsPage.save">Сохранить</span>
                     </button>
                 </div>
             </div>
@@ -168,7 +170,8 @@
                 <div class="section-header">
                     <div class="flex-grow-1 me-3">
                         <label class="form-label small mb-1" data-i18n="contactsPage.sectionTitle">Заголовок</label>
-                        <input type="text" class="form-control section-title-input" data-i18n="[placeholder]contactsPage.sectionTitlePlaceholder" placeholder="Название секции">
+                        <input type="text" class="form-control section-title-input"
+                            data-i18n="[placeholder]contactsPage.sectionTitlePlaceholder" placeholder="Название секции">
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-danger btn-sm delete-section-btn">
@@ -179,9 +182,12 @@
                 <div class="mb-3">
                     <label class="form-label small" data-i18n="contactsPage.content">Содержание</label>
                     <div class="content-toolbar">
-                        <button type="button" class="toolbar-btn" data-format="bold"><b data-i18n="contactsPage.bold">Полужирный</b></button>
-                        <button type="button" class="toolbar-btn" data-format="italic"><i data-i18n="contactsPage.italic">Курсив</i></button>
-                        <button type="button" class="toolbar-btn" data-format="underline"><u data-i18n="contactsPage.underline">Подчёркнутый</u></button>
+                        <button type="button" class="toolbar-btn" data-format="bold"><b
+                                data-i18n="contactsPage.bold">Полужирный</b></button>
+                        <button type="button" class="toolbar-btn" data-format="italic"><i
+                                data-i18n="contactsPage.italic">Курсив</i></button>
+                        <button type="button" class="toolbar-btn" data-format="underline"><u
+                                data-i18n="contactsPage.underline">Подчёркнутый</u></button>
                         <button type="button" class="toolbar-btn" data-format="insertUnorderedList">☰</button>
                         <button type="button" class="toolbar-btn" data-format="insertOrderedList">1.</button>
                     </div>
@@ -192,7 +198,8 @@
                     <!-- Contact cards will be added here -->
                 </div>
                 <div class="add-contact-btn" onclick="addContactToSection(this)">
-                    <i class="icon-base ti tabler-plus me-2"></i><span data-i18n="contactsPage.addContact">Добавить контакт</span>
+                    <i class="icon-base ti tabler-plus me-2"></i><span data-i18n="contactsPage.addContact">Добавить
+                        контакт</span>
                 </div>
             </div>
         </template>
@@ -205,12 +212,15 @@
                     <img src="" alt="" style="display: none;">
                 </div>
                 <div class="contact-info">
-                    <input type="text" class="form-control form-control-sm mb-2 contact-name-input" data-i18n="[placeholder]contactsPage.fullName" placeholder="ФИО">
+                    <input type="text" class="form-control form-control-sm mb-2 contact-name-input"
+                        data-i18n="[placeholder]contactsPage.fullName" placeholder="ФИО">
                     <div class="row">
                         <div class="col-4">
                             <select class="form-select form-select-sm mb-2 contact-type-select">
-                                <option value="chairman" data-i18n="contactsPage.contactTypes.chairman">Председатель</option>
-                                <option value="employee" data-i18n="contactsPage.contactTypes.employee">Сотрудник</option>
+                                <option value="chairman" data-i18n="contactsPage.contactTypes.chairman">Председатель
+                                </option>
+                                <option value="employee" data-i18n="contactsPage.contactTypes.employee">Сотрудник
+                                </option>
                             </select>
                         </div>
                         <div class="col-4">
@@ -386,7 +396,11 @@
 
                 if (contact.photoPath) {
                     const img = contactCard.querySelector('.contact-photo img');
-                    img.src = window.contextPath + '/' + contact.photoPath;
+                    if (contact.photoPath.startsWith('http://') || contact.photoPath.startsWith('https://')) {
+                        img.src = contact.photoPath;
+                    } else {
+                        img.src = window.contextPath + '/' + contact.photoPath;
+                    }
                     img.style.display = 'block';
                     contactCard.querySelector('.no-photo-text').style.display = 'none';
                     $(contactCard).data('photo-path', contact.photoPath);

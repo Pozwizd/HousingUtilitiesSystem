@@ -37,20 +37,20 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
   function setupEventListeners() {
     // Apply filters button
-    applyFiltersBtn.addEventListener('click', function() {
+    applyFiltersBtn.addEventListener('click', function () {
       currentPage = 0; // Reset to first page when applying filters
       applyFilters();
     });
 
     // Clear filters button
-    clearFiltersBtn.addEventListener('click', function() {
+    clearFiltersBtn.addEventListener('click', function () {
       clearFilters();
     });
 
     // Enter key on filter inputs
     Object.values(filterElements).forEach(element => {
       if (element && element.tagName === 'INPUT') {
-        element.addEventListener('keypress', function(e) {
+        element.addEventListener('keypress', function (e) {
           if (e.key === 'Enter') {
             currentPage = 0;
             applyFilters();
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
   function applyFilters() {
     // Collect filter values
     currentFilters = {};
-    
+
     if (filterElements.lastName.value.trim()) {
       currentFilters.filter_lastName = filterElements.lastName.value.trim();
     }
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
       });
 
       const response = await fetch((window.contextPath || '') + `users/getAllUsers?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         renderTable(data.content);
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         <td>
           <div class="d-flex align-items-center">
             <div class="avatar avatar-sm me-2">
-              <img src="${user.photo ? ((window.contextPath || '') + '/' + user.photo) : ((window.contextPath || '') + '/assets/img/avatars/1.png')}" alt="Avatar" class="rounded-circle">
+              <img src="${user.photo ? (user.photo.startsWith('http') ? user.photo : ((window.contextPath || '') + '/' + user.photo)) : ((window.contextPath || '') + '/assets/img/avatars/1.png')}" alt="Avatar" class="rounded-circle">
             </div>
             <div>
               <strong>${user.fullName || ''}</strong>
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     // Add delete event listeners
     document.querySelectorAll('.delete-user-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function () {
         const userId = this.getAttribute('data-user-id');
         const userName = this.getAttribute('data-user-name');
         deleteUser(userId, userName);
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     // Add click events to pagination links
     pagination.querySelectorAll('a.page-link').forEach(link => {
-      link.addEventListener('click', function(e) {
+      link.addEventListener('click', function (e) {
         e.preventDefault();
         const page = parseInt(this.getAttribute('data-page'));
         if (page >= 0 && page < totalPages && page !== currentPageNum) {

@@ -1,4 +1,5 @@
 package org.spacelab.housingutilitiessystemchairman.controller.pages;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,7 @@ public class ContactViewController {
     @GetMapping({ "", "/" })
     public ModelAndView getContactsPage(Model model) {
         return new ModelAndView("contact/contacts")
-                .addObject("pageTitle", "contacts.title")
+                .addObject("pageTitle", "pages.contacts")
                 .addObject("pageActive", "contacts");
     }
 }

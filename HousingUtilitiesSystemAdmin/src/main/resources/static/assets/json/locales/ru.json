@@ -46,8 +46,12 @@
     "statuses": {
       "new": "Новый",
       "active": "Активный",
+      "inactive": "Неактивный",
+      "pending": "В ожидании",
       "deactivated": "Деактивирован",
-      "blocked": "Заблокирован"
+      "blocked": "Заблокирован",
+      "deleted": "Удален",
+      "archived": "Архивирован"
     }
   },
   "users": {
