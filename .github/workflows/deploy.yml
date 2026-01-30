@@ -2,7 +2,7 @@ name: Cloud Run Deployment
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'HousingUtilitiesSystemAdmin/**'
       - 'HousingUtilitiesSystemChairman/**'
