@@ -19,6 +19,9 @@ import org.spacelab.housingutilitiessystemadmin.models.location.HouseRequest;
 import org.spacelab.housingutilitiessystemadmin.models.location.HouseResponse;
 import org.spacelab.housingutilitiessystemadmin.models.location.HouseResponseTable;
 import org.spacelab.housingutilitiessystemadmin.repository.HouseRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.ChairmanService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.HouseService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.StreetService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 

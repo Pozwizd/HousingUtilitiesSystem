@@ -16,6 +16,8 @@ import org.spacelab.housingutilitiessystemadmin.models.chairman.ChairmanResponse
 import org.spacelab.housingutilitiessystemadmin.models.chairman.ChairmanResponseTable;
 import org.spacelab.housingutilitiessystemadmin.models.filters.chairman.ChairmanRequestTable;
 import org.spacelab.housingutilitiessystemadmin.repository.ChairmanRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.ChairmanService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +47,9 @@ class ChairmanServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private MultipartFile multipartFile;
@@ -206,11 +211,13 @@ class ChairmanServiceTest {
             when(chairmanRepository.findByEmail(anyString())).thenReturn(Optional.empty());
             when(chairmanRepository.findByLogin(anyString())).thenReturn(Optional.empty());
             when(chairmanMapper.toEntity(testChairmanRequest)).thenReturn(testChairman);
+            when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
             when(chairmanRepository.save(any(Chairman.class))).thenReturn(testChairman);
             when(chairmanMapper.mapChairmanToResponse(testChairman)).thenReturn(testChairmanResponse);
 
             chairmanService.createChairman(testChairmanRequest);
 
+            verify(passwordEncoder).encode("password123");
             verify(chairmanRepository).save(any(Chairman.class));
         }
 
@@ -278,11 +285,13 @@ class ChairmanServiceTest {
         void updateChairman_withPassword_shouldUpdatePassword() {
             testChairmanRequest.setPassword("newPassword");
             when(chairmanRepository.findById("chairman-id-123")).thenReturn(Optional.of(testChairman));
+            when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
             when(chairmanRepository.save(any(Chairman.class))).thenReturn(testChairman);
             when(chairmanMapper.mapChairmanToResponse(testChairman)).thenReturn(testChairmanResponse);
 
             chairmanService.updateChairman("chairman-id-123", testChairmanRequest);
 
+            verify(passwordEncoder).encode("newPassword");
             verify(chairmanRepository).save(any(Chairman.class));
         }
 
@@ -502,7 +511,8 @@ class ChairmanServiceTest {
 
         @Test
         @DisplayName("Should get pageable chairmen async with null params")
-        void getPageableChairmenAsync_withNullParams_shouldReturnPage() throws ExecutionException, InterruptedException {
+        void getPageableChairmenAsync_withNullParams_shouldReturnPage()
+                throws ExecutionException, InterruptedException {
             Page<Chairman> chairmenPage = new PageImpl<>(List.of(testChairman));
             Page<ChairmanResponseTable> responsePage = new PageImpl<>(List.of(new ChairmanResponseTable()));
 

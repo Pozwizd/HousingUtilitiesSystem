@@ -3,10 +3,6 @@ spring:
     import: optional:file:.env[.properties]
 
   data:
-    elasticsearch:
-      repositories:
-        enabled: true
-
     mongodb:
       uri: ${MONGODB_URI:mongodb://mongo1:27017,mongo2:27018,mongo3:27019/${MONGODB_DATABASE:HousingUtilitiesSystemDB}?replicaSet=rs0}
 
@@ -23,10 +19,6 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
-    username: ${ELASTICSEARCH_USERNAME:}
-    password: ${ELASTICSEARCH_PASSWORD:}
 
   cache:
     type: redis
@@ -61,8 +53,6 @@ logging:
     org.spacelab.housingutilitiessystemchairman: DEBUG
     org.springframework.data.mongodb.core.convert: WARN
     org.springframework.data.mongodb.core.mapping: WARN
-    org.springframework.data.elasticsearch: DEBUG
-    co.elastic.clients: INFO
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 

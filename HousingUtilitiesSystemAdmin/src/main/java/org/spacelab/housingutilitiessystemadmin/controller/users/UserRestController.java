@@ -10,7 +10,7 @@ import org.spacelab.housingutilitiessystemadmin.models.filters.user.UserRequestT
 import org.spacelab.housingutilitiessystemadmin.models.user.UserRequest;
 import org.spacelab.housingutilitiessystemadmin.models.user.UserResponse;
 import org.spacelab.housingutilitiessystemadmin.models.user.UserResponseTable;
-import org.spacelab.housingutilitiessystemadmin.service.UserService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -13,8 +13,6 @@ logging:
     org.spacelab.housingutilitiessystemadmin: DEBUG
     org.springframework.data.mongodb.core.convert: WARN
     org.springframework.data.mongodb.core.mapping: WARN
-    org.springframework.data.elasticsearch: DEBUG
-    co.elastic.clients: INFO
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 

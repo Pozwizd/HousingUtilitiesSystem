@@ -2,7 +2,7 @@ package org.spacelab.housingutilitiessystemadmin.controller.cache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.spacelab.housingutilitiessystemadmin.service.RedisService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.RedisService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

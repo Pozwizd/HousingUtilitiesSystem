@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================================
-# Local Services (Redis + Elasticsearch) - Stop Script
+# Local Services (Redis) - Stop Script
 # ============================================================================
 
 set -e

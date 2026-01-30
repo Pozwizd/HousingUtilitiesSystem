@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.spacelab.housingutilitiessystemadmin.entity.Bill;
 import org.spacelab.housingutilitiessystemadmin.repository.BillRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.BillService;
 
 import java.util.Arrays;
 import java.util.List;

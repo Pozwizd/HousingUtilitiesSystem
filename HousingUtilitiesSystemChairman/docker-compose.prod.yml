@@ -1,6 +1,6 @@
 # ============================================================================
 # Docker Compose - Production Configuration for Chairman Module
-# Connects to shared MongoDB, Elasticsearch, Redis from Admin deployment
+# Connects to shared MongoDB, Redis from Admin deployment
 # ============================================================================
 
 services:
@@ -37,9 +37,6 @@ services:
 
       # Spring Profile
       - SPRING_PROFILES_ACTIVE=docker
-
-      # Elasticsearch (connects to Admin's Elasticsearch)
-      - ELASTICSEARCH_URIS=${ELASTICSEARCH_URIS:-http://elasticsearch-housing:9200}
 
       # Redis (connects to Admin's Redis)
       - REDIS_HOST=${REDIS_HOST:-redis-housing}

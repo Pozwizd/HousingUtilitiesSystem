@@ -10,31 +10,6 @@
 
 <body>
     <div layout:fragment="content">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-            <div class="d-flex align-items-center gap-3">
-                <div class="avatar avatar-lg bg-label-primary">
-                    <span class="avatar-initial rounded-circle">
-                        <i class="icon-base ti tabler-messages"></i>
-                    </span>
-                </div>
-                <div>
-                    <h4 class="mb-1" data-i18n="pages.chat">Чат</h4>
-                    <p class="mb-0 text-body-secondary" data-i18n="chat.subtitle">Общайтесь с жителями и управляйте
-                        обращениями</p>
-                </div>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-label-secondary" id="chat-refresh-btn">
-                    <i class="icon-base ti tabler-refresh me-1"></i>
-                    <span data-i18n="chat.refresh">Обновить</span>
-                </button>
-                <button type="button" class="btn btn-primary" id="chat-new-conversation-btn">
-                    <i class="icon-base ti tabler-message-plus me-1"></i>
-                    <span data-i18n="chat.newConversation">Новый диалог</span>
-                </button>
-            </div>
-        </div>
-
         <div class="app-chat card overflow-hidden">
             <div class="row g-0">
                 <!-- Contacts -->
@@ -43,10 +18,6 @@
                         <div class="px-4 py-4 border-bottom">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h5 class="mb-0" data-i18n="chat.dialogues">Диалоги</h5>
-                                <button type="button" class="btn btn-icon btn-text-secondary rounded-pill"
-                                    data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay>
-                                    <i class="icon-base ti tabler-info-circle"></i>
-                                </button>
                             </div>
                             <div class="input-group mt-4">
                                 <span class="input-group-text border-end-0">
@@ -68,7 +39,7 @@
                                 </ul>
                             </div>
                             <!-- Removed Chairman section -->
-                            <div class="py-3 border-top">
+                            <div class="py-3 border-top" id="chat-resident-section">
                                 <div class="px-4 pb-2 text-uppercase text-body-secondary small"
                                     data-i18n="chat.residents">Жители дома</div>
                                 <ul class="list-unstyled mb-0" id="chat-resident-list">
@@ -98,25 +69,6 @@
                                         data-i18n="chat.emptySubtitle">История сообщений появится здесь</small>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-icon btn-text-secondary rounded-pill">
-                                    <i class="icon-base ti tabler-phone"></i>
-                                </button>
-                                <button class="btn btn-icon btn-text-secondary rounded-pill">
-                                    <i class="icon-base ti tabler-video"></i>
-                                </button>
-                                <button class="btn btn-icon btn-text-secondary rounded-pill" data-bs-toggle="dropdown">
-                                    <i class="icon-base ti tabler-dots-vertical"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="javascript:void(0);"
-                                        data-i18n="chat.viewProfile">Просмотреть профиль</a>
-                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.mute">Отключить
-                                        уведомления</a>
-                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.clear">Очистить
-                                        чат</a>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="chat-history-body px-4 py-4 flex-grow-1 overflow-auto" id="chat-history-container">
@@ -128,10 +80,6 @@
 
                         <div class="chat-history-footer px-4 py-3 border-top">
                             <form class="form-send-message d-flex align-items-center gap-3" id="chat-send-form">
-                                <label class="btn btn-icon btn-text-secondary rounded-pill mb-0">
-                                    <i class="icon-base ti tabler-microphone"></i>
-                                    <input type="file" hidden disabled>
-                                </label>
                                 <input class="form-control message-input border-0 shadow-none" type="text"
                                     id="chat-message-input" placeholder="Введите сообщение"
                                     data-i18n="[placeholder]chat.typeMessage" autocomplete="off" />
@@ -145,25 +93,6 @@
                     </div>
                 </div>
                 <!--/ Chat History -->
-
-                <!-- Sidebar Right -->
-                <div class="col app-chat-sidebar-right app-sidebar overflow-hidden" id="app-chat-sidebar-right">
-                    <div
-                        class="sidebar-header d-flex flex-column align-items-center justify-content-center px-4 pt-5 pb-4">
-                        <div class="avatar avatar-xl" id="chat-sidebar-avatar">
-                            <span class="avatar-initial bg-label-secondary rounded-circle">?</span>
-                        </div>
-                        <h5 class="mt-4 mb-0" id="chat-sidebar-name" data-i18n="chat.emptyTitle">Выберите диалог</h5>
-                        <span class="text-body-secondary" id="chat-sidebar-role"></span>
-                        <i class="icon-base ti tabler-x icon-lg cursor-pointer close-sidebar mt-3"
-                            data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay></i>
-                    </div>
-                    <div class="sidebar-body px-4 pb-4 overflow-auto" id="chat-sidebar-body">
-                        <div class="text-center text-body-secondary" data-i18n="chat.sidebarEmpty">Информация о жильце
-                            появится после выбора диалога</div>
-                    </div>
-                </div>
-                <!--/ Sidebar Right -->
             </div>
         </div>
     </div>
@@ -251,8 +180,10 @@
                 }
 
                 // Update residents/contacts list
+                const residentSection = document.getElementById('chat-resident-section');
                 if (data.chatContactResponses && data.chatContactResponses.length > 0) {
                     console.log('[Chat DEBUG] Processing contacts:', data.chatContactResponses.length);
+                    residentSection.style.display = ''; // Show section
                     residentsList.innerHTML = '';
                     data.chatContactResponses.forEach((contact, index) => {
                         console.log(`[Chat DEBUG] Contact ${index}:`, contact);
@@ -261,7 +192,7 @@
                     });
                 } else {
                     console.log('[Chat DEBUG] No contacts found');
-                    showEmptyState(residentsList, 'chat.noResidents');
+                    residentSection.style.display = 'none'; // Hide entire section
                 }
             }
 
@@ -426,9 +357,12 @@
                             console.log('[Chat] Removing sender from contacts list:', event.senderId);
                             contactToRemove.remove();
 
-                            // Show empty state if no more contacts
+                            // Hide entire residents section if no more contacts
                             if (residentsList.querySelectorAll('.chat-contact-list-item').length === 0) {
-                                showEmptyState(residentsList, 'chat.noResidents');
+                                const residentSection = document.getElementById('chat-resident-section');
+                                if (residentSection) {
+                                    residentSection.style.display = 'none';
+                                }
                             }
                         }
                     }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================================
-# Local Services (Redis + Elasticsearch) - Status Script
+# Local Services (Redis) - Status Script
 # ============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -33,14 +33,6 @@ if docker exec redis-services redis-cli ping &> /dev/null; then
     echo "[OK] Redis: healthy (localhost:6379)"
 else
     echo "[--] Redis: not running"
-fi
-
-# Elasticsearch check
-if curl -s http://localhost:9200/_cluster/health &> /dev/null; then
-    STATUS=$(curl -s http://localhost:9200/_cluster/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-    echo "[OK] Elasticsearch: $STATUS (http://localhost:9200)"
-else
-    echo "[--] Elasticsearch: not running"
 fi
 
 echo ""

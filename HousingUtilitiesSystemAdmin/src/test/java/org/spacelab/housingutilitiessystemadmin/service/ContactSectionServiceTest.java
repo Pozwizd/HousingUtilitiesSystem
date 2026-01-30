@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.spacelab.housingutilitiessystemadmin.entity.ContactSection;
 import org.spacelab.housingutilitiessystemadmin.repository.ContactSectionRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.ContactSectionService;
 
 import java.util.Arrays;
 import java.util.List;

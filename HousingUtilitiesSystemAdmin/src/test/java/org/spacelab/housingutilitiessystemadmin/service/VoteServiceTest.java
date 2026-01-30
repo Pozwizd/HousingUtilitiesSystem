@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.spacelab.housingutilitiessystemadmin.entity.Vote;
 import org.spacelab.housingutilitiessystemadmin.repository.VoteRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.VoteService;
 
 import java.util.Arrays;
 import java.util.List;

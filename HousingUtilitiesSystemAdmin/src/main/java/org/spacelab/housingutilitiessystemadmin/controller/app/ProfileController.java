@@ -8,7 +8,7 @@ import org.spacelab.housingutilitiessystemadmin.exception.OperationException;
 import org.spacelab.housingutilitiessystemadmin.models.admin.ProfileResponse;
 import org.spacelab.housingutilitiessystemadmin.models.admin.ProfileUpdateRequest;
 import org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser;
-import org.spacelab.housingutilitiessystemadmin.service.AdminService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.AdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

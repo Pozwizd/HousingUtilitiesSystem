@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.spacelab.housingutilitiessystemadmin.entity.location.Region;
 import org.spacelab.housingutilitiessystemadmin.repository.RegionRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.RegionService;
 
 import java.util.Arrays;
 import java.util.List;

@@ -42,3 +42,8 @@ temp-uploads/
 
 # Documentation
 docs/
+
+# Google Cloud Keys
+*.json
+!mongo-init.js
+

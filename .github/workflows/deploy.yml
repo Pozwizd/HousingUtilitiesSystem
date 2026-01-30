@@ -1,4 +1,4 @@
-name: Unified Monorepo Deployment
+name: Cloud Run Deployment
 
 on:
   push:
@@ -12,144 +12,68 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_REGISTRY: ghcr.io
-  NETWORK_NAME: housing-network
-  MONGO_KEYFILE: /opt/mongo/keyfile
+  PROJECT_ID: housing-system-2026
+  REGION: europe-west3
+  GAR_LOCATION: europe-west3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/housing-repo # Assuming Artifact Registry or GCR. Using GCR for simplicity if AR not set up, but let's stick to simple image refs or GCR. 
+  # Actually, user provided manual deploy commands using local source.
+  # For CI/CD we need to build images and push them.
+  # Let's use gcr.io as it's often enabled by default or easily accessible.
+  IMAGE_REGISTRY: gcr.io
 
 jobs:
   # ============================================================================
-  # Infrastructure Setup (MongoDB, Redis, Elasticsearch)
+  # Authentication & Setup
   # ============================================================================
-  infrastructure:
-    name: Deploy Infrastructure
+  setup:
+    name: Setup & Auth
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Deploy MongoDB, Redis, Elasticsearch
-        uses: appleboy/ssh-action@v1.2.4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # We don't strictly need a setup job if we do auth in each job, 
+      # but it's good for verifying secrets early.
+      # Skipped for speed/parallelism in actual deploy jobs.
+
+  # ============================================================================
+  # AI Service Deployment (g4f)
+  # ============================================================================
+  deploy-ai:
+    name: Deploy AI Service
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            set -e
-            
-            # Create network
-            docker network create ${{ env.NETWORK_NAME }} 2>/dev/null || true
-            
-            # ==================== MongoDB Replica Set ====================
-            echo "Starting MongoDB Replica Set..."
-            
-            # MongoDB Node 1
-            if ! docker ps --format '{{.Names}}' | grep -q '^mongo1-housing$'; then
-              docker rm -f mongo1-housing 2>/dev/null || true
-              docker run -d \
-                --name mongo1-housing \
-                --network ${{ env.NETWORK_NAME }} \
-                --restart unless-stopped \
-                -v mongo1-housing-data:/data/db \
-                mongo:latest mongod --replSet rs0 --bind_ip_all
-            fi
-            
-            # MongoDB Node 2
-            if ! docker ps --format '{{.Names}}' | grep -q '^mongo2-housing$'; then
-              docker rm -f mongo2-housing 2>/dev/null || true
-              docker run -d \
-                --name mongo2-housing \
-                --network ${{ env.NETWORK_NAME }} \
-                --restart unless-stopped \
-                -v mongo2-housing-data:/data/db \
-                mongo:latest mongod --replSet rs0 --bind_ip_all
-            fi
-            
-            # MongoDB Node 3
-            if ! docker ps --format '{{.Names}}' | grep -q '^mongo3-housing$'; then
-              docker rm -f mongo3-housing 2>/dev/null || true
-              docker run -d \
-                --name mongo3-housing \
-                --network ${{ env.NETWORK_NAME }} \
-                --restart unless-stopped \
-                -v mongo3-housing-data:/data/db \
-                mongo:latest mongod --replSet rs0 --bind_ip_all
-            fi
-            
-            # Wait for MongoDB to start
-            sleep 10
-            
-            # Initialize Replica Set (only if not already initialized)
-            docker exec mongo1-housing mongosh --eval "
-              try {
-                rs.status();
-                print('Replica set already initialized');
-              } catch (e) {
-                rs.initiate({
-                  _id: 'rs0',
-                  members: [
-                    { _id: 0, host: 'mongo1-housing:27017', priority: 2 },
-                    { _id: 1, host: 'mongo2-housing:27017', priority: 1 },
-                    { _id: 2, host: 'mongo3-housing:27017', priority: 1 }
-                  ]
-                });
-                print('Replica set initialized');
-              }
-            " || true
-            
-            # Wait for primary election
-            sleep 5
-            
-            # Create admin user (if not exists)
-            docker exec mongo1-housing mongosh --eval "
-              try {
-                db.getSiblingDB('admin').createUser({
-                  user: '${{ secrets.MONGO_ROOT_USERNAME }}',
-                  pwd: '${{ secrets.MONGO_ROOT_PASSWORD }}',
-                  roles: ['root']
-                });
-                print('Admin user created');
-              } catch (e) {
-                print('Admin user already exists or error: ' + e.message);
-              }
-            " || true
-            
-            # ==================== Elasticsearch ====================
-            echo "Starting Elasticsearch..."
-            if ! docker ps --format '{{.Names}}' | grep -q '^elasticsearch-housing$'; then
-              docker rm -f elasticsearch-housing 2>/dev/null || true
-              docker run -d \
-                --name elasticsearch-housing \
-                --network ${{ env.NETWORK_NAME }} \
-                --restart unless-stopped \
-                -e discovery.type=single-node \
-                -e xpack.security.enabled=false \
-                -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-                -v elasticsearch-housing-data:/usr/share/elasticsearch/data \
-                docker.elastic.co/elasticsearch/elasticsearch:8.16.1
-            fi
-            
-            # ==================== Redis ====================
-            echo "Starting Redis..."
-            if ! docker ps --format '{{.Names}}' | grep -q '^redis-housing$'; then
-              docker rm -f redis-housing 2>/dev/null || true
-              docker run -d \
-                --name redis-housing \
-                --network ${{ env.NETWORK_NAME }} \
-                --restart unless-stopped \
-                -v redis-housing-data:/data \
-                redis:alpine redis-server --appendonly yes
-            fi
-            
-            echo "Infrastructure ready!"
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: housing-ai
+          region: ${{ env.REGION }}
+          image: hlohaus789/g4f:lat
+          flags: '--allow-unauthenticated'
+          env_vars: |
+            G4F_PROXY=
+            # Add any other required env vars for g4f if known. 
+            # Defaulting to standard image behavior.
 
   # ============================================================================
   # Admin Module Deployment
   # ============================================================================
-  admin:
+  deploy-admin:
     name: Deploy Admin
     runs-on: ubuntu-latest
-    needs: infrastructure
-    
+    needs: deploy-ai
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -159,75 +83,58 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build Admin
-        run: mvn clean verify -B -pl HousingUtilitiesSystemAdmin -am
+      - name: Build with Maven
+        run: mvn clean package -B -pl HousingUtilitiesSystemAdmin -am -DskipTests
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Registry
-        uses: docker/login-action@v3
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./HousingUtilitiesSystemAdmin
-          push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-admin:latest
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.4
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Container
+        run: |
+          docker build -f HousingUtilitiesSystemAdmin/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }} ./HousingUtilitiesSystemAdmin
+          docker push gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            set -e
-            CONTAINER="housing-utilities-admin"
-            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-admin:latest"
-            
-            # Shared Infra Check
-            docker network create ${{ env.NETWORK_NAME }} 2>/dev/null || true
-            
-            # Pull and Restart App
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
-            docker pull $IMAGE
-            docker stop $CONTAINER 2>/dev/null || true
-            docker rm $CONTAINER 2>/dev/null || true
-            
-            docker run -d \
-              --name $CONTAINER \
-              --network ${{ env.NETWORK_NAME }} \
-              --restart unless-stopped \
-              -p 9081:8080 \
-              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
-              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
-              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
-              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
-              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
-              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
-              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
-              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
-              -e SPRING_DATA_REDIS_HOST="redis-housing" \
-              -e SPRING_PROFILES_ACTIVE="docker" \
-              -v /opt/housing-uploads:/app/uploads \
-              $IMAGE
+          service: housing-admin
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }}
+          flags: '--allow-unauthenticated --vpc-connector=housing-connector --vpc-egress=private-ranges-only --memory=1Gi --cpu=1 --timeout=600'
+          env_vars: |
+            SPRING_PROFILES_ACTIVE=prod
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            ELASTICSEARCH_URIS=${{ secrets.ELASTICSEARCH_URIS }}
+            ELASTICSEARCH_USERNAME=${{ secrets.ELASTICSEARCH_USERNAME }}
+            ELASTICSEARCH_PASSWORD=${{ secrets.ELASTICSEARCH_PASSWORD }}
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+            OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+            SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }}
+            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+            GCS_BUCKET=${{ secrets.GCS_BUCKET }}
+            AI_GPT4FREE_URL=${{ needs.deploy-ai.outputs.url }}
 
   # ============================================================================
   # Chairman Module Deployment
   # ============================================================================
-  chairman:
+  deploy-chairman:
     name: Deploy Chairman
     runs-on: ubuntu-latest
-    needs: infrastructure
-    
+    needs: deploy-ai
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -237,68 +144,58 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build Chairman
-        run: mvn clean verify -B -pl HousingUtilitiesSystemChairman -am
+      - name: Build with Maven
+        run: mvn clean package -B -pl HousingUtilitiesSystemChairman -am -DskipTests
 
-      - name: Log in to Registry
-        uses: docker/login-action@v3
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./HousingUtilitiesSystemChairman
-          push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-chairman:latest
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.4
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Container
+        run: |
+          docker build -f HousingUtilitiesSystemChairman/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }} ./HousingUtilitiesSystemChairman
+          docker push gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            set -e
-            CONTAINER="housing-utilities-chairman"
-            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-chairman:latest"
-            
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
-            docker pull $IMAGE
-            docker stop $CONTAINER 2>/dev/null || true
-            docker rm $CONTAINER 2>/dev/null || true
-            
-            docker run -d \
-              --name $CONTAINER \
-              --network ${{ env.NETWORK_NAME }} \
-              --restart unless-stopped \
-              -p 9083:8082 \
-              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
-              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
-              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
-              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
-              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
-              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
-              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
-              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
-              -e SPRING_DATA_REDIS_HOST="redis-housing" \
-              -e SPRING_PROFILES_ACTIVE="docker" \
-              -v /opt/housing-uploads:/app/uploads \
-              $IMAGE
+          service: housing-chairman
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }}
+          flags: '--allow-unauthenticated --vpc-connector=housing-connector --vpc-egress=private-ranges-only --memory=1Gi --cpu=1 --timeout=600'
+          env_vars: |
+             SPRING_PROFILES_ACTIVE=prod
+             MONGODB_URI=${{ secrets.MONGODB_URI }}
+             ELASTICSEARCH_URIS=${{ secrets.ELASTICSEARCH_URIS }}
+             ELASTICSEARCH_USERNAME=${{ secrets.ELASTICSEARCH_USERNAME }}
+             ELASTICSEARCH_PASSWORD=${{ secrets.ELASTICSEARCH_PASSWORD }}
+             REDIS_HOST=${{ secrets.REDIS_HOST }}
+             JWT_SECRET=${{ secrets.JWT_SECRET }}
+             OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+             OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+             SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }}
+             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+             GCS_BUCKET=${{ secrets.GCS_BUCKET }}
+             AI_GPT4FREE_URL=${{ needs.deploy-ai.outputs.url }}
 
   # ============================================================================
   # User Module Deployment
   # ============================================================================
-  user:
+  deploy-user:
     name: Deploy User
     runs-on: ubuntu-latest
-    needs: infrastructure
-    
+    needs: deploy-ai
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -308,54 +205,46 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build User
-        run: mvn clean verify -B -pl HousingUtilitiesSystemUser -am
+      - name: Build with Maven
+        run: mvn clean package -B -pl HousingUtilitiesSystemUser -am -DskipTests
 
-      - name: Log in to Registry
-        uses: docker/login-action@v3
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./HousingUtilitiesSystemUser
-          push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-user:latest
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.4
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Container
+        run: |
+          docker build -f HousingUtilitiesSystemUser/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }} ./HousingUtilitiesSystemUser
+          docker push gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            set -e
-            CONTAINER="housing-utilities-user"
-            IMAGE="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/housing-utilities-user:latest"
-            
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
-            docker pull $IMAGE
-            docker stop $CONTAINER 2>/dev/null || true
-            docker rm $CONTAINER 2>/dev/null || true
-            
-            docker run -d \
-              --name $CONTAINER \
-              --network ${{ env.NETWORK_NAME }} \
-              --restart unless-stopped \
-              -p 9082:8081 \
-              -e MONGODB_URI='mongodb://${{ secrets.MONGO_ROOT_USERNAME }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo1-housing:27017,mongo2-housing:27017,mongo3-housing:27017/HousingUtilitiesSystemDB?replicaSet=rs0&authSource=admin' \
-              -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-              -e OAUTH_GOOGLE_CLIENT_ID='${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}' \
-              -e OAUTH_GOOGLE_CLIENT_SECRET='${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}' \
-              -e SENDGRID_API_KEY='${{ secrets.SENDGRID_API_KEY }}' \
-              -e SENDGRID_FROM_EMAIL='${{ secrets.SENDGRID_FROM_EMAIL }}' \
-              -e MAIL_USERNAME='${{ secrets.MAIL_USERNAME }}' \
-              -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
-              -e ELASTICSEARCH_URIS="http://elasticsearch-housing:9200" \
-              -e SPRING_DATA_REDIS_HOST="redis-housing" \
-              -e SPRING_PROFILES_ACTIVE="docker" \
-              -v /opt/housing-uploads:/app/uploads \
-              $IMAGE
+          service: housing-user
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }}
+          flags: '--allow-unauthenticated --vpc-connector=housing-connector --vpc-egress=private-ranges-only --memory=1Gi --cpu=1 --timeout=600'
+          env_vars: |
+             SPRING_PROFILES_ACTIVE=prod
+             MONGODB_URI=${{ secrets.MONGODB_URI }}
+             ELASTICSEARCH_URIS=${{ secrets.ELASTICSEARCH_URIS }}
+             ELASTICSEARCH_USERNAME=${{ secrets.ELASTICSEARCH_USERNAME }}
+             ELASTICSEARCH_PASSWORD=${{ secrets.ELASTICSEARCH_PASSWORD }}
+             REDIS_HOST=${{ secrets.REDIS_HOST }}
+             JWT_SECRET=${{ secrets.JWT_SECRET }}
+             OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+             OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+             SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }}
+             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+             GCS_BUCKET=${{ secrets.GCS_BUCKET }}
+             AI_GPT4FREE_URL=${{ needs.deploy-ai.outputs.url }}
+

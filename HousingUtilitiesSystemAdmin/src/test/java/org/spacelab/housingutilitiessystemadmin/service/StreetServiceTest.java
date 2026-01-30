@@ -13,9 +13,9 @@ import org.spacelab.housingutilitiessystemadmin.entity.location.Street;
 import org.spacelab.housingutilitiessystemadmin.mappers.StreetMapper;
 import org.spacelab.housingutilitiessystemadmin.models.location.StreetResponse;
 import org.spacelab.housingutilitiessystemadmin.repository.StreetRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.StreetService;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 

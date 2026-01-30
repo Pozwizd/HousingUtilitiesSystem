@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================================
-REM Local Services (Redis + Elasticsearch) - Stop Script for Windows
+REM Local Services (Redis) - Stop Script for Windows
 REM ============================================================================
 
 echo =====================================

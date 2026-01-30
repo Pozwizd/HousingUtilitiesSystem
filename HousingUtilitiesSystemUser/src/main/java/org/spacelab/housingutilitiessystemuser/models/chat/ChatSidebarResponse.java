@@ -7,19 +7,17 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatSidebarResponse {
 
-    
     private List<ChatConversationResponse> chatConversationResponses;
 
-    
     private ChatContactResponse chairman;
 
-    
+    private ChatContactResponse aiAssistant;
+
     private List<ChatContactResponse> chatContactResponses;
 }

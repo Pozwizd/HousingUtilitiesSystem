@@ -2,7 +2,7 @@ package org.spacelab.housingutilitiessystemadmin.controller.location;
 
 import lombok.AllArgsConstructor;
 import org.spacelab.housingutilitiessystemadmin.entity.location.Region;
-import org.spacelab.housingutilitiessystemadmin.service.RegionService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.RegionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

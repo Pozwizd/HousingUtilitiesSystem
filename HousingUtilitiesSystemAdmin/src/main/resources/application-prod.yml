@@ -5,6 +5,12 @@ spring:
     mongodb:
       # Нужно изменить пароль
       uri: ${MONGODB_URI}
+  cloud:
+    gcp:
+      core:
+        enabled: true
+      storage:
+        enabled: true
       
   security:
     oauth2:
@@ -57,3 +63,8 @@ server:
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
+
+# Google Cloud Storage
+gcs:
+  bucket-name: ${GCS_BUCKET:housing-system-uploads}
+  public-url: https://storage.googleapis.com

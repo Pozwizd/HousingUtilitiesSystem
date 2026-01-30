@@ -8,7 +8,7 @@ import org.spacelab.housingutilitiessystemadmin.models.chairman.ChairmanRequest;
 import org.spacelab.housingutilitiessystemadmin.models.chairman.ChairmanResponse;
 import org.spacelab.housingutilitiessystemadmin.models.chairman.ChairmanResponseTable;
 import org.spacelab.housingutilitiessystemadmin.models.filters.chairman.ChairmanRequestTable;
-import org.spacelab.housingutilitiessystemadmin.service.ChairmanService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.ChairmanService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

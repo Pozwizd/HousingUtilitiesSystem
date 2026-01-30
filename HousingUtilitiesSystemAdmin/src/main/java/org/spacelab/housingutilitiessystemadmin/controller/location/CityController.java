@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.spacelab.housingutilitiessystemadmin.entity.location.City;
 import org.spacelab.housingutilitiessystemadmin.models.location.CityResponse;
-import org.spacelab.housingutilitiessystemadmin.service.CityService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.CityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

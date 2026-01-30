@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================================
-REM Local Services (Redis + Elasticsearch) - Status Script for Windows
+REM Local Services (Redis) - Status Script for Windows
 REM ============================================================================
 
 echo =====================================
@@ -24,14 +24,6 @@ if %errorlevel% equ 0 (
     echo [OK] Redis: healthy (localhost:6379)
 ) else (
     echo [--] Redis: not running
-)
-
-REM Elasticsearch check
-curl -s http://localhost:9200/_cluster/health >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [OK] Elasticsearch: running (http://localhost:9200)
-) else (
-    echo [--] Elasticsearch: not running
 )
 
 echo.

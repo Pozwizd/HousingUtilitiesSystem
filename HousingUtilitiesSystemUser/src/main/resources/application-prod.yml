@@ -5,6 +5,12 @@ spring:
     mongodb:
       # Нужно изменить пароль
       uri: ${MONGODB_URI}
+  cloud:
+    gcp:
+      core:
+        enabled: true
+      storage:
+        enabled: true
       
   security:
     oauth2:

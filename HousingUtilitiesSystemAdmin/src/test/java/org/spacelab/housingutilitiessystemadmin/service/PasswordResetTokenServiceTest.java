@@ -12,6 +12,7 @@ import org.spacelab.housingutilitiessystemadmin.entity.Admin;
 import org.spacelab.housingutilitiessystemadmin.entity.PasswordResetToken;
 import org.spacelab.housingutilitiessystemadmin.repository.AdminRepository;
 import org.spacelab.housingutilitiessystemadmin.repository.PasswordResetTokenRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.PasswordResetTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;

@@ -6,6 +6,77 @@
     <title data-i18n="pages.chat">Чат</title>
     <th:block layout:fragment="page_css">
         <link rel="stylesheet" th:href="@{/assets/vendor/css/pages/app-chat.css}" />
+        <style>
+            /* Fix for long AI responses with URLs */
+            .chat-message-text {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                max-width: 100%;
+                white-space: pre-wrap;
+            }
+
+            .chat-message-text p {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                margin-bottom: 0;
+            }
+
+            .chat-message-wrapper {
+                max-width: 80%;
+                min-width: 0;
+            }
+
+            /* Markdown styles for AI responses */
+            .chat-message-text.ai-message {
+                white-space: normal;
+            }
+
+            .chat-message-text.ai-message p {
+                margin-bottom: 0.5rem;
+            }
+
+            .chat-message-text.ai-message p:last-child {
+                margin-bottom: 0;
+            }
+
+            .chat-message-text.ai-message ul,
+            .chat-message-text.ai-message ol {
+                margin: 0.5rem 0;
+                padding-left: 1.5rem;
+            }
+
+            .chat-message-text.ai-message li {
+                margin-bottom: 0.25rem;
+            }
+
+            .chat-message-text.ai-message a {
+                color: inherit;
+                text-decoration: underline;
+            }
+
+            .chat-message-text.ai-message blockquote {
+                border-left: 3px solid currentColor;
+                margin: 0.5rem 0;
+                padding-left: 0.75rem;
+                opacity: 0.8;
+            }
+
+            .chat-message-text.ai-message code {
+                background: rgba(0, 0, 0, 0.1);
+                padding: 0.1rem 0.3rem;
+                border-radius: 3px;
+                font-size: 0.9em;
+            }
+
+            .chat-message-text.ai-message pre {
+                background: rgba(0, 0, 0, 0.1);
+                padding: 0.5rem;
+                border-radius: 5px;
+                overflow-x: auto;
+            }
+        </style>
     </th:block>
 </head>
 
@@ -19,10 +90,6 @@
                         <div class="px-4 py-4 border-bottom">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h5 class="mb-0" data-i18n="chat.dialogues">Диалоги</h5>
-                                <button type="button" class="btn btn-icon btn-text-secondary rounded-pill"
-                                    data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay>
-                                    <i class="icon-base ti tabler-info-circle"></i>
-                                </button>
                             </div>
                             <div class="input-group mt-4">
                                 <span class="input-group-text border-end-0">
@@ -44,7 +111,7 @@
                                 </ul>
                             </div>
                             <!-- Chairman Section (only for User module) -->
-                            <div class="py-3 border-top">
+                            <div class="py-3 border-top" id="chat-chairman-section">
                                 <div class="px-4 pb-2 text-uppercase text-body-secondary small"
                                     data-i18n="chat.chairman">Председатель дома</div>
                                 <ul class="list-unstyled mb-0" id="chat-chairman-list">
@@ -53,8 +120,18 @@
                                     </li>
                                 </ul>
                             </div>
+                            <!-- AI Assistant Section -->
+                            <div class="py-3 border-top" id="chat-ai-section">
+                                <div class="px-4 pb-2 text-uppercase text-body-secondary small"
+                                    data-i18n="chat.aiAssistant">AI Ассистент</div>
+                                <ul class="list-unstyled mb-0" id="chat-ai-list">
+                                    <li class="px-4 py-5 text-center text-body-secondary" data-empty-ai>
+                                        <span data-i18n="chat.noAi">AI недоступен</span>
+                                    </li>
+                                </ul>
+                            </div>
                             <!-- Residents Section -->
-                            <div class="py-3 border-top">
+                            <div class="py-3 border-top" id="chat-resident-section">
                                 <div class="px-4 pb-2 text-uppercase text-body-secondary small"
                                     data-i18n="chat.residents">Жители дома</div>
                                 <ul class="list-unstyled mb-0" id="chat-resident-list">
@@ -84,25 +161,6 @@
                                         data-i18n="chat.emptySubtitle">История сообщений появится здесь</small>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-icon btn-text-secondary rounded-pill">
-                                    <i class="icon-base ti tabler-phone"></i>
-                                </button>
-                                <button class="btn btn-icon btn-text-secondary rounded-pill">
-                                    <i class="icon-base ti tabler-video"></i>
-                                </button>
-                                <button class="btn btn-icon btn-text-secondary rounded-pill" data-bs-toggle="dropdown">
-                                    <i class="icon-base ti tabler-dots-vertical"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="javascript:void(0);"
-                                        data-i18n="chat.viewProfile">Просмотреть профиль</a>
-                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.mute">Отключить
-                                        уведомления</a>
-                                    <a class="dropdown-item" href="javascript:void(0);" data-i18n="chat.clear">Очистить
-                                        чат</a>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="chat-history-body px-4 py-4 flex-grow-1 overflow-auto" id="chat-history-container">
@@ -114,10 +172,6 @@
 
                         <div class="chat-history-footer px-4 py-3 border-top">
                             <form class="form-send-message d-flex align-items-center gap-3" id="chat-send-form">
-                                <label class="btn btn-icon btn-text-secondary rounded-pill mb-0">
-                                    <i class="icon-base ti tabler-microphone"></i>
-                                    <input type="file" hidden disabled>
-                                </label>
                                 <input class="form-control message-input border-0 shadow-none" type="text"
                                     id="chat-message-input" placeholder="Введите сообщение"
                                     data-i18n="[placeholder]chat.typeMessage" autocomplete="off" />
@@ -131,32 +185,14 @@
                     </div>
                 </div>
                 <!--/ Chat History -->
-
-                <!-- Sidebar Right -->
-                <div class="col app-chat-sidebar-right app-sidebar overflow-hidden" id="app-chat-sidebar-right">
-                    <div
-                        class="sidebar-header d-flex flex-column align-items-center justify-content-center px-4 pt-5 pb-4">
-                        <div class="avatar avatar-xl" id="chat-sidebar-avatar">
-                            <span class="avatar-initial bg-label-secondary rounded-circle">?</span>
-                        </div>
-                        <h5 class="mt-4 mb-0" id="chat-sidebar-name" data-i18n="chat.emptyTitle">Выберите диалог</h5>
-                        <span class="text-body-secondary" id="chat-sidebar-role"></span>
-                        <i class="icon-base ti tabler-x icon-lg cursor-pointer close-sidebar mt-3"
-                            data-bs-toggle="sidebar" data-target="#app-chat-sidebar-right" data-overlay></i>
-                    </div>
-                    <div class="sidebar-body px-4 pb-4 overflow-auto" id="chat-sidebar-body">
-                        <div class="text-center text-body-secondary" data-i18n="chat.sidebarEmpty">Информация о
-                            собеседнике
-                            появится после выбора диалога</div>
-                    </div>
-                </div>
-                <!--/ Sidebar Right -->
             </div>
         </div>
     </div>
     <th:block layout:fragment="page_js">
         <script th:src="@{/assets/js/sockjs.js}"></script>
         <script th:src="@{/assets/js/stomp.umd.js}"></script>
+        <!-- Marked.js for markdown rendering -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
         <script th:inline="javascript">
             /* Context path для динамических путей */
@@ -186,6 +222,7 @@
             // === DOM Elements ===
             const conversationsList = document.getElementById('chat-recent-conversations');
             const chairmanList = document.getElementById('chat-chairman-list');
+            const aiList = document.getElementById('chat-ai-list');
             const residentsList = document.getElementById('chat-resident-list');
             const chatMessages = document.getElementById('chat-messages');
             const chatSendForm = document.getElementById('chat-send-form');
@@ -239,21 +276,35 @@
                 }
 
                 // Update chairman section (only for User module)
+                const chairmanSection = document.getElementById('chat-chairman-section');
                 if (data.chairman) {
+                    chairmanSection.style.display = ''; // Show section
                     chairmanList.innerHTML = '';
                     chairmanList.appendChild(createChairmanItem(data.chairman));
                 } else {
-                    showEmptyState(chairmanList, 'chat.noChairman');
+                    chairmanSection.style.display = 'none'; // Hide entire section
+                }
+
+                // Update AI assistant section
+                const aiSection = document.getElementById('chat-ai-section');
+                if (data.aiAssistant) {
+                    aiSection.style.display = ''; // Show section
+                    aiList.innerHTML = '';
+                    aiList.appendChild(createAiItem(data.aiAssistant));
+                } else {
+                    aiSection.style.display = 'none'; // Hide if no AI or already in conversation
                 }
 
                 // Update residents/contacts list
+                const residentSection = document.getElementById('chat-resident-section');
                 if (data.chatContactResponses && data.chatContactResponses.length > 0) {
+                    residentSection.style.display = ''; // Show section
                     residentsList.innerHTML = '';
                     data.chatContactResponses.forEach(contact => {
                         residentsList.appendChild(createContactItem(contact));
                     });
                 } else {
-                    showEmptyState(residentsList, 'chat.noResidents');
+                    residentSection.style.display = 'none'; // Hide entire section
                 }
             }
 
@@ -263,28 +314,44 @@
                 li.className = 'chat-contact-list-item px-4 py-3 cursor-pointer';
                 li.setAttribute('data-conversation-id', conv.id);
                 li.setAttribute('data-participant-id', conv.participantId || ''); // For presence updates
-                li.setAttribute('data-participant-type', conv.participantType || ''); // For chairman badge
+                li.setAttribute('data-participant-type', conv.participantType || ''); // For chairman/AI badge
                 li.onclick = () => selectConversation(conv.id, conv.name);
 
-                const avatarClass = conv.online ? 'avatar-online' : 'avatar-offline';
+                const isChairman = conv.participantType === 'CHAIRMAN';
+                const isAi = conv.participantType === 'AI';
+                const avatarClass = isAi ? 'avatar-online' : (conv.online ? 'avatar-online' : 'avatar-offline');
                 const initial = conv.name ? conv.name.charAt(0).toUpperCase() : '?';
                 const timeStr = conv.lastMessageTime ? formatTime(conv.lastMessageTime) : '';
-                const isChairman = conv.participantType === 'CHAIRMAN';
-                const avatarBgClass = isChairman ? 'bg-label-warning' : 'bg-label-primary';
-                const chairmanBadge = isChairman ? '<span class="badge bg-label-warning ms-2">Председатель</span>' : '';
+
+                let avatarBgClass = 'bg-label-primary';
+                let badge = '';
+                let avatarContent;
+
+                if (isAi) {
+                    avatarBgClass = 'bg-label-info';
+                    badge = '<span class="badge bg-label-info ms-2">AI</span>';
+                    avatarContent = `<span class="avatar-initial ${avatarBgClass} rounded-circle"><i class="ti ti-robot" style="font-size: 1.2rem;"></i></span>`;
+                } else if (isChairman) {
+                    avatarBgClass = 'bg-label-warning';
+                    badge = '<span class="badge bg-label-warning ms-2">Председатель</span>';
+                    avatarContent = conv.avatar
+                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
+                        : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`;
+                } else {
+                    avatarContent = conv.avatar
+                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
+                        : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`;
+                }
 
                 li.innerHTML = `
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
-                            ${conv.avatar
-                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
-                        : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`
-                    }
+                            ${avatarContent}
                         </div>
                         <div class="flex-grow-1 overflow-hidden">
                             <div class="d-flex align-items-center">
                                 <h6 class="mb-0 text-truncate">${conv.name || 'Без имени'}</h6>
-                                ${chairmanBadge}
+                                ${badge}
                             </div>
                             <small class="text-body-secondary text-truncate chat-message-preview">${conv.lastMessage || ''}</small>
                         </div>
@@ -344,6 +411,30 @@
                             <h6 class="mb-0 text-truncate">${contact.name || 'Без имени'}</h6>
                             <small class="text-body-secondary">${contact.online ? 'В сети' : 'Не в сети'}</small>
                         </div>
+                    </div>
+                `;
+                return li;
+            }
+
+            // === Create AI Assistant List Item ===
+            function createAiItem(ai) {
+                const li = document.createElement('li');
+                li.className = 'chat-contact-list-item px-4 py-3 cursor-pointer';
+                li.setAttribute('data-user-id', ai.id);
+                li.onclick = () => startConversationWith(ai.id, ai.name, 'AI');
+
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar avatar-online">
+                            <span class="avatar-initial bg-label-info rounded-circle">
+                                <i class="ti ti-robot" style="font-size: 1.2rem;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h6 class="mb-0 text-truncate">${ai.name || 'AI Ассистент'}</h6>
+                            <small class="text-body-secondary">Всегда на связи</small>
+                        </div>
+                        <span class="badge bg-label-info">AI</span>
                     </div>
                 `;
                 return li;
@@ -441,8 +532,8 @@
                             console.log('[Chat] Removing sender from chairman list:', event.senderId);
                             chairmanToRemove.remove();
 
-                            // Hide entire chairman section (parent div with border-top)
-                            const chairmanSection = chairmanList.closest('.py-3.border-top');
+                            // Hide entire chairman section
+                            const chairmanSection = document.getElementById('chat-chairman-section');
                             if (chairmanSection) {
                                 chairmanSection.style.display = 'none';
                             }
@@ -454,9 +545,12 @@
                             console.log('[Chat] Removing sender from contacts list:', event.senderId);
                             contactToRemove.remove();
 
-                            // Show empty state if no more contacts
+                            // Hide entire residents section if no more contacts
                             if (residentsList.querySelectorAll('.chat-contact-list-item').length === 0) {
-                                showEmptyState(residentsList, 'chat.noResidents');
+                                const residentSection = document.getElementById('chat-resident-section');
+                                if (residentSection) {
+                                    residentSection.style.display = 'none';
+                                }
                             }
                         }
                     }
@@ -682,26 +776,33 @@
                         const info = await response.json();
                         console.log('[Chat] Conversation info loaded:', info);
 
+                        const isAi = info.participantType === 'AI';
+
                         // Update online status text
                         document.getElementById('chat-recipient-status').textContent =
-                            info.online ? 'В сети' : 'Не в сети';
+                            isAi ? 'Всегда на связи' : (info.online ? 'В сети' : 'Не в сети');
 
                         // Save participant ID for presence updates
                         currentParticipantId = info.participantId;
 
                         // Update name
                         document.getElementById('chat-recipient-name').textContent = info.name || 'Диалог';
-                        document.getElementById('chat-sidebar-name').textContent = info.name || 'Диалог';
+                        const sidebarName = document.getElementById('chat-sidebar-name');
+                        if (sidebarName) {
+                            sidebarName.textContent = info.name || 'Диалог';
+                        }
 
                         // Update avatar with image or initial
                         const avatarContainer = document.getElementById('chat-recipient-avatar');
                         if (avatarContainer) {
                             // Set online/offline class
                             avatarContainer.classList.remove('avatar-online', 'avatar-offline');
-                            avatarContainer.classList.add(info.online ? 'avatar-online' : 'avatar-offline');
+                            avatarContainer.classList.add(isAi || info.online ? 'avatar-online' : 'avatar-offline');
 
                             // Set avatar content
-                            if (info.avatar) {
+                            if (isAi) {
+                                avatarContainer.innerHTML = `<span class="avatar-initial bg-label-info rounded-circle"><i class="ti ti-robot" style="font-size: 1.2rem;"></i></span>`;
+                            } else if (info.avatar) {
                                 avatarContainer.innerHTML = `<img src="${getAvatarUrl(info.avatar)}" class="rounded-circle" alt="${info.name}">`;
                             } else {
                                 const initial = (info.name || '?').charAt(0).toUpperCase();
@@ -818,17 +919,38 @@
 
                 // Calculate isOwn on client-side using senderId and currentUserId
                 const isOwn = msg.senderId === currentUserId;
-                console.log('[Chat] Message senderId:', msg.senderId, 'currentUserId:', currentUserId, 'isOwn:', isOwn);
+                const isAi = msg.senderType === 'AI';
+                console.log('[Chat] Message senderId:', msg.senderId, 'currentUserId:', currentUserId, 'isOwn:', isOwn, 'isAi:', isAi);
 
                 const li = document.createElement('li');
                 li.className = isOwn ? 'chat-message chat-message-right' : 'chat-message';
                 li.setAttribute('data-message-id', msg.id);
 
-                const avatarHtml = msg.senderAvatar
-                    ? `<img src="${contextPath}${msg.senderAvatar}" class="rounded-circle" alt="${msg.senderName}">`
-                    : `<span class="avatar-initial ${isOwn ? 'bg-primary' : 'bg-label-secondary'} rounded-circle">${(msg.senderName || '?').charAt(0).toUpperCase()}</span>`;
+                // Avatar: AI gets robot icon, others get image or initial
+                let avatarHtml;
+                if (isAi) {
+                    avatarHtml = `<span class="avatar-initial bg-label-info rounded-circle"><i class="ti ti-robot"></i></span>`;
+                } else if (msg.senderAvatar) {
+                    avatarHtml = `<img src="${contextPath}${msg.senderAvatar}" class="rounded-circle" alt="${msg.senderName}">`;
+                } else {
+                    avatarHtml = `<span class="avatar-initial ${isOwn ? 'bg-primary' : 'bg-label-secondary'} rounded-circle">${(msg.senderName || '?').charAt(0).toUpperCase()}</span>`;
+                }
 
                 const time = msg.timestamp ? formatTime(msg.timestamp) : '';
+
+                // For AI messages, render markdown; for others, escape HTML
+                let contentHtml;
+                const aiMessageClass = isAi ? 'ai-message' : '';
+                if (isAi && typeof marked !== 'undefined') {
+                    // Configure marked for safe rendering
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true
+                    });
+                    contentHtml = marked.parse(msg.content || '');
+                } else {
+                    contentHtml = `<p class="mb-0">${escapeHtml(msg.content)}</p>`;
+                }
 
                 li.innerHTML = `
                     <div class="d-flex ${isOwn ? 'flex-row-reverse' : ''} gap-2">
@@ -836,8 +958,8 @@
                             ${avatarHtml}
                         </div>
                         <div class="chat-message-wrapper">
-                            <div class="chat-message-text ${isOwn ? 'bg-primary text-white' : 'bg-body-secondary'}">
-                                <p class="mb-0">${escapeHtml(msg.content)}</p>
+                            <div class="chat-message-text ${aiMessageClass} ${isOwn ? 'bg-primary text-white' : 'bg-body-secondary'}">
+                                ${contentHtml}
                             </div>
                             <div class="text-body-secondary mt-1 ${isOwn ? 'text-end' : ''}">
                                 <small>${time}</small>

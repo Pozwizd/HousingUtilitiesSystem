@@ -21,6 +21,7 @@ import org.spacelab.housingutilitiessystemadmin.models.user.UserRequest;
 import org.spacelab.housingutilitiessystemadmin.models.user.UserResponse;
 import org.spacelab.housingutilitiessystemadmin.models.user.UserResponseTable;
 import org.spacelab.housingutilitiessystemadmin.repository.UserRepository;
+import org.spacelab.housingutilitiessystemadmin.service.impl.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -48,7 +49,7 @@ class UserServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private FileService fileService;
+    private FileGoogleCloudService fileGoogleCloudService;
 
     @Mock
     private CityService cityService;
@@ -356,13 +357,13 @@ class UserServiceTest {
 
             when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
             when(userMapper.toEntity(testUserRequest)).thenReturn(testUser);
-            when(fileService.uploadFile(multipartFile)).thenReturn("uploads/photo.jpg");
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenReturn("uploads/photo.jpg");
             when(userRepository.save(any(User.class))).thenReturn(testUser);
             when(userMapper.mapUserToResponse(testUser)).thenReturn(testUserResponse);
 
             userService.createUser(testUserRequest);
 
-            verify(fileService).uploadFile(multipartFile);
+            verify(fileGoogleCloudService).uploadFile(multipartFile);
         }
 
         @Test
@@ -373,7 +374,7 @@ class UserServiceTest {
 
             when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
             when(userMapper.toEntity(testUserRequest)).thenReturn(testUser);
-            when(fileService.uploadFile(multipartFile)).thenThrow(new IOException("Upload failed"));
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenThrow(new IOException("Upload failed"));
 
             assertThatThrownBy(() -> userService.createUser(testUserRequest))
                     .isInstanceOf(OperationException.class)
@@ -415,14 +416,14 @@ class UserServiceTest {
             when(multipartFile.isEmpty()).thenReturn(false);
 
             when(userRepository.findById(any(ObjectId.class))).thenReturn(Optional.of(testUser));
-            when(fileService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
             when(userRepository.save(any(User.class))).thenReturn(testUser);
             when(userMapper.mapUserToResponse(testUser)).thenReturn(testUserResponse);
 
             userService.updateUser(testUserId, testUserRequest);
 
-            verify(fileService).deleteFile("old-photo.jpg");
-            verify(fileService).uploadFile(multipartFile);
+            verify(fileGoogleCloudService).deleteFile("old-photo.jpg");
+            verify(fileGoogleCloudService).uploadFile(multipartFile);
         }
 
         @Test
@@ -432,7 +433,7 @@ class UserServiceTest {
             when(multipartFile.isEmpty()).thenReturn(false);
 
             when(userRepository.findById(any(ObjectId.class))).thenReturn(Optional.of(testUser));
-            when(fileService.uploadFile(multipartFile)).thenThrow(new IOException("Upload failed"));
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenThrow(new IOException("Upload failed"));
 
             assertThatThrownBy(() -> userService.updateUser(testUserId, testUserRequest))
                     .isInstanceOf(OperationException.class)
@@ -570,14 +571,14 @@ class UserServiceTest {
             when(multipartFile.isEmpty()).thenReturn(false);
 
             when(userRepository.findById(any(ObjectId.class))).thenReturn(Optional.of(testUser));
-            when(fileService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
             when(userRepository.save(any(User.class))).thenReturn(testUser);
             when(userMapper.mapUserToResponse(testUser)).thenReturn(testUserResponse);
 
             userService.updateUser(testUserId, testUserRequest);
 
-            verify(fileService, never()).deleteFile(anyString());
-            verify(fileService).uploadFile(multipartFile);
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService).uploadFile(multipartFile);
         }
 
         @Test
@@ -588,14 +589,14 @@ class UserServiceTest {
             when(multipartFile.isEmpty()).thenReturn(false);
 
             when(userRepository.findById(any(ObjectId.class))).thenReturn(Optional.of(testUser));
-            when(fileService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
+            when(fileGoogleCloudService.uploadFile(multipartFile)).thenReturn("new-photo.jpg");
             when(userRepository.save(any(User.class))).thenReturn(testUser);
             when(userMapper.mapUserToResponse(testUser)).thenReturn(testUserResponse);
 
             userService.updateUser(testUserId, testUserRequest);
 
-            verify(fileService, never()).deleteFile(anyString());
-            verify(fileService).uploadFile(multipartFile);
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService).uploadFile(multipartFile);
         }
     }
 

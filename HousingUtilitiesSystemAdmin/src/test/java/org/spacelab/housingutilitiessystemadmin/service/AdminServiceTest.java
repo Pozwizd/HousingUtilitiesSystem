@@ -12,7 +12,8 @@ import org.spacelab.housingutilitiessystemadmin.entity.Admin;
 import org.spacelab.housingutilitiessystemadmin.exception.OperationException;
 import org.spacelab.housingutilitiessystemadmin.models.admin.ProfileUpdateRequest;
 import org.spacelab.housingutilitiessystemadmin.repository.AdminRepository;
-import org.springframework.http.HttpStatus;
+import org.spacelab.housingutilitiessystemadmin.service.impl.AdminService;
+import org.spacelab.housingutilitiessystemadmin.service.impl.FileGoogleCloudService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,7 +37,7 @@ class AdminServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private FileService fileService;
+    private FileGoogleCloudService fileGoogleCloudService;
 
     @InjectMocks
     private AdminService adminService;
@@ -496,7 +497,7 @@ class AdminServiceTest {
         void updateAvatar_shouldUploadAndSave() throws IOException {
             // Given
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            when(fileService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
+            when(fileGoogleCloudService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
             when(adminRepository.save(any(Admin.class))).thenReturn(testAdmin);
 
             // When
@@ -504,7 +505,7 @@ class AdminServiceTest {
 
             // Then
             assertThat(result.getPathAvatar()).isEqualTo("uploads/new-avatar.jpg");
-            verify(fileService).uploadFile(avatarFile);
+            verify(fileGoogleCloudService).uploadFile(avatarFile);
             verify(adminRepository).save(any(Admin.class));
         }
 
@@ -514,15 +515,15 @@ class AdminServiceTest {
             // Given
             testAdmin.setPathAvatar("uploads/old-avatar.jpg");
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            when(fileService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
+            when(fileGoogleCloudService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
             when(adminRepository.save(any(Admin.class))).thenReturn(testAdmin);
 
             // When
             adminService.updateAvatar("admin@test.com", avatarFile);
 
             // Then
-            verify(fileService).deleteFile("uploads/old-avatar.jpg");
-            verify(fileService).uploadFile(avatarFile);
+            verify(fileGoogleCloudService).deleteFile("uploads/old-avatar.jpg");
+            verify(fileGoogleCloudService).uploadFile(avatarFile);
         }
 
         @Test
@@ -531,15 +532,15 @@ class AdminServiceTest {
             // Given
             testAdmin.setPathAvatar(null);
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            when(fileService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
+            when(fileGoogleCloudService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
             when(adminRepository.save(any(Admin.class))).thenReturn(testAdmin);
 
             // When
             adminService.updateAvatar("admin@test.com", avatarFile);
 
             // Then
-            verify(fileService, never()).deleteFile(anyString());
-            verify(fileService).uploadFile(avatarFile);
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService).uploadFile(avatarFile);
         }
 
         @Test
@@ -548,14 +549,14 @@ class AdminServiceTest {
             // Given
             testAdmin.setPathAvatar("");
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            when(fileService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
+            when(fileGoogleCloudService.uploadFile(avatarFile)).thenReturn("uploads/new-avatar.jpg");
             when(adminRepository.save(any(Admin.class))).thenReturn(testAdmin);
 
             // When
             adminService.updateAvatar("admin@test.com", avatarFile);
 
             // Then
-            verify(fileService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
         }
 
         @Test
@@ -563,7 +564,7 @@ class AdminServiceTest {
         void updateAvatar_shouldThrowException_whenUploadFails() throws IOException {
             // Given
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            when(fileService.uploadFile(avatarFile)).thenThrow(new IOException("Upload failed"));
+            when(fileGoogleCloudService.uploadFile(avatarFile)).thenThrow(new IOException("Upload failed"));
 
             // When/Then
             assertThatThrownBy(() -> adminService.updateAvatar("admin@test.com", avatarFile))
@@ -602,7 +603,7 @@ class AdminServiceTest {
             // Then
             assertThat(result).isTrue();
             assertThat(testAdmin.getPathAvatar()).isNull();
-            verify(fileService).deleteFile("uploads/avatar.jpg");
+            verify(fileGoogleCloudService).deleteFile("uploads/avatar.jpg");
             verify(adminRepository).save(any(Admin.class));
         }
 
@@ -618,7 +619,7 @@ class AdminServiceTest {
 
             // Then
             assertThat(result).isFalse();
-            verify(fileService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
             verify(adminRepository, never()).save(any(Admin.class));
         }
 
@@ -634,7 +635,7 @@ class AdminServiceTest {
 
             // Then
             assertThat(result).isFalse();
-            verify(fileService, never()).deleteFile(anyString());
+            verify(fileGoogleCloudService, never()).deleteFile(anyString());
         }
 
         @Test
@@ -643,7 +644,7 @@ class AdminServiceTest {
             // Given
             testAdmin.setPathAvatar("uploads/avatar.jpg");
             when(adminRepository.findByEmail("admin@test.com")).thenReturn(testAdmin);
-            doThrow(new IOException("Delete failed")).when(fileService).deleteFile("uploads/avatar.jpg");
+            doThrow(new IOException("Delete failed")).when(fileGoogleCloudService).deleteFile("uploads/avatar.jpg");
 
             // When/Then
             assertThatThrownBy(() -> adminService.deleteAvatar("admin@test.com"))
