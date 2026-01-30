@@ -97,7 +97,8 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          docker build -f HousingUtilitiesSystemAdmin/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }} ./HousingUtilitiesSystemAdmin
+          cd HousingUtilitiesSystemAdmin
+          docker build -f Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }} .
           docker push gcr.io/${{ env.PROJECT_ID }}/housing-admin:${{ github.sha }}
 
       - name: Deploy to Cloud Run
@@ -158,7 +159,8 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          docker build -f HousingUtilitiesSystemChairman/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }} ./HousingUtilitiesSystemChairman
+          cd HousingUtilitiesSystemChairman
+          docker build -f Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }} .
           docker push gcr.io/${{ env.PROJECT_ID }}/housing-chairman:${{ github.sha }}
 
       - name: Deploy to Cloud Run
@@ -219,7 +221,8 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          docker build -f HousingUtilitiesSystemUser/Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }} ./HousingUtilitiesSystemUser
+          cd HousingUtilitiesSystemUser
+          docker build -f Dockerfile.local -t gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }} .
           docker push gcr.io/${{ env.PROJECT_ID }}/housing-user:${{ github.sha }}
 
       - name: Deploy to Cloud Run
