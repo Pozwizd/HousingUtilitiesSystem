@@ -58,12 +58,10 @@ jobs:
         with:
           service: housing-ai
           region: ${{ env.REGION }}
-          image: hlohaus789/g4f:lat
+          image: hlohaus789/g4f:latest
           flags: '--allow-unauthenticated'
           env_vars: |
             G4F_PROXY=
-            # Add any other required env vars for g4f if known. 
-            # Defaulting to standard image behavior.
 
   # ============================================================================
   # Admin Module Deployment
