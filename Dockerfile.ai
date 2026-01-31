@@ -1,0 +1,6 @@
+FROM hlohaus789/g4f:latest
+
+WORKDIR /app
+
+COPY har_and_cookies /app/har_and_cookies
+COPY generated_media /app/generated_media
