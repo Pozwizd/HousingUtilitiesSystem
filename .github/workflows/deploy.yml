@@ -9,6 +9,9 @@ on:
       - 'HousingUtilitiesSystemUser/**'
       - 'pom.xml'
       - '.github/workflows/deploy.yml'
+      - 'Dockerfile.ai'
+      - 'har_and_cookies/**'
+      - 'generated_media/**'
   workflow_dispatch:
 
 env:
