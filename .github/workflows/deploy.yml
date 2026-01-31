@@ -63,6 +63,13 @@ jobs:
           env_vars: |
             G4F_PROXY=
 
+      - name: Make Service Public
+        run: |
+          gcloud run services add-iam-policy-binding housing-ai \
+            --region ${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
   # ============================================================================
   # Admin Module Deployment
   # ============================================================================
