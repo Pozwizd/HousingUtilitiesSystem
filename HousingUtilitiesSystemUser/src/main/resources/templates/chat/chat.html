@@ -7,27 +7,6 @@
     <th:block layout:fragment="page_css">
         <link rel="stylesheet" th:href="@{/assets/vendor/css/pages/app-chat.css}" />
         <style>
-            /* Fix for long AI responses with URLs */
-            .chat-message-text {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-                max-width: 100%;
-                white-space: pre-wrap;
-            }
-
-            .chat-message-text p {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                word-break: break-word;
-                margin-bottom: 0;
-            }
-
-            .chat-message-wrapper {
-                max-width: 80%;
-                min-width: 0;
-            }
-
             /* Markdown styles for AI responses */
             .chat-message-text.ai-message {
                 white-space: normal;

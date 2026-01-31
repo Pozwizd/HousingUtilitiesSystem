@@ -63,3 +63,9 @@ server:
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
+
+ai:
+  gpt4free:
+    provider:
+    model: gpt-4o-mini
+

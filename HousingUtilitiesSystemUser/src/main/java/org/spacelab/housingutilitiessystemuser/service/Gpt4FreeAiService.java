@@ -52,10 +52,14 @@ public class Gpt4FreeAiService implements AiService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // Build request body
-            Map<String, Object> requestBody = Map.of(
-                    "provider", aiConfig.getProvider(),
-                    "messages", List.of(
-                            Map.of("role", "user", "content", userMessage)));
+            Map<String, Object> requestMap = new java.util.HashMap<>();
+            if (aiConfig.getProvider() != null && !aiConfig.getProvider().isEmpty()) {
+                requestMap.put("provider", aiConfig.getProvider());
+            }
+            requestMap.put("model", aiConfig.getModel());
+            requestMap.put("messages", List.of(Map.of("role", "user", "content", userMessage)));
+
+            Map<String, Object> requestBody = requestMap;
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 

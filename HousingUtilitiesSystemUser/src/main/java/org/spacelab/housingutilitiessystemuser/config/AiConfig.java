@@ -14,8 +14,11 @@ public class AiConfig {
     @Value("${ai.gpt4free.url:http://localhost:8090}")
     private String gpt4freeUrl;
 
-    @Value("${ai.gpt4free.provider:Perplexity}")
+    @Value("${ai.gpt4free.provider:}")
     private String provider;
+
+    @Value("${ai.gpt4free.model:gpt-4o-mini}")
+    private String model;
 
     @Bean
     public RestTemplate aiRestTemplate() {

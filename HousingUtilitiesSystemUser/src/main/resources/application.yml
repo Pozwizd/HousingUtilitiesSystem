@@ -115,7 +115,8 @@ jwt:
 ai:
   gpt4free:
     url: ${GPT4FREE_URL:http://localhost:8090}
-    provider: ${GPT4FREE_PROVIDER:Perplexity}
+    provider: ${GPT4FREE_PROVIDER:}
+    model: ${GPT4FREE_MODEL:gpt-4o-mini}
 
 # Google Cloud Storage
 gcs:
