@@ -335,11 +335,11 @@
                     avatarBgClass = 'bg-label-warning';
                     badge = '<span class="badge bg-label-warning ms-2">Председатель</span>';
                     avatarContent = conv.avatar
-                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
+                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`
                         : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`;
                 } else {
                     avatarContent = conv.avatar
-                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}">`
+                        ? `<img src="${getAvatarUrl(conv.avatar)}" class="rounded-circle" alt="${conv.name}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`
                         : `<span class="avatar-initial ${avatarBgClass} rounded-circle">${initial}</span>`;
                 }
 
@@ -375,7 +375,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
                             ${chairman.avatar
-                        ? `<img src="${getAvatarUrl(chairman.avatar)}" class="rounded-circle" alt="${chairman.name}">`
+                        ? `<img src="${getAvatarUrl(chairman.avatar)}" class="rounded-circle" alt="${chairman.name}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`
                         : `<span class="avatar-initial bg-label-warning rounded-circle">${initial}</span>`
                     }
                         </div>
@@ -403,7 +403,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar ${avatarClass}">
                             ${contact.avatar
-                        ? `<img src="${getAvatarUrl(contact.avatar)}" class="rounded-circle" alt="${contact.name}">`
+                        ? `<img src="${getAvatarUrl(contact.avatar)}" class="rounded-circle" alt="${contact.name}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`
                         : `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`
                     }
                         </div>
@@ -803,7 +803,7 @@
                             if (isAi) {
                                 avatarContainer.innerHTML = `<span class="avatar-initial bg-label-info rounded-circle"><i class="ti ti-robot" style="font-size: 1.2rem;"></i></span>`;
                             } else if (info.avatar) {
-                                avatarContainer.innerHTML = `<img src="${getAvatarUrl(info.avatar)}" class="rounded-circle" alt="${info.name}">`;
+                                avatarContainer.innerHTML = `<img src="${getAvatarUrl(info.avatar)}" class="rounded-circle" alt="${info.name}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`;
                             } else {
                                 const initial = (info.name || '?').charAt(0).toUpperCase();
                                 avatarContainer.innerHTML = `<span class="avatar-initial bg-label-secondary rounded-circle">${initial}</span>`;
@@ -931,7 +931,7 @@
                 if (isAi) {
                     avatarHtml = `<span class="avatar-initial bg-label-info rounded-circle"><i class="ti ti-robot"></i></span>`;
                 } else if (msg.senderAvatar) {
-                    avatarHtml = `<img src="${contextPath}${msg.senderAvatar}" class="rounded-circle" alt="${msg.senderName}">`;
+                    avatarHtml = `<img src="${getAvatarUrl(msg.senderAvatar)}" class="rounded-circle" alt="${msg.senderName}" onerror="this.onerror=null;this.src=contextPath + 'assets/img/avatars/1.png';">`;
                 } else {
                     avatarHtml = `<span class="avatar-initial ${isOwn ? 'bg-primary' : 'bg-label-secondary'} rounded-circle">${(msg.senderName || '?').charAt(0).toUpperCase()}</span>`;
                 }
