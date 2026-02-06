@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
  * Active in production or docker environments.
  */
 @Service
-@Profile({ "prod", "docker", "default" })
+@Profile({ "prod", "docker", "default", "dev" })
 @RequiredArgsConstructor
 @Slf4j
 public class Gpt4FreeAiService implements AiService {

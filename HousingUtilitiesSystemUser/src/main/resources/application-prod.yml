@@ -66,6 +66,7 @@ server:
 
 ai:
   gpt4free:
-    provider:
-    model: gpt-4o-mini
+    url: ${AI_GPT4FREE_URL:https://housing-ai-449944933058.europe-west3.run.app}
+    provider: Perplexity
+    model:
 

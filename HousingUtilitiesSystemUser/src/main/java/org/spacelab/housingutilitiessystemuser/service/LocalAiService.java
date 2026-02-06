@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
  * Active in 'dev' profile.
  */
 @Service
-@Profile("dev")
+@Profile("mock")
 @Slf4j
 public class LocalAiService implements AiService {
 
