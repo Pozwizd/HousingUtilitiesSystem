@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -22,7 +21,6 @@ public class ChatSidebarController {
 
     private final ChatService chatService;
 
-    
     @GetMapping("/chat/sidebar")
     @ResponseBody
     public ResponseEntity<ChatSidebarResponse> getSidebar() {
@@ -31,7 +29,6 @@ public class ChatSidebarController {
         return ResponseEntity.ok(sidebar);
     }
 
-    
     @GetMapping("/chat/conversation/{id}/messages")
     @ResponseBody
     public ResponseEntity<List<ChatMessageResponse>> getMessages(
@@ -42,7 +39,6 @@ public class ChatSidebarController {
         return ResponseEntity.ok(messages);
     }
 
-    
     @PostMapping("/chat/conversation")
     @ResponseBody
     public ResponseEntity<ChatConversationResponse> getOrCreateConversation(
@@ -56,12 +52,19 @@ public class ChatSidebarController {
         return ResponseEntity.ok(response);
     }
 
-    
     @GetMapping("/chat/conversation/{id}")
     @ResponseBody
     public ResponseEntity<ChatConversationResponse> getConversationInfo(@PathVariable String id) {
         log.info("📥 GET /chat/conversation/{}", id);
         ChatConversationResponse info = chatService.getConversationInfo(id);
         return ResponseEntity.ok(info);
+    }
+
+    @DeleteMapping("/chat/conversation/{id}/messages")
+    @ResponseBody
+    public ResponseEntity<Void> clearConversationMessages(@PathVariable String id) {
+        log.info("🗑️ DELETE /chat/conversation/{}/messages", id);
+        chatService.clearConversationMessages(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -43,6 +44,7 @@ public class ChatService {
         private final UserRepository userRepository;
         private final ChatMessageMapper chatMessageMapper;
         private final ChatEventPublisher chatEventPublisher;
+
         public Chairman getCurrentUser() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !authentication.isAuthenticated()) {
@@ -55,6 +57,7 @@ public class ChatService {
                                 .orElseThrow(() -> new OperationException("работе с чатом",
                                                 "Пользователь " + login + " не найден", HttpStatus.UNAUTHORIZED));
         }
+
         public ChatSidebarResponse getChatSidebar() {
                 Chairman chairman = getCurrentUser();
                 log.debug("Building chat sidebar for chairman: {}", chairman.getId());
@@ -63,69 +66,69 @@ public class ChatService {
                         conversations = new HashSet<>();
                 }
                 log.debug("Found {} conversations for chairman", conversations.size());
-            List<ObjectId> conversationIds = conversations.stream()
-                    .map(c -> new ObjectId(c.getId()))
-                    .collect(Collectors.toList());
-            Map<String, ChatMessage> lastMessageByConversation = new HashMap<>();
-            if (!conversationIds.isEmpty()) {
-                List<ChatMessage> allMessages = chatMessageRepository.findByConversationIdIn(conversationIds);
-                for (ChatMessage msg : allMessages) {
-                    String convId = msg.getConversation().getId();
-                    if (!lastMessageByConversation.containsKey(convId)) {
-                        lastMessageByConversation.put(convId, msg);
-                    }
-                }
-            }
-            Set<String> userParticipantIds = new HashSet<>();
-            Set<String> chairmanParticipantIds = new HashSet<>();
-            Map<String, ParticipantInfo> participantInfoByConversation = new HashMap<>();
-            for (ChatMessage msg : lastMessageByConversation.values()) {
-                if (!msg.getSenderId().equals(chairman.getId())) {
-                    String convId = msg.getConversation().getId();
-                    participantInfoByConversation.put(convId,
-                            new ParticipantInfo(msg.getSenderId(), msg.getSenderType()));
-                    if ("USER".equals(msg.getSenderType())) {
-                        userParticipantIds.add(msg.getSenderId());
-                    } else if ("CHAIRMAN".equals(msg.getSenderType())) {
-                        chairmanParticipantIds.add(msg.getSenderId());
-                    }
-                }
-            }
-            for (Conversation conv : conversations) {
-                if (!participantInfoByConversation.containsKey(conv.getId())) {
-                    List<ChatMessage> msgs = chatMessageRepository.findLatestByConversationId(conv.getId());
-                    for (ChatMessage msg : msgs) {
-                        if (!msg.getSenderId().equals(chairman.getId())) {
-                            participantInfoByConversation.put(conv.getId(),
-                                    new ParticipantInfo(msg.getSenderId(),
-                                            msg.getSenderType()));
-                            if ("USER".equals(msg.getSenderType())) {
-                                userParticipantIds.add(msg.getSenderId());
-                            } else if ("CHAIRMAN".equals(msg.getSenderType())) {
-                                chairmanParticipantIds.add(msg.getSenderId());
-                            }
-                            break;
+                List<ObjectId> conversationIds = conversations.stream()
+                                .map(c -> new ObjectId(c.getId()))
+                                .collect(Collectors.toList());
+                Map<String, ChatMessage> lastMessageByConversation = new HashMap<>();
+                if (!conversationIds.isEmpty()) {
+                        List<ChatMessage> allMessages = chatMessageRepository.findByConversationIdIn(conversationIds);
+                        for (ChatMessage msg : allMessages) {
+                                String convId = msg.getConversation().getId();
+                                if (!lastMessageByConversation.containsKey(convId)) {
+                                        lastMessageByConversation.put(convId, msg);
+                                }
                         }
-                    }
                 }
-            }
-            Map<String, User> usersById = new HashMap<>();
-            if (!userParticipantIds.isEmpty()) {
-                List<ObjectId> userIds = userParticipantIds.stream()
-                        .map(ObjectId::new)
-                        .collect(Collectors.toList());
-                userRepository.findAllById(userIds).forEach(u -> usersById.put(u.getId(), u));
-            }
-            Map<String, Chairman> chairmansById = new HashMap<>();
-            if (!chairmanParticipantIds.isEmpty()) {
-                chairmanRepository.findAllById(chairmanParticipantIds)
-                        .forEach(c -> chairmansById.put(c.getId(), c));
-            }
+                Set<String> userParticipantIds = new HashSet<>();
+                Set<String> chairmanParticipantIds = new HashSet<>();
+                Map<String, ParticipantInfo> participantInfoByConversation = new HashMap<>();
+                for (ChatMessage msg : lastMessageByConversation.values()) {
+                        if (!msg.getSenderId().equals(chairman.getId())) {
+                                String convId = msg.getConversation().getId();
+                                participantInfoByConversation.put(convId,
+                                                new ParticipantInfo(msg.getSenderId(), msg.getSenderType()));
+                                if ("USER".equals(msg.getSenderType())) {
+                                        userParticipantIds.add(msg.getSenderId());
+                                } else if ("CHAIRMAN".equals(msg.getSenderType())) {
+                                        chairmanParticipantIds.add(msg.getSenderId());
+                                }
+                        }
+                }
+                for (Conversation conv : conversations) {
+                        if (!participantInfoByConversation.containsKey(conv.getId())) {
+                                List<ChatMessage> msgs = chatMessageRepository.findLatestByConversationId(conv.getId());
+                                for (ChatMessage msg : msgs) {
+                                        if (!msg.getSenderId().equals(chairman.getId())) {
+                                                participantInfoByConversation.put(conv.getId(),
+                                                                new ParticipantInfo(msg.getSenderId(),
+                                                                                msg.getSenderType()));
+                                                if ("USER".equals(msg.getSenderType())) {
+                                                        userParticipantIds.add(msg.getSenderId());
+                                                } else if ("CHAIRMAN".equals(msg.getSenderType())) {
+                                                        chairmanParticipantIds.add(msg.getSenderId());
+                                                }
+                                                break;
+                                        }
+                                }
+                        }
+                }
+                Map<String, User> usersById = new HashMap<>();
+                if (!userParticipantIds.isEmpty()) {
+                        List<ObjectId> userIds = userParticipantIds.stream()
+                                        .map(ObjectId::new)
+                                        .collect(Collectors.toList());
+                        userRepository.findAllById(userIds).forEach(u -> usersById.put(u.getId(), u));
+                }
+                Map<String, Chairman> chairmansById = new HashMap<>();
+                if (!chairmanParticipantIds.isEmpty()) {
+                        chairmanRepository.findAllById(chairmanParticipantIds)
+                                        .forEach(c -> chairmansById.put(c.getId(), c));
+                }
                 List<ChatConversationResponse> conversationResponses = conversations.stream()
-                        .map(conv -> toConversationResponseOptimized(conv, chairman.getId(),
-                                lastMessageByConversation.get(conv.getId()),
-                                participantInfoByConversation.get(conv.getId()),
-                                usersById, chairmansById))
+                                .map(conv -> toConversationResponseOptimized(conv, chairman.getId(),
+                                                lastMessageByConversation.get(conv.getId()),
+                                                participantInfoByConversation.get(conv.getId()),
+                                                usersById, chairmansById))
                                 .sorted((c1, c2) -> {
                                         String t1 = c1.getLastMessageTime();
                                         String t2 = c2.getLastMessageTime();
@@ -136,75 +139,76 @@ public class ChatService {
                                         return t2.compareTo(t1);
                                 })
                                 .collect(Collectors.toList());
-            Set<String> participantsInConversations = participantInfoByConversation.values().stream()
-                    .map(ParticipantInfo::id)
-                    .collect(Collectors.toSet());
+                Set<String> participantsInConversations = participantInfoByConversation.values().stream()
+                                .map(ParticipantInfo::id)
+                                .collect(Collectors.toSet());
                 Set<House> chairmanHouses = houseRepository.findByChairman(chairman);
-            List<ChatContactResponse> contacts;
-            if (chairmanHouses.isEmpty()) {
-                contacts = new ArrayList<>();
-            } else {
-                contacts = userRepository.findByHouseIn(new ArrayList<>(chairmanHouses)).stream()
-                        .distinct()
-                        .filter(user -> user.getStatus() == Status.ACTIVE)
-                        .filter(user -> !participantsInConversations.contains(user.getId()))
-                        .sorted((u1, u2) -> Boolean.compare(u2.isOnline(), u1.isOnline()))
-                        .map(u -> ChatContactResponse.builder()
-                                .id(u.getId())
-                                .name(u.getFullName())
-                                .avatar(u.getPhoto())
-                                .online(u.isOnline())
-                                .participantType("USER")
-                                .build())
-                        .collect(Collectors.toList());
-            }
+                List<ChatContactResponse> contacts;
+                if (chairmanHouses.isEmpty()) {
+                        contacts = new ArrayList<>();
+                } else {
+                        contacts = userRepository.findByHouseIn(new ArrayList<>(chairmanHouses)).stream()
+                                        .distinct()
+                                        .filter(user -> user.getStatus() == Status.ACTIVE)
+                                        .filter(user -> !participantsInConversations.contains(user.getId()))
+                                        .sorted((u1, u2) -> Boolean.compare(u2.isOnline(), u1.isOnline()))
+                                        .map(u -> ChatContactResponse.builder()
+                                                        .id(u.getId())
+                                                        .name(u.getFullName())
+                                                        .avatar(u.getPhoto())
+                                                        .online(u.isOnline())
+                                                        .participantType("USER")
+                                                        .build())
+                                        .collect(Collectors.toList());
+                }
                 return ChatSidebarResponse.builder()
                                 .chatConversationResponses(conversationResponses)
                                 .chatContactResponses(contacts)
                                 .build();
         }
 
-    private ChatConversationResponse toConversationResponseOptimized(
-            Conversation conversation,
-            String currentUserId,
-            ChatMessage lastMessage,
-            ParticipantInfo participantInfo,
-            Map<String, User> usersById,
-            Map<String, Chairman> chairmansById) {
-        String name = "Новый диалог";
-        String avatar = null;
-        boolean online = false;
-        String participantId = null;
-        String participantType = null;
-        if (participantInfo != null) {
-            participantId = participantInfo.id();
-            participantType = participantInfo.type();
-            if ("USER".equals(participantType) && usersById.containsKey(participantId)) {
-                User u = usersById.get(participantId);
-                name = u.getFullName();
-                avatar = u.getPhoto();
-                online = u.isOnline();
-            } else if ("CHAIRMAN".equals(participantType) && chairmansById.containsKey(participantId)) {
-                Chairman ch = chairmansById.get(participantId);
-                name = ch.getFullName();
-                avatar = ch.getPhoto();
-                online = ch.isOnline();
-            }
+        private ChatConversationResponse toConversationResponseOptimized(
+                        Conversation conversation,
+                        String currentUserId,
+                        ChatMessage lastMessage,
+                        ParticipantInfo participantInfo,
+                        Map<String, User> usersById,
+                        Map<String, Chairman> chairmansById) {
+                String name = "Новый диалог";
+                String avatar = null;
+                boolean online = false;
+                String participantId = null;
+                String participantType = null;
+                if (participantInfo != null) {
+                        participantId = participantInfo.id();
+                        participantType = participantInfo.type();
+                        if ("USER".equals(participantType) && usersById.containsKey(participantId)) {
+                                User u = usersById.get(participantId);
+                                name = u.getFullName();
+                                avatar = u.getPhoto();
+                                online = u.isOnline();
+                        } else if ("CHAIRMAN".equals(participantType) && chairmansById.containsKey(participantId)) {
+                                Chairman ch = chairmansById.get(participantId);
+                                name = ch.getFullName();
+                                avatar = ch.getPhoto();
+                                online = ch.isOnline();
+                        }
+                }
+                return ChatConversationResponse.builder()
+                                .id(conversation.getId())
+                                .participantId(participantId)
+                                .name(name)
+                                .avatar(avatar)
+                                .lastMessage(lastMessage != null ? lastMessage.getContent() : "")
+                                .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt().toString() : "")
+                                .online(online)
+                                .participantType(participantType)
+                                .build();
         }
-        return ChatConversationResponse.builder()
-                .id(conversation.getId())
-                .participantId(participantId)
-                .name(name)
-                .avatar(avatar)
-                .lastMessage(lastMessage != null ? lastMessage.getContent() : "")
-                .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt().toString() : "")
-                .online(online)
-                .participantType(participantType)
-                .build();
-    }
 
-    private record ParticipantInfo(String id, String type) {
-    }
+        private record ParticipantInfo(String id, String type) {
+        }
+
         public ChatMessageResponse sendMessage(String conversationId, String content, Chairman sender) {
                 log.debug("Sending message to conversation {}: {}", conversationId, content);
                 Conversation conversation = conversationRepository.findById(conversationId)
@@ -249,6 +253,7 @@ public class ChatService {
                 }
                 return chatMessageMapper.toResponse(savedMessage, sender.getId());
         }
+
         public Conversation getOrCreateConversation(String targetId, String targetType) {
                 Chairman chairman = getCurrentUser();
                 Set<Conversation> myConversations = chairman.getConversations();
@@ -302,6 +307,7 @@ public class ChatService {
                 chatMessageRepository.save(initMessage);
                 return savedConversation;
         }
+
         public List<ChatMessageResponse> getConversationMessages(String conversationId, int limit) {
                 log.info("📥 Loading messages for conversation: {}, limit: {}", conversationId, limit);
                 Chairman chairman = getCurrentUser();
@@ -319,6 +325,35 @@ public class ChatService {
                                 .collect(Collectors.toList());
                 return chatMessageMapper.toResponseList(filtered, chairman.getId());
         }
+
+        public void clearConversationMessages(String conversationId) {
+                log.info("🗑️ Deleting conversation: {}", conversationId);
+
+                Chairman chairman = getCurrentUser();
+
+                Conversation conversation = conversationRepository.findById(conversationId)
+                                .orElseThrow(() -> new OperationException("удалении чата",
+                                                "Диалог не найден: " + conversationId, HttpStatus.NOT_FOUND));
+
+                if (chairman.getConversations() == null ||
+                                !chairman.getConversations().stream().anyMatch(c -> c.getId().equals(conversationId))) {
+                        throw new OperationException("удалении чата",
+                                        "Нет доступа к диалогу", HttpStatus.FORBIDDEN);
+                }
+
+                // Delete all messages in this conversation
+                chatMessageRepository.deleteByConversationId(conversationId);
+
+                // Remove conversation from chairman's list
+                chairman.getConversations().removeIf(c -> c.getId().equals(conversationId));
+                chairmanRepository.save(chairman);
+
+                // Delete the conversation entity
+                conversationRepository.delete(conversation);
+
+                log.info("✅ Deleted conversation: {}", conversationId);
+        }
+
         public ChatConversationResponse getConversationInfo(String conversationId) {
                 Chairman chairman = getCurrentUser();
                 Conversation conversation = conversationRepository.findById(conversationId)
@@ -331,6 +366,7 @@ public class ChatService {
                 }
                 return toConversationResponse(conversation, chairman.getId());
         }
+
         private String getOtherParticipantId(Conversation conversation, String currentUserId) {
                 List<ChatMessage> messages = chatMessageRepository.findLatestByConversationId(conversation.getId());
                 return messages.stream()
@@ -339,6 +375,7 @@ public class ChatService {
                                 .findFirst()
                                 .orElse(null);
         }
+
         private String getOtherParticipantType(Conversation conversation, String currentUserId) {
                 List<ChatMessage> messages = chatMessageRepository.findLatestByConversationId(conversation.getId());
                 return messages.stream()
@@ -347,6 +384,7 @@ public class ChatService {
                                 .findFirst()
                                 .orElse(null);
         }
+
         private ChatConversationResponse toConversationResponse(Conversation conversation, String currentUserId) {
                 List<ChatMessage> lastMessages = chatMessageRepository.findLatestByConversationId(conversation.getId());
                 ChatMessage lastMessage = lastMessages.isEmpty() ? null : lastMessages.get(0);
@@ -383,6 +421,7 @@ public class ChatService {
                                 .participantType(otherType)
                                 .build();
         }
+
         private ChatEvent buildChatEventForUser(ChatMessage message, User recipient, Chairman sender) {
                 return ChatEvent.builder()
                                 .eventType("MESSAGE_SENT")
@@ -399,6 +438,7 @@ public class ChatService {
                                 .isOnline(sender.isOnline())
                                 .build();
         }
+
         private ChatEvent buildChatEventForChairman(ChatMessage message, Chairman recipient, Chairman sender) {
                 return ChatEvent.builder()
                                 .eventType("MESSAGE_SENT")

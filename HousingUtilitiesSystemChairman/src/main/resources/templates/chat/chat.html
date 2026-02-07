@@ -69,6 +69,10 @@
                                         data-i18n="chat.emptySubtitle">История сообщений появится здесь</small>
                                 </div>
                             </div>
+                            <button type="button" class="btn btn-icon btn-sm btn-outline-danger d-none"
+                                id="chat-clear-btn" title="Очистить чат" data-i18n="[title]chat.clearChat">
+                                <i class="icon-base ti tabler-trash"></i>
+                            </button>
                         </div>
 
                         <div class="chat-history-body px-4 py-4 flex-grow-1 overflow-auto" id="chat-history-container">
@@ -546,6 +550,10 @@
                 document.getElementById('chat-recipient-status').textContent = 'Загрузка...';
                 chatSendButton.disabled = false;
 
+                // Show clear button
+                const clearBtn = document.getElementById('chat-clear-btn');
+                if (clearBtn) clearBtn.classList.remove('d-none');
+
                 // Mark as active in sidebar
                 conversationsList.querySelectorAll('.chat-contact-list-item').forEach(item => {
                     item.classList.remove('active');
@@ -823,6 +831,54 @@
                 // Update sidebar preview immediately (optimistic update)
                 updateConversationPreview(currentConversationId, content, new Date().toISOString(), 'Вы');
                 moveConversationToTop(currentConversationId);
+            }
+
+            // === Clear Chat Button Handler ===
+            const clearChatBtn = document.getElementById('chat-clear-btn');
+            if (clearChatBtn) {
+                clearChatBtn.addEventListener('click', async () => {
+                    if (!currentConversationId) return;
+
+                    if (!confirm('Вы уверены, что хотите удалить этот чат?')) return;
+
+                    console.log('[Chat] Deleting conversation:', currentConversationId);
+
+                    try {
+                        const response = await fetch(contextPath + `chat/conversation/${currentConversationId}/messages`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        });
+
+                        if (response.ok) {
+                            console.log('[Chat] Conversation deleted successfully');
+
+                            // Reset current conversation
+                            currentConversationId = null;
+                            currentParticipantId = null;
+
+                            // Reset chat UI
+                            chatMessages.innerHTML = `
+                                <li class="py-5 text-center text-body-secondary" id="chat-empty-state"
+                                    data-i18n="chat.selectConversation">Выберите диалог или начните новый</li>
+                            `;
+                            document.getElementById('chat-recipient-name').textContent = 'Выберите диалог';
+                            document.getElementById('chat-recipient-status').textContent = 'История сообщений появится здесь';
+                            chatSendButton.disabled = true;
+
+                            // Hide clear button
+                            clearChatBtn.classList.add('d-none');
+
+                            // Reload sidebar to reflect changes
+                            loadSidebar();
+                        } else {
+                            console.error('[Chat] Failed to delete conversation:', response.status);
+                            alert('Не удалось удалить чат');
+                        }
+                    } catch (error) {
+                        console.error('[Chat] Error deleting conversation:', error);
+                        alert('Произошла ошибка при удалении чата');
+                    }
+                });
             }
 
         </script>

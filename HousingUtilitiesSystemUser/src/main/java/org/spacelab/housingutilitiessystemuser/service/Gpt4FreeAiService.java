@@ -90,6 +90,123 @@ public class Gpt4FreeAiService implements AiService {
         }
     }
 
+    /**
+     * Get AI response with conversation history.
+     */
+    @Override
+    public String getAiResponseWithHistory(List<Map<String, String>> messages, String contextSummary) {
+        log.info("🤖 Sending message with history ({} messages) to AI", messages.size());
+
+        try {
+            String url = aiConfig.getGpt4freeUrl() + "/v1/chat/completions";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Build messages list with optional context summary
+            List<Map<String, String>> fullMessages = new java.util.ArrayList<>();
+
+            // Add system message with context summary if exists
+            if (contextSummary != null && !contextSummary.isEmpty()) {
+                fullMessages.add(Map.of(
+                        "role", "system",
+                        "content", "Предыдущий контекст разговора: " + contextSummary));
+            }
+
+            // Add conversation history
+            fullMessages.addAll(messages);
+
+            Map<String, Object> requestMap = new java.util.HashMap<>();
+            if (aiConfig.getProvider() != null && !aiConfig.getProvider().isEmpty()) {
+                requestMap.put("provider", aiConfig.getProvider());
+            }
+            requestMap.put("model", aiConfig.getModel());
+            requestMap.put("messages", fullMessages);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestMap, headers);
+
+            log.debug("🤖 AI Request with {} messages", fullMessages.size());
+
+            ResponseEntity<AiResponse> response = aiRestTemplate.exchange(
+                    url, HttpMethod.POST, request, AiResponse.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                AiResponse aiResponse = response.getBody();
+                if (aiResponse.getChoices() != null && !aiResponse.getChoices().isEmpty()) {
+                    String content = aiResponse.getChoices().get(0).getMessage().getContent();
+                    log.info("🤖 AI Response received: {}", content.substring(0, Math.min(100, content.length())));
+                    return content;
+                }
+            }
+
+            return "Извините, я не смог обработать ваш запрос. Попробуйте ещё раз.";
+
+        } catch (Exception e) {
+            log.error("🤖 Error getting AI response with history: {}", e.getMessage(), e);
+            return "Произошла ошибка при обращении к AI. Пожалуйста, попробуйте позже.";
+        }
+    }
+
+    /**
+     * Summarize conversation history.
+     */
+    @Override
+    public String summarizeContext(List<Map<String, String>> messages) {
+        log.info("🤖 Summarizing conversation context ({} messages)", messages.size());
+
+        try {
+            String url = aiConfig.getGpt4freeUrl() + "/v1/chat/completions";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Build summarization request
+            List<Map<String, String>> summaryMessages = new java.util.ArrayList<>();
+
+            // System prompt for summarization
+            summaryMessages.add(Map.of(
+                    "role", "system",
+                    "content",
+                    "Ты помощник для суммирования. Кратко опиши основные темы и ключевые моменты следующего диалога на русском языке. Будь максимально лаконичен (2-3 предложения)."));
+
+            // Build conversation text
+            StringBuilder conversationText = new StringBuilder("Диалог:\n");
+            for (Map<String, String> msg : messages) {
+                String role = "user".equals(msg.get("role")) ? "Пользователь" : "Ассистент";
+                conversationText.append(role).append(": ").append(msg.get("content")).append("\n");
+            }
+
+            summaryMessages.add(Map.of("role", "user", "content", conversationText.toString()));
+
+            Map<String, Object> requestMap = new java.util.HashMap<>();
+            if (aiConfig.getProvider() != null && !aiConfig.getProvider().isEmpty()) {
+                requestMap.put("provider", aiConfig.getProvider());
+            }
+            requestMap.put("model", aiConfig.getModel());
+            requestMap.put("messages", summaryMessages);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestMap, headers);
+
+            ResponseEntity<AiResponse> response = aiRestTemplate.exchange(
+                    url, HttpMethod.POST, request, AiResponse.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                AiResponse aiResponse = response.getBody();
+                if (aiResponse.getChoices() != null && !aiResponse.getChoices().isEmpty()) {
+                    String summary = aiResponse.getChoices().get(0).getMessage().getContent();
+                    log.info("🤖 Context summary: {}", summary);
+                    return summary;
+                }
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            log.error("🤖 Error summarizing context: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     // === Response DTOs ===
 
     @Data

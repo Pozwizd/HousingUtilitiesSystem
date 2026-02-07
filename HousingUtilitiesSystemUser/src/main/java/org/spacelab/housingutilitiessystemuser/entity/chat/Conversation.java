@@ -14,7 +14,6 @@ import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import java.time.Instant;
 import java.util.Set;
 
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -33,4 +32,8 @@ public class Conversation {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    // Context summarization for AI conversations
+    private String contextSummary;
+    private int messagesSinceLastSummary;
 }

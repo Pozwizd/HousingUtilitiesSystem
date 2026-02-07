@@ -23,6 +23,24 @@ public interface AiService {
     String getAiResponse(String userMessage);
 
     /**
+     * Get AI response with conversation history.
+     * 
+     * @param messages       List of messages in format [{role: "user"|"assistant",
+     *                       content: "..."}]
+     * @param contextSummary Optional summary of previous context
+     * @return AI response
+     */
+    String getAiResponseWithHistory(java.util.List<java.util.Map<String, String>> messages, String contextSummary);
+
+    /**
+     * Summarize conversation history.
+     * 
+     * @param messages List of messages to summarize
+     * @return Concise summary of the conversation
+     */
+    String summarizeContext(java.util.List<java.util.Map<String, String>> messages);
+
+    /**
      * Check if participant ID is AI.
      */
     static boolean isAiParticipant(String participantId) {

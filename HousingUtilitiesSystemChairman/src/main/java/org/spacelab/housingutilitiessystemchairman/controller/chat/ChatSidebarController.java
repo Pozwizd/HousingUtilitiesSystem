@@ -13,18 +13,21 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @Controller
 @RequestMapping("/chat")
 @Slf4j
 @RequiredArgsConstructor
 public class ChatSidebarController {
     private final ChatService chatService;
+
     @GetMapping("/sidebar")
     @ResponseBody
     public ResponseEntity<ChatSidebarResponse> getSidebar() {
         log.debug("GET /chat/sidebar");
         return ResponseEntity.ok(chatService.getChatSidebar());
     }
+
     @GetMapping("/conversation/{id}/messages")
     @ResponseBody
     public ResponseEntity<List<ChatMessageResponse>> getMessages(
@@ -33,6 +36,7 @@ public class ChatSidebarController {
         log.debug("GET /chat/conversation/{}/messages?limit={}", id, limit);
         return ResponseEntity.ok(chatService.getConversationMessages(id, limit));
     }
+
     @PostMapping("/conversation")
     @ResponseBody
     public ResponseEntity<ChatConversationResponse> getOrCreateConversation(
@@ -42,10 +46,19 @@ public class ChatSidebarController {
         Conversation conversation = chatService.getOrCreateConversation(request.getUserId(), targetType);
         return ResponseEntity.ok(chatService.getConversationInfo(conversation.getId()));
     }
+
     @GetMapping("/conversation/{id}")
     @ResponseBody
     public ResponseEntity<ChatConversationResponse> getConversation(@PathVariable String id) {
         log.debug("GET /chat/conversation/{}", id);
         return ResponseEntity.ok(chatService.getConversationInfo(id));
+    }
+
+    @DeleteMapping("/conversation/{id}/messages")
+    @ResponseBody
+    public ResponseEntity<Void> clearConversationMessages(@PathVariable String id) {
+        log.info("🗑️ DELETE /chat/conversation/{}/messages", id);
+        chatService.clearConversationMessages(id);
+        return ResponseEntity.noContent().build();
     }
 }

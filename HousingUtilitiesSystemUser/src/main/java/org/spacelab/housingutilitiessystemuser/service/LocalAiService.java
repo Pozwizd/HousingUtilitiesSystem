@@ -34,4 +34,18 @@ public class LocalAiService implements AiService {
         return "Это локальный ответ AI для разработки. В продакшене здесь будет ответ от настоящего AI." +
                 "\nВаш запрос: " + userMessage;
     }
+
+    @Override
+    public String getAiResponseWithHistory(java.util.List<java.util.Map<String, String>> messages,
+            String contextSummary) {
+        log.info("🤖 [LOCAL] Getting AI response with {} messages", messages.size());
+        String lastMessage = messages.isEmpty() ? "" : messages.get(messages.size() - 1).get("content");
+        return getAiResponse(lastMessage);
+    }
+
+    @Override
+    public String summarizeContext(java.util.List<java.util.Map<String, String>> messages) {
+        log.info("🤖 [LOCAL] Summarizing {} messages", messages.size());
+        return "Локальное суммирование: обсуждение содержит " + messages.size() + " сообщений.";
+    }
 }

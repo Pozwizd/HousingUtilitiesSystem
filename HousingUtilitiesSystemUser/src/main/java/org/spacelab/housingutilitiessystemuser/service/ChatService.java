@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -276,6 +277,34 @@ public class ChatService {
                                 .collect(Collectors.toList());
         }
 
+        public void clearConversationMessages(String conversationId) {
+                log.info("🗑️ Deleting conversation: {}", conversationId);
+
+                User user = getCurrentUser();
+
+                Conversation conversation = conversationRepository.findById(conversationId)
+                                .orElseThrow(() -> new OperationException("удалении чата",
+                                                "Диалог не найден: " + conversationId, HttpStatus.NOT_FOUND));
+
+                if (user.getConversations() == null ||
+                                !user.getConversations().stream().anyMatch(c -> c.getId().equals(conversationId))) {
+                        throw new OperationException("удалении чата",
+                                        "Нет доступа к диалогу", HttpStatus.FORBIDDEN);
+                }
+
+                // Delete all messages in this conversation
+                chatMessageRepository.deleteByConversationId(conversationId);
+
+                // Remove conversation from user's list
+                user.getConversations().removeIf(c -> c.getId().equals(conversationId));
+                userRepository.save(user);
+
+                // Delete the conversation entity
+                conversationRepository.delete(conversation);
+
+                log.info("✅ Deleted conversation: {}", conversationId);
+        }
+
         public ChatConversationResponse getConversationInfo(String conversationId) {
                 User user = getCurrentUser();
 
@@ -439,48 +468,92 @@ public class ChatService {
 
         /**
          * Trigger AI response asynchronously and save it as a message.
+         * Now includes conversation history and automatic context summarization.
          */
         private void triggerAiResponse(Conversation conversation, String userMessage, User sender) {
-                aiService.getAiResponseAsync(userMessage)
-                                .thenAccept(aiResponse -> {
-                                        log.info("🤖 AI response received, saving to conversation");
+                CompletableFuture.runAsync(() -> {
+                        try {
+                                log.info("🤖 Processing AI request with history for conversation {}",
+                                                conversation.getId());
 
-                                        // Save AI response as a message
-                                        ChatMessage aiMessage = ChatMessage.builder()
-                                                        .conversation(conversation)
-                                                        .content(aiResponse)
-                                                        .senderId(AiService.AI_PARTICIPANT_ID)
-                                                        .senderType(AiService.AI_PARTICIPANT_TYPE)
-                                                        .createdAt(Instant.now())
-                                                        .build();
-                                        ChatMessage savedAiMessage = chatMessageRepository.save(aiMessage);
+                                // Load last 10 messages for context
+                                List<ChatMessage> recentMessages = chatMessageRepository.findByConversationId(
+                                                conversation.getId(), PageRequest.of(0, 10));
+                                Collections.reverse(recentMessages); // Oldest first
 
-                                        // Update conversation timestamp
-                                        conversation.setUpdatedAt(Instant.now());
-                                        conversationRepository.save(conversation);
+                                // Build messages array for AI
+                                List<Map<String, String>> aiMessages = new java.util.ArrayList<>();
+                                for (ChatMessage msg : recentMessages) {
+                                        if (msg.getContent() == null || msg.getContent().isEmpty())
+                                                continue;
+                                        String role = AiService.AI_PARTICIPANT_TYPE.equals(msg.getSenderType())
+                                                        ? "assistant"
+                                                        : "user";
+                                        aiMessages.add(Map.of("role", role, "content", msg.getContent()));
+                                }
 
-                                        // Publish event to user via WebSocket
-                                        ChatEvent event = ChatEvent.builder()
-                                                        .eventType("MESSAGE_SENT")
-                                                        .targetUserId(sender.getId())
-                                                        .targetUserRole("USER")
-                                                        .conversationId(conversation.getId())
-                                                        .messageId(savedAiMessage.getId())
-                                                        .senderId(AiService.AI_PARTICIPANT_ID)
-                                                        .senderName(AiService.AI_NAME)
-                                                        .senderAvatar(AiService.AI_AVATAR)
-                                                        .senderType(AiService.AI_PARTICIPANT_TYPE)
-                                                        .lastMessage(aiResponse)
-                                                        .timestamp(savedAiMessage.getCreatedAt())
-                                                        .isOnline(true)
-                                                        .build();
-                                        chatEventPublisher.publishMessageEvent(event);
+                                // Check if we need to summarize (every 5 user messages)
+                                int messageCount = conversation.getMessagesSinceLastSummary() + 1;
+                                String contextSummary = conversation.getContextSummary();
 
-                                        log.info("✅ AI response published to user {}", sender.getId());
-                                })
-                                .exceptionally(ex -> {
-                                        log.error("❌ Failed to get AI response: {}", ex.getMessage());
-                                        return null;
-                                });
+                                if (messageCount >= 5) {
+                                        log.info("🤖 Triggering context summarization (message count: {})",
+                                                        messageCount);
+                                        String newSummary = aiService.summarizeContext(aiMessages);
+                                        if (newSummary != null) {
+                                                // Combine old and new summaries
+                                                if (contextSummary != null && !contextSummary.isEmpty()) {
+                                                        contextSummary = contextSummary + "\n" + newSummary;
+                                                } else {
+                                                        contextSummary = newSummary;
+                                                }
+                                                conversation.setContextSummary(contextSummary);
+                                                conversation.setMessagesSinceLastSummary(0);
+                                                log.info("🤖 Context summarized and saved");
+                                        }
+                                } else {
+                                        conversation.setMessagesSinceLastSummary(messageCount);
+                                }
+
+                                // Get AI response with history
+                                String aiResponse = aiService.getAiResponseWithHistory(aiMessages, contextSummary);
+                                log.info("🤖 AI response received, saving to conversation");
+
+                                // Save AI response as a message
+                                ChatMessage aiMessage = ChatMessage.builder()
+                                                .conversation(conversation)
+                                                .content(aiResponse)
+                                                .senderId(AiService.AI_PARTICIPANT_ID)
+                                                .senderType(AiService.AI_PARTICIPANT_TYPE)
+                                                .createdAt(Instant.now())
+                                                .build();
+                                ChatMessage savedAiMessage = chatMessageRepository.save(aiMessage);
+
+                                // Update conversation timestamp
+                                conversation.setUpdatedAt(Instant.now());
+                                conversationRepository.save(conversation);
+
+                                // Publish event to user via WebSocket
+                                ChatEvent event = ChatEvent.builder()
+                                                .eventType("MESSAGE_SENT")
+                                                .targetUserId(sender.getId())
+                                                .targetUserRole("USER")
+                                                .conversationId(conversation.getId())
+                                                .messageId(savedAiMessage.getId())
+                                                .senderId(AiService.AI_PARTICIPANT_ID)
+                                                .senderName(AiService.AI_NAME)
+                                                .senderAvatar(AiService.AI_AVATAR)
+                                                .senderType(AiService.AI_PARTICIPANT_TYPE)
+                                                .lastMessage(aiResponse)
+                                                .timestamp(savedAiMessage.getCreatedAt())
+                                                .isOnline(true)
+                                                .build();
+                                chatEventPublisher.publishMessageEvent(event);
+
+                                log.info("✅ AI response published to user {}", sender.getId());
+                        } catch (Exception ex) {
+                                log.error("❌ Failed to get AI response: {}", ex.getMessage(), ex);
+                        }
+                });
         }
 }

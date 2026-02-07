@@ -11,11 +11,12 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
 
-    
     @Query(value = "{'conversation': ObjectId(?0)}", sort = "{'createdAt': -1}")
     List<ChatMessage> findByConversationId(String conversationId, Pageable pageable);
 
-    
     @Query(value = "{'conversation': ObjectId(?0)}", sort = "{'createdAt': -1}")
     List<ChatMessage> findLatestByConversationId(String conversationId);
+
+    @Query(value = "{'conversation': ObjectId(?0)}", delete = true)
+    void deleteByConversationId(String conversationId);
 }

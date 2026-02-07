@@ -9,10 +9,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 @Repository
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
     @Query(value = "{'conversation': ObjectId(?0)}", sort = "{'createdAt': -1}")
     List<ChatMessage> findByConversationId(String conversationId, Pageable pageable);
+
     @Query(value = "{'conversation': ObjectId(?0)}", sort = "{'createdAt': -1}")
     List<ChatMessage> findLatestByConversationId(String conversationId);
 
@@ -21,4 +23,7 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
 
     @Query(value = "{'conversation': {$in: ?0}}", sort = "{'createdAt': -1}")
     List<ChatMessage> findByConversationIdIn(List<ObjectId> conversationIds);
+
+    @Query(value = "{'conversation': ObjectId(?0)}", delete = true)
+    void deleteByConversationId(String conversationId);
 }
