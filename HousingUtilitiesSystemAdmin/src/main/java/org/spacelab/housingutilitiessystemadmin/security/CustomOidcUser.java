@@ -83,6 +83,6 @@ public class CustomOidcUser implements OidcUser, UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return admin.isEnabled();
     }
 }

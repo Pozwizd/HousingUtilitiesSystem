@@ -50,7 +50,7 @@ logging:
     org.mongodb.driver.query: WARN
     org.mongodb.driver.write: WARN
     org.mongodb.driver.protocol.command: WARN
-    org.spacelab.housingutilitiessystemchairman: DEBUG
+    org.spacelab.housingutilitiessystemuser: DEBUG
     org.springframework.data.mongodb.core.convert: WARN
     org.springframework.data.mongodb.core.mapping: WARN
   pattern:

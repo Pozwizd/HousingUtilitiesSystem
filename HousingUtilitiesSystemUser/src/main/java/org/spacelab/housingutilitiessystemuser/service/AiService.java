@@ -7,9 +7,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface AiService {
 
-    String AI_PARTICIPANT_ID = "perplexity-ai";
+    String AI_PARTICIPANT_ID = "ai-assistant";
     String AI_PARTICIPANT_TYPE = "AI";
-    String AI_NAME = "Perplexity AI";
+    String AI_NAME = "AI Ассистент";
     String AI_AVATAR = null; // Will use initial letter
 
     /**

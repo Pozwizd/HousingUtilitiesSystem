@@ -61,7 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         DispatcherType dispatcherType = request.getDispatcherType();
 
-        
         if (dispatcherType == DispatcherType.ASYNC) {
             SecurityContext savedContext = (SecurityContext) request.getAttribute(SECURITY_CONTEXT_ATTR);
             if (savedContext != null) {
@@ -72,13 +71,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        
         SecurityContextHolder.clearContext();
 
         String accessToken = extractToken(request);
 
-        
-        
         if (accessToken == null) {
             log.debug("Access token не найден, проверяем refresh token");
 
@@ -86,15 +82,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (refreshed) {
                 log.info("✅ Access token успешно создан из refresh token");
-                
-                
+
             } else {
                 log.debug("❌ Refresh token отсутствует или невалиден - пользователь НЕаутентифицирован");
                 filterChain.doFilter(request, response);
                 return;
             }
         } else {
-            
+
             try {
                 var username = jwtService.extractUserName(accessToken);
 
@@ -111,12 +106,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             } catch (Exception e) {
                 log.error("❌ Ошибка при обработке access token: {}", e.getMessage());
-                
+
                 tryCreateAccessTokenFromRefresh(request, response);
             }
         }
 
-        
         SecurityContext currentContext = SecurityContextHolder.getContext();
         if (currentContext != null && currentContext.getAuthentication() != null) {
             request.setAttribute(SECURITY_CONTEXT_ATTR, currentContext);
@@ -125,7 +119,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    
     private boolean tryCreateAccessTokenFromRefresh(HttpServletRequest request, HttpServletResponse response) {
         Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE);
 
@@ -145,14 +138,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtService.isTokenValid(refreshToken.get(), userDetails)) {
-                
+
                 String newAccessToken = jwtService.generateToken(userDetails);
 
-                
-                Cookie accessCookie = createAccessTokenCookie(newAccessToken);
+                Cookie accessCookie = createAccessTokenCookie(newAccessToken, request);
                 response.addCookie(accessCookie);
 
-                
                 authenticateUser(userDetails, request);
 
                 log.info("✅ Новый access token создан для пользователя: {}", username);
@@ -167,7 +158,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    
     private void tryRefreshAccessToken(HttpServletRequest request, HttpServletResponse response,
             UserDetails userDetails) {
         Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE);
@@ -175,7 +165,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (refreshToken.isPresent() && jwtService.isTokenValid(refreshToken.get(), userDetails)) {
             String newAccessToken = jwtService.generateToken(userDetails);
 
-            Cookie accessCookie = createAccessTokenCookie(newAccessToken);
+            Cookie accessCookie = createAccessTokenCookie(newAccessToken, request);
             response.addCookie(accessCookie);
 
             authenticateUser(userDetails, request);
@@ -199,24 +189,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.setContext(context);
     }
 
-    private Cookie createAccessTokenCookie(String token) {
+    private Cookie createAccessTokenCookie(String token, HttpServletRequest request) {
         Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); 
-        cookie.setPath("/");
-        cookie.setMaxAge(15 * 60); 
+        cookie.setSecure(false);
+        String contextPath = request.getContextPath();
+        cookie.setPath(contextPath.isEmpty() ? "/" : contextPath);
+        cookie.setMaxAge(15 * 60);
         return cookie;
     }
 
     private String extractToken(HttpServletRequest request) {
-        
+
         var authHeader = request.getHeader(HEADER_NAME);
 
         if (StringUtils.hasText(authHeader) && authHeader.startsWith(BEARER_PREFIX)) {
             return authHeader.substring(BEARER_PREFIX.length());
         }
 
-        
         Optional<String> tokenFromCookie = getCookieValue(request, ACCESS_TOKEN_COOKIE);
         return tokenFromCookie.orElse(null);
     }

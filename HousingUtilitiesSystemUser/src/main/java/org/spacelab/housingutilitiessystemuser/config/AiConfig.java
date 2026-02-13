@@ -14,7 +14,7 @@ public class AiConfig {
     @Value("${ai.gpt4free.url:http://localhost:8090}")
     private String gpt4freeUrl;
 
-    @Value("${ai.gpt4free.provider:Perplexity}")
+    @Value("${ai.gpt4free.provider:PollinationsAI}")
     private String provider;
 
     @Value("${ai.gpt4free.model:}")
@@ -24,7 +24,7 @@ public class AiConfig {
     public RestTemplate aiRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000);
-        factory.setReadTimeout(60000); // AI responses can take time
+        factory.setReadTimeout(60000);
         return new RestTemplate(factory);
     }
 

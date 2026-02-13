@@ -48,7 +48,8 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser) {
-            claims.put("email", ((org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser) userDetails).getEmail());
+            claims.put("email",
+                    ((org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser) userDetails).getEmail());
         }
         return generateToken(claims, userDetails);
     }
@@ -61,10 +62,12 @@ public class JwtService {
      */
     public String generateToken(Authentication authentication) {
         Map<String, Object> claims = new HashMap<>();
-        if (authentication.getPrincipal() instanceof org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser) {
-            claims.put("email", ((org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser) authentication.getPrincipal()).getEmail());
+        String username = resolveUsername(authentication);
+        if (authentication
+                .getPrincipal() instanceof org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser oidcUser) {
+            claims.put("email", oidcUser.getEmail());
         }
-        return buildToken(claims, authentication.getName(), jwtExpiration);
+        return buildToken(claims, username, jwtExpiration);
     }
 
     /**
@@ -74,7 +77,18 @@ public class JwtService {
      * @return refresh токен
      */
     public String generateRefreshToken(Authentication authentication) {
-        return buildToken(new HashMap<>(), authentication.getName(), refreshExpiration);
+        String username = resolveUsername(authentication);
+        return buildToken(new HashMap<>(), username, refreshExpiration);
+    }
+
+    private String resolveUsername(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.spacelab.housingutilitiessystemadmin.security.CustomOidcUser oidcUser) {
+            return oidcUser.getUsername();
+        } else if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        return authentication.getName();
     }
 
     /**

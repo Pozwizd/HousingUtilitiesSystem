@@ -95,10 +95,10 @@ logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   level:
-    org.spacelab.housingutilitiessystemchairman: DEBUG
-    org.spacelab.housingutilitiessystemchairman.service.PasswordResetTokenService: DEBUG
-    org.spacelab.housingutilitiessystemchairman.controller.LoginController: DEBUG
-    org.spacelab.housingutilitiessystemchairman.service.JavaMailService: INFO
+    org.spacelab.housingutilitiessystemuser: DEBUG
+    org.spacelab.housingutilitiessystemuser.service.PasswordResetTokenService: DEBUG
+    org.spacelab.housingutilitiessystemuser.controller.LoginController: DEBUG
+    org.spacelab.housingutilitiessystemuser.service.JavaMailService: INFO
 
 file:
   upload:
@@ -115,7 +115,7 @@ jwt:
 ai:
   gpt4free:
     url: ${GPT4FREE_URL:http://localhost:8090}
-    provider: ${GPT4FREE_PROVIDER:Perplexity}
+    provider: ${GPT4FREE_PROVIDER:PollinationsAI}
     model: ${GPT4FREE_MODEL:}
 
 # Google Cloud Storage

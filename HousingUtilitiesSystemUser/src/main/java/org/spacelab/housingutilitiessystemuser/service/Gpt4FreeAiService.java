@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Service for communicating with Perplexity AI via GPT4Free API.
+ * Service for communicating with AI via GPT4Free API (PollinationsAI provider).
  * Active in production or docker environments.
  */
 @Service
@@ -43,7 +43,7 @@ public class Gpt4FreeAiService implements AiService {
      */
     @Override
     public String getAiResponse(String userMessage) {
-        log.info("🤖 Sending message to Perplexity AI: {}", userMessage);
+        log.info("🤖 Sending message to AI: {}", userMessage);
 
         try {
             String url = aiConfig.getGpt4freeUrl() + "/v1/chat/completions";
@@ -103,7 +103,7 @@ public class Gpt4FreeAiService implements AiService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // Build messages list with optional context summary
+            // Build messages list in standard OpenAI multi-turn format
             List<Map<String, String>> fullMessages = new java.util.ArrayList<>();
 
             // Add system message with context summary if exists
@@ -113,7 +113,7 @@ public class Gpt4FreeAiService implements AiService {
                         "content", "Предыдущий контекст разговора: " + contextSummary));
             }
 
-            // Add conversation history
+            // Add conversation history (user/assistant messages in order)
             fullMessages.addAll(messages);
 
             Map<String, Object> requestMap = new java.util.HashMap<>();
@@ -126,6 +126,15 @@ public class Gpt4FreeAiService implements AiService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestMap, headers);
 
             log.debug("🤖 AI Request with {} messages", fullMessages.size());
+            if (log.isDebugEnabled()) {
+                try {
+                    String jsonMessages = new com.fasterxml.jackson.databind.ObjectMapper()
+                            .writeValueAsString(fullMessages);
+                    log.debug("🤖 AI Messages JSON: {}", jsonMessages);
+                } catch (Exception e) {
+                    log.warn("Failed to serialize messages for logging", e);
+                }
+            }
 
             ResponseEntity<AiResponse> response = aiRestTemplate.exchange(
                     url, HttpMethod.POST, request, AiResponse.class);

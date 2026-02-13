@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -58,8 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         DispatcherType dispatcherType = request.getDispatcherType();
 
@@ -79,7 +77,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String accessToken = extractToken(request);
 
-        // ✅ НОВАЯ ЛОГИКА: Если access-token нет, но есть refresh-token - создаем новый access-token
+        // ✅ НОВАЯ ЛОГИКА: Если access-token нет, но есть refresh-token - создаем новый
+        // access-token
         if (accessToken == null) {
             log.debug("Access token не найден, проверяем refresh token");
 
@@ -129,7 +128,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Попытка создать новый access token из refresh token
      *
-     * @return true если access token успешно создан, false если refresh token отсутствует/невалиден
+     * @return true если access token успешно создан, false если refresh token
+     *         отсутствует/невалиден
      */
     private boolean tryCreateAccessTokenFromRefresh(HttpServletRequest request, HttpServletResponse response) {
         Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE);
@@ -154,7 +154,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String newAccessToken = jwtService.generateToken(userDetails);
 
                 // Отправляем новый access token в cookie
-                Cookie accessCookie = createAccessTokenCookie(newAccessToken);
+                Cookie accessCookie = createAccessTokenCookie(newAccessToken, request);
                 response.addCookie(accessCookie);
 
                 // Аутентифицируем пользователя
@@ -175,13 +175,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Обновление access token когда текущий невалиден
      */
-    private void tryRefreshAccessToken(HttpServletRequest request, HttpServletResponse response, UserDetails userDetails) {
+    private void tryRefreshAccessToken(HttpServletRequest request, HttpServletResponse response,
+            UserDetails userDetails) {
         Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE);
 
         if (refreshToken.isPresent() && jwtService.isTokenValid(refreshToken.get(), userDetails)) {
             String newAccessToken = jwtService.generateToken(userDetails);
 
-            Cookie accessCookie = createAccessTokenCookie(newAccessToken);
+            Cookie accessCookie = createAccessTokenCookie(newAccessToken, request);
             response.addCookie(accessCookie);
 
             authenticateUser(userDetails, request);
@@ -198,19 +199,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
-                userDetails.getAuthorities()
-        );
+                userDetails.getAuthorities());
 
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         context.setAuthentication(authToken);
         SecurityContextHolder.setContext(context);
     }
 
-    private Cookie createAccessTokenCookie(String token) {
+    private Cookie createAccessTokenCookie(String token, HttpServletRequest request) {
         Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, token);
         cookie.setHttpOnly(true);
         cookie.setSecure(false); // В продакшене установите true с HTTPS!
-        cookie.setPath("/");
+        String contextPath = request.getContextPath();
+        cookie.setPath(contextPath.isEmpty() ? "/" : contextPath);
         cookie.setMaxAge(15 * 60); // 15 минут
         return cookie;
     }

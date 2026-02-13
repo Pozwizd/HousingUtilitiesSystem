@@ -53,7 +53,7 @@ public class SecurityConfig {
                                 .securityContext(context -> context
                                                 .securityContextRepository(securityContextRepository()))
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                                 .authorizeHttpRequests((authorize) -> authorize
                                                 .requestMatchers("/login", "/perform-login", "/assets/**", "/css/**",
                                                                 "/js/**",

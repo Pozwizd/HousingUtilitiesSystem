@@ -1,4 +1,5 @@
 package org.spacelab.housingutilitiessystemchairman.security;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.spacelab.housingutilitiessystemchairman.entity.Chairman;
@@ -11,12 +12,14 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOidcUserService extends OidcUserService {
     private final ChairmanRepository chairmanRepository;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     @Transactional
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
@@ -41,9 +44,12 @@ public class CustomOidcUserService extends OidcUserService {
             chairman.setLogin(email);
             if (name != null && !name.isEmpty()) {
                 String[] nameParts = name.split(" ");
-                if (nameParts.length > 0) chairman.setLastName(nameParts[0]);
-                if (nameParts.length > 1) chairman.setFirstName(nameParts[1]);
-                if (nameParts.length > 2) chairman.setMiddleName(nameParts[2]);
+                if (nameParts.length > 0)
+                    chairman.setFirstName(nameParts[0]);
+                if (nameParts.length > 1)
+                    chairman.setLastName(nameParts[1]);
+                if (nameParts.length > 2)
+                    chairman.setMiddleName(nameParts[2]);
             }
             chairman.setPhoto(picture);
             chairman.setRole(Role.USER);
@@ -59,12 +65,12 @@ public class CustomOidcUserService extends OidcUserService {
         if (name != null) {
             String[] nameParts = name.split(" ");
             boolean needsUpdate = false;
-            if (nameParts.length > 0 && !nameParts[0].equals(chairman.getLastName())) {
-                chairman.setLastName(nameParts[0]);
+            if (nameParts.length > 0 && !nameParts[0].equals(chairman.getFirstName())) {
+                chairman.setFirstName(nameParts[0]);
                 needsUpdate = true;
             }
-            if (nameParts.length > 1 && !nameParts[1].equals(chairman.getFirstName())) {
-                chairman.setFirstName(nameParts[1]);
+            if (nameParts.length > 1 && !nameParts[1].equals(chairman.getLastName())) {
+                chairman.setLastName(nameParts[1]);
                 needsUpdate = true;
             }
             if (nameParts.length > 2 && !nameParts[2].equals(chairman.getMiddleName())) {

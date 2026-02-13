@@ -30,12 +30,10 @@ public class JwtService {
     @Value("${jwt.refresh-expiration:604800000}")
     private long refreshExpiration;
 
-    
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof CustomOidcUser) {
@@ -44,43 +42,48 @@ public class JwtService {
         return generateToken(claims, userDetails);
     }
 
-    
     public String generateToken(Authentication authentication) {
         Map<String, Object> claims = new HashMap<>();
-        if (authentication.getPrincipal() instanceof CustomOidcUser) {
-            claims.put("email", ((CustomOidcUser) authentication.getPrincipal()).getEmail());
+        String username = resolveUsername(authentication);
+        if (authentication.getPrincipal() instanceof CustomOidcUser oidcUser) {
+            claims.put("email", oidcUser.getEmail());
         }
-        return buildToken(claims, authentication.getName(), jwtExpiration);
+        return buildToken(claims, username, jwtExpiration);
     }
 
-    
     public String generateRefreshToken(Authentication authentication) {
-        return buildToken(new HashMap<>(), authentication.getName(), refreshExpiration);
+        String username = resolveUsername(authentication);
+        return buildToken(new HashMap<>(), username, refreshExpiration);
     }
 
-    
+    private String resolveUsername(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomOidcUser oidcUser) {
+            return oidcUser.getUsername();
+        } else if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        return authentication.getName();
+    }
+
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails.getUsername(), refreshExpiration);
     }
 
-    
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
         return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
         final Claims claims = extractAllClaims(token);
         return claimsResolvers.apply(claims);
     }
 
-    
     private String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails.getUsername(), jwtExpiration);
     }
 
-    
     private String buildToken(Map<String, Object> extraClaims, String username, long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
@@ -91,17 +94,14 @@ public class JwtService {
                 .compact();
     }
 
-    
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSigningKey)))
@@ -110,7 +110,6 @@ public class JwtService {
                 .getPayload();
     }
 
-    
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSigningKey);
         return Keys.hmacShaKeyFor(keyBytes);

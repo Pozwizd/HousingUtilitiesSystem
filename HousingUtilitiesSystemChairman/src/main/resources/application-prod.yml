@@ -56,6 +56,7 @@ jwt:
   expiration: 86400000 # 24 часа
 
 server:
+  forward-headers-strategy: native
   error:
     include-message: never
     include-binding-errors: never

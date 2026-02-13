@@ -55,6 +55,50 @@
                 border-radius: 5px;
                 overflow-x: auto;
             }
+
+            /* AI typing indicator */
+            .ai-typing-indicator {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 0;
+            }
+
+            .ai-typing-indicator span {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: currentColor;
+                opacity: 0.4;
+                animation: aiTypingBounce 1.4s infinite ease-in-out both;
+            }
+
+            .ai-typing-indicator span:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+
+            .ai-typing-indicator span:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+
+            .ai-typing-indicator span:nth-child(3) {
+                animation-delay: 0s;
+            }
+
+            @keyframes aiTypingBounce {
+
+                0%,
+                80%,
+                100% {
+                    transform: scale(0.6);
+                    opacity: 0.4;
+                }
+
+                40% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
         </style>
     </th:block>
 </head>
@@ -892,6 +936,11 @@
             function appendMessage(msg) {
                 console.log('[Chat] appendMessage called with:', msg);
 
+                // Remove typing indicator when AI message arrives
+                if (msg.senderType === 'AI') {
+                    removeAiTypingIndicator();
+                }
+
                 // Remove empty state if present
                 const emptyState = chatMessages.querySelector('[data-i18n="chat.noMessages"], [data-i18n="chat.selectConversation"], #chat-empty-state');
                 if (emptyState) {
@@ -934,7 +983,9 @@
                         breaks: true,
                         gfm: true
                     });
-                    contentHtml = marked.parse(msg.content || '');
+                    // Sanitize AI content: remove Perplexity-style citations and references
+                    const cleanedContent = sanitizeAiContent(msg.content || '');
+                    contentHtml = marked.parse(cleanedContent);
                 } else {
                     contentHtml = `<p class="mb-0">${escapeHtml(msg.content)}</p>`;
                 }
@@ -969,6 +1020,59 @@
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
+            }
+
+            // === Sanitize AI Content (remove Perplexity-style citations) ===
+            function sanitizeAiContent(text) {
+                if (!text) return '';
+                // Remove inline citation references like [0], [1], [2] etc.
+                let cleaned = text.replace(/\[\d+\]/g, '');
+                // Remove blockquote reference sections (> [0] URL\n> [1] URL...)
+                cleaned = cleaned.replace(/^\s*>\s*\[\d+\].*$/gm, '');
+                // Remove lines that are just URLs (leftover references)
+                cleaned = cleaned.replace(/^\s*https?:\/\/\S+\s*$/gm, '');
+                // Clean up excessive blank lines
+                cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+                return cleaned.trim();
+            }
+
+            // === Show AI Typing Indicator ===
+            function showAiTypingIndicator() {
+                // Remove existing indicator if any
+                removeAiTypingIndicator();
+
+                const li = document.createElement('li');
+                li.className = 'chat-message';
+                li.setAttribute('id', 'ai-typing-indicator');
+
+                li.innerHTML = `
+                    <div class="d-flex gap-2">
+                        <div class="avatar avatar-sm">
+                            <span class="avatar-initial bg-label-info rounded-circle"><i class="ti ti-robot"></i></span>
+                        </div>
+                        <div class="chat-message-wrapper">
+                            <div class="chat-message-text ai-message bg-body-secondary">
+                                <div class="ai-typing-indicator">
+                                    <span></span><span></span><span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatMessages.appendChild(li);
+
+                // Scroll to bottom
+                const container = document.getElementById('chat-history-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+
+            // === Remove AI Typing Indicator ===
+            function removeAiTypingIndicator() {
+                const indicator = document.getElementById('ai-typing-indicator');
+                if (indicator) indicator.remove();
             }
 
             // === Setup Event Listeners ===
@@ -1011,6 +1115,12 @@
 
                 chatMessageInput.value = '';
                 chatSendButton.disabled = true;
+
+                // Show typing indicator if chatting with AI
+                const activeItem = conversationsList.querySelector('.chat-contact-list-item.active');
+                if (activeItem && activeItem.getAttribute('data-participant-type') === 'AI') {
+                    showAiTypingIndicator();
+                }
 
                 // Update sidebar preview immediately (optimistic update)
                 updateConversationPreview(currentConversationId, content, new Date().toISOString(), 'Вы');

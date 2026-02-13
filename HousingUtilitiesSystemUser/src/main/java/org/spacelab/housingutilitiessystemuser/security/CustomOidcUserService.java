@@ -52,9 +52,9 @@ public class CustomOidcUserService extends OidcUserService {
             if (name != null && !name.isEmpty()) {
                 String[] nameParts = name.split(" ");
                 if (nameParts.length > 0)
-                    user.setLastName(nameParts[0]);
+                    user.setFirstName(nameParts[0]);
                 if (nameParts.length > 1)
-                    user.setFirstName(nameParts[1]);
+                    user.setLastName(nameParts[1]);
                 if (nameParts.length > 2)
                     user.setMiddleName(nameParts[2]);
             }
@@ -77,12 +77,12 @@ public class CustomOidcUserService extends OidcUserService {
             String[] nameParts = name.split(" ");
             boolean needsUpdate = false;
 
-            if (nameParts.length > 0 && !nameParts[0].equals(user.getLastName())) {
-                user.setLastName(nameParts[0]);
+            if (nameParts.length > 0 && !nameParts[0].equals(user.getFirstName())) {
+                user.setFirstName(nameParts[0]);
                 needsUpdate = true;
             }
-            if (nameParts.length > 1 && !nameParts[1].equals(user.getFirstName())) {
-                user.setFirstName(nameParts[1]);
+            if (nameParts.length > 1 && !nameParts[1].equals(user.getLastName())) {
+                user.setLastName(nameParts[1]);
                 needsUpdate = true;
             }
             if (nameParts.length > 2 && !nameParts[2].equals(user.getMiddleName())) {
